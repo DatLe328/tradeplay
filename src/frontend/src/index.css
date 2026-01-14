@@ -1,0 +1,212 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fredoka:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 45 100% 98%;
+    --foreground: 280 30% 20%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 280 30% 20%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 280 30% 20%;
+
+    --primary: 340 82% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 200 100% 92%;
+    --secondary-foreground: 200 60% 35%;
+
+    --muted: 45 40% 94%;
+    --muted-foreground: 280 15% 45%;
+
+    --accent: 160 70% 88%;
+    --accent-foreground: 160 70% 30%;
+
+    --destructive: 0 72% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 45 100% 55%;
+    --warning-foreground: 45 100% 15%;
+
+    --border: 340 40% 88%;
+    --input: 340 40% 92%;
+    --ring: 340 82% 65%;
+
+    --radius: 1rem;
+
+    /* Play Together cute accents */
+    --gaming-glow: 340 82% 70%;
+    --gaming-gradient-start: 340 82% 65%;
+    --gaming-gradient-end: 280 70% 65%;
+    
+    /* Pastel palette */
+    --pastel-pink: 340 82% 85%;
+    --pastel-blue: 200 100% 85%;
+    --pastel-green: 160 70% 82%;
+    --pastel-yellow: 45 100% 85%;
+    --pastel-purple: 280 70% 85%;
+
+    --sidebar-background: 45 100% 98%;
+    --sidebar-foreground: 280 30% 25%;
+    --sidebar-primary: 340 82% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 340 60% 95%;
+    --sidebar-accent-foreground: 340 60% 35%;
+    --sidebar-border: 340 40% 90%;
+    --sidebar-ring: 340 82% 65%;
+  }
+
+  .dark {
+    --background: 280 30% 8%;
+    --foreground: 45 50% 95%;
+
+    --card: 280 25% 12%;
+    --card-foreground: 45 50% 95%;
+
+    --popover: 280 25% 12%;
+    --popover-foreground: 45 50% 95%;
+
+    --primary: 340 82% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 280 25% 18%;
+    --secondary-foreground: 200 80% 80%;
+
+    --muted: 280 25% 15%;
+    --muted-foreground: 280 15% 60%;
+
+    --accent: 160 50% 20%;
+    --accent-foreground: 160 70% 75%;
+
+    --destructive: 0 62% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 60% 50%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 45 100% 55%;
+    --warning-foreground: 280 30% 10%;
+
+    --border: 280 25% 20%;
+    --input: 280 25% 20%;
+    --ring: 340 82% 65%;
+
+    /* Play Together cute accents dark */
+    --gaming-glow: 340 82% 55%;
+    --gaming-gradient-start: 340 82% 60%;
+    --gaming-gradient-end: 280 70% 55%;
+    
+    /* Pastel palette dark */
+    --pastel-pink: 340 50% 35%;
+    --pastel-blue: 200 60% 35%;
+    --pastel-green: 160 50% 30%;
+    --pastel-yellow: 45 60% 35%;
+    --pastel-purple: 280 50% 35%;
+
+    --sidebar-background: 280 25% 10%;
+    --sidebar-foreground: 45 50% 95%;
+    --sidebar-primary: 340 82% 65%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 340 40% 20%;
+    --sidebar-accent-foreground: 340 60% 80%;
+    --sidebar-border: 280 25% 18%;
+    --sidebar-ring: 340 82% 65%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-gaming;
+  }
+}
+
+@layer utilities {
+  .font-gaming {
+    font-family: 'Fredoka', sans-serif;
+  }
+
+  .font-sans {
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary via-[hsl(280,70%,65%)] to-[hsl(200,100%,65%)] bg-clip-text text-transparent;
+  }
+
+  .gaming-glow {
+    box-shadow: 0 0 25px hsl(var(--gaming-glow) / 0.4),
+                0 0 50px hsl(var(--gaming-glow) / 0.15);
+  }
+
+  .gaming-glow-sm {
+    box-shadow: 0 0 15px hsl(var(--gaming-glow) / 0.25);
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:scale-[1.03] hover:gaming-glow-sm hover:-translate-y-1;
+  }
+
+  .gaming-border {
+    @apply border-2 border-primary/40 rounded-2xl;
+  }
+
+  .gaming-bg {
+    @apply bg-gradient-to-br from-[hsl(var(--pastel-pink))] via-[hsl(var(--pastel-blue)/0.5)] to-[hsl(var(--pastel-yellow))];
+  }
+  
+  .cute-shadow {
+    box-shadow: 0 8px 25px -5px hsl(var(--primary) / 0.2),
+                0 4px 10px -5px hsl(var(--primary) / 0.1);
+  }
+}
+
+@layer components {
+  .badge-available {
+    @apply bg-[hsl(var(--pastel-green))] text-[hsl(160,70%,25%)] border-2 border-[hsl(160,70%,50%/0.5)] font-semibold;
+  }
+
+  .badge-sold {
+    @apply bg-destructive/20 text-destructive border-2 border-destructive/30 font-semibold;
+  }
+
+  .badge-pending {
+    @apply bg-[hsl(var(--pastel-yellow))] text-[hsl(45,100%,25%)] border-2 border-[hsl(45,100%,50%/0.5)] font-semibold;
+  }
+
+  .badge-completed {
+    @apply bg-[hsl(var(--pastel-blue))] text-[hsl(200,80%,30%)] border-2 border-[hsl(200,80%,50%/0.5)] font-semibold;
+  }
+
+  .btn-gaming {
+    @apply bg-gradient-to-r from-primary via-[hsl(280,70%,65%)] to-[hsl(200,100%,65%)] text-white 
+           font-bold py-3 px-7 rounded-2xl transition-all duration-300
+           hover:scale-105 hover:gaming-glow active:scale-95 cute-shadow;
+  }
+
+  .input-gaming {
+    @apply bg-white dark:bg-muted border-2 border-primary/30 rounded-2xl px-4 py-3
+           focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary
+           transition-all duration-200 font-medium;
+  }
+
+  .card-gaming {
+    @apply bg-card border-2 border-primary/20 rounded-3xl overflow-hidden
+           transition-all duration-300 hover:border-primary/50 hover:gaming-glow-sm hover:-translate-y-1 cute-shadow;
+  }
+}

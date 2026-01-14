@@ -1,0 +1,6 @@
+backups/*
+scripts/*
+deployments/*
+.env
+.env.*
+!.env.example
