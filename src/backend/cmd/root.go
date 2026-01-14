@@ -70,6 +70,7 @@ func setupRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 		auth.GET("/google/callback", authAPI.GoogleCallbackHdl())
 		auth.POST("/refresh-token", csrfValidate, authAPI.RefreshTokenHandler())
 		auth.POST("/logout", csrfValidate, authAPI.LogoutHdl())
+		auth.PATCH("/change-password", requireAuthMdw, csrfValidate, authAPI.ChangePasswordHandler())
 	}
 
 	account := v1.Group("/accounts")

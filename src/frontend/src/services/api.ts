@@ -67,7 +67,7 @@ api.interceptors.response.use(
 	async (error: AxiosError) => {
 		const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-		if (error.response?.status === 401 && !originalRequest._retry) {
+		if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
 			
 			if (isUserIdle()) {
 				localStorage.removeItem(WELCOME_POPUP_KEY);
@@ -84,7 +84,10 @@ api.interceptors.response.use(
 				return new Promise(function (resolve, reject) {
 					failedQueue.push({ resolve, reject });
 				})
-					.then(() => {
+					.then((token) => {
+                        if (originalRequest.headers) {
+                            originalRequest.headers['X-CSRF-Token'] = token;
+                        }
 						return api(originalRequest);
 					})
 					.catch((err) => Promise.reject(err));
@@ -107,13 +110,19 @@ api.interceptors.response.use(
 					}
 				);
 
-				if (response.data?.data?.csrf_token) {
-					localStorage.setItem('csrf_token', response.data.data.csrf_token);
+                const newToken = response.data?.data?.csrf_token;
+
+				if (newToken) {
+					localStorage.setItem('csrf_token', newToken);
+                    
+                    if (originalRequest.headers) {
+                        originalRequest.headers['X-CSRF-Token'] = newToken;
+                    }
 				}
 
 				localStorage.setItem('lastActivity', Date.now().toString());
                 
-				processQueue(null, null);
+				processQueue(null, newToken);
 				
 				return api(originalRequest);
 			} catch (refreshError) {

@@ -8,10 +8,12 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/services/api";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { Label } from "@/components/ui/label";
+import { useTranslation } from "@/stores/languageStore";
 
 export default function ForgotPasswordPage() {
 	const navigate = useNavigate();
 	const { toast } = useToast();
+	const { t } = useTranslation();
 
 	const [step, setStep] = useState<1 | 2>(1);
 
@@ -33,8 +35,8 @@ export default function ForgotPasswordPage() {
 
 		if (!captchaToken) {
 			toast({
-				title: "Chưa xác thực",
-				description: "Vui lòng xác thực bạn không phải robot.",
+				title: t("notVerified"),
+				description: t("captchaError"),
 				variant: "destructive",
 			});
 			return;
@@ -52,14 +54,14 @@ export default function ForgotPasswordPage() {
 			);
 
 			toast({
-				title: "Đã gửi mã xác thực",
-				description: "Vui lòng kiểm tra email của bạn",
+				title: t("otpSent"),
+				description: t("otpSentDesc"),
 			});
 			setStep(2);
 		} catch (error: any) {
 			toast({
-				title: "Lỗi",
-				description: error.message || "Không tìm thấy email này",
+				title: t("error"),
+				description: error.message || t("emailNotFound"),
 				variant: "destructive",
 			});
 			setCaptchaToken("");
@@ -74,8 +76,8 @@ export default function ForgotPasswordPage() {
 
 		if (newPassword.length < 8 || newPassword.length > 30) {
 			toast({
-				title: "Mật khẩu không hợp lệ",
-				description: "Mật khẩu phải từ 8 đến 30 ký tự.",
+				title: t("error"),
+				description: t("passwordLengthError"),
 				variant: "destructive",
 			});
 			return;
@@ -83,8 +85,8 @@ export default function ForgotPasswordPage() {
 
 		if (newPassword !== confirmPassword) {
 			toast({
-				title: "Mật khẩu không khớp",
-				description: "Vui lòng nhập lại mật khẩu chính xác.",
+				title: t("error"),
+				description: t("passwordMatchError"),
 				variant: "destructive",
 			});
 			return;
@@ -101,14 +103,14 @@ export default function ForgotPasswordPage() {
 				}),
 			});
 			toast({
-				title: "Thành công",
-				description: "Mật khẩu đã được đổi. Vui lòng đăng nhập lại.",
+				title: t("success"),
+				description: t("resetPasswordSuccess"),
 			});
 			navigate("/auth");
 		} catch (error: any) {
 			toast({
-				title: "Thất bại",
-				description: error.message || "Mã xác thực không đúng",
+				title: t("error"),
+				description: error.message || t("otpIncorrect"),
 				variant: "destructive",
 			});
 		} finally {
@@ -132,7 +134,7 @@ export default function ForgotPasswordPage() {
 					className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
 				>
 					<ArrowLeft className="h-4 w-4" />
-					Quay lại đăng nhập
+					{t("backToLogin")}
 				</Link>
 
 				<div className="p-8 rounded-2xl bg-card border border-border shadow-lg">
@@ -141,12 +143,12 @@ export default function ForgotPasswordPage() {
 							<KeyRound className="h-6 w-6 text-primary" />
 						</div>
 						<h1 className="font-gaming text-2xl font-bold">
-							Quên Mật Khẩu
+							{t("forgotPasswordTitle")}
 						</h1>
 						<p className="text-muted-foreground mt-2 text-sm">
 							{step === 1
-								? "Nhập email để nhận mã khôi phục"
-								: `Nhập mã OTP đã gửi tới ${email}`}
+								? t("forgotPasswordStep1")
+								: `${t("forgotPasswordStep2")} ${email}`}
 						</p>
 					</div>
 
@@ -157,7 +159,7 @@ export default function ForgotPasswordPage() {
 									<Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 									<Input
 										type="email"
-										placeholder="Email của bạn"
+										placeholder={t("yourEmail")}
 										value={email}
 										onChange={(e) =>
 											setEmail(e.target.value)
@@ -189,7 +191,7 @@ export default function ForgotPasswordPage() {
 								className="w-full btn-gaming py-6"
 								disabled={isLoading}
 							>
-								{isLoading ? "Đang gửi..." : "Gửi mã xác thực"}
+								{isLoading ? t("sending") : t("sendOtp")}
 							</Button>
 						</form>
 					) : (
@@ -199,11 +201,11 @@ export default function ForgotPasswordPage() {
 						>
 							<div className="space-y-2">
 								<Label className="text-sm font-medium">
-									Mã xác thực
+									{t("otpPlaceholder") || "OTP Code"}
 								</Label>
 								<Input
 									type="text"
-									placeholder="Mã OTP 6 số"
+									placeholder="######"
 									value={otp}
 									onChange={(e) => setOtp(e.target.value)}
 									className="text-center text-lg tracking-widest font-mono"
@@ -220,7 +222,7 @@ export default function ForgotPasswordPage() {
 										type={
 											showPassword ? "text" : "password"
 										}
-										placeholder="Mật khẩu mới (8-30 ký tự)"
+										placeholder={t("newPassword")}
 										value={newPassword}
 										onChange={(e) =>
 											setNewPassword(e.target.value)
@@ -256,7 +258,7 @@ export default function ForgotPasswordPage() {
 												? "text"
 												: "password"
 										}
-										placeholder="Nhập lại mật khẩu mới"
+										placeholder={t("confirmNewPassword")}
 										value={confirmPassword}
 										onChange={(e) =>
 											setConfirmPassword(e.target.value)
@@ -290,7 +292,7 @@ export default function ForgotPasswordPage() {
 								disabled={isLoading}
 								type="submit"
 							>
-								{isLoading ? "Đang xử lý..." : "Đổi mật khẩu"}
+								{isLoading ? t("processing") : t("resetPassword")}
 							</Button>
 
 							<div className="text-center">
@@ -300,7 +302,7 @@ export default function ForgotPasswordPage() {
 									className="text-xs text-muted-foreground hover:underline"
 									tabIndex={-1}
 								>
-									Gửi lại mã / Đổi email
+									{t("resendOrChangeEmail")}
 								</button>
 							</div>
 						</form>

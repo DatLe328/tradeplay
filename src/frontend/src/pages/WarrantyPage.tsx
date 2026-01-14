@@ -12,62 +12,65 @@ import {
   Sparkles
 } from "lucide-react";
 import { motion } from "framer-motion";
-
-const warrantyPolicies = [
-  {
-    icon: ShieldCheck,
-    title: "Bảo hành 24h đầu tiên",
-    description: "Tất cả acc được bảo hành trong 24 giờ đầu sau khi giao. Nếu có vấn đề về đăng nhập hoặc acc không đúng mô tả, chúng tôi sẽ hoàn tiền hoặc đổi acc mới.",
-    highlight: true
-  },
-  {
-    icon: RefreshCw,
-    title: "Đổi acc miễn phí",
-    description: "Trong thời gian bảo hành, nếu acc gặp sự cố (bị khóa, mất items do lỗi hệ thống), bạn sẽ được đổi acc khác có giá trị tương đương.",
-    highlight: false
-  },
-  {
-    icon: Clock,
-    title: "Hỗ trợ nhanh chóng",
-    description: "Đội ngũ hỗ trợ phản hồi trong vòng 30 phút (giờ hành chính) và tối đa 2 giờ (ngoài giờ hành chính).",
-    highlight: false
-  }
-];
-
-const coveredCases = [
-  "Acc không đăng nhập được do sai thông tin",
-  "Acc bị khóa ngay sau khi nhận (do lỗi từ phía shop)",
-  "Thông tin acc không đúng với mô tả (items, skin, level...)",
-  "Acc đã được bán cho người khác trước đó"
-];
-
-const notCoveredCases = [
-  "Acc bị khóa do người mua vi phạm chính sách game",
-  "Người mua chia sẻ thông tin acc cho người khác",
-  "Acc bị hack do người mua không bảo mật tốt",
-  "Yêu cầu bảo hành sau thời gian quy định (24h)",
-  "Người mua tự ý đổi thông tin rồi quên"
-];
-
-const warrantyProcess = [
-  {
-    step: 1,
-    title: "Liên hệ hỗ trợ",
-    description: "Gửi tin nhắn qua Zalo/Telegram kèm mã đơn hàng và mô tả vấn đề"
-  },
-  {
-    step: 2,
-    title: "Xác minh thông tin",
-    description: "Đội ngũ sẽ kiểm tra và xác nhận vấn đề trong vòng 30 phút"
-  },
-  {
-    step: 3,
-    title: "Xử lý bảo hành",
-    description: "Hoàn tiền hoặc đổi acc mới trong vòng 1-2 giờ sau khi xác nhận"
-  }
-];
+import { useTranslation } from "@/stores/languageStore";
 
 export default function WarrantyPage() {
+  const { t } = useTranslation();
+
+  const warrantyPolicies = [
+    {
+      icon: ShieldCheck,
+      title: t('warranty24h'),
+      description: t('warranty24hDesc'),
+      highlight: true
+    },
+    {
+      icon: RefreshCw,
+      title: t('freeExchange'),
+      description: t('freeExchangeDesc'),
+      highlight: false
+    },
+    {
+      icon: Clock,
+      title: t('fastSupport'),
+      description: t('fastSupportDesc'),
+      highlight: false
+    }
+  ];
+
+  const coveredCases = [
+    t('covered1'),
+    t('covered2'),
+    t('covered3'),
+    t('covered4')
+  ];
+
+  const notCoveredCases = [
+    t('notCovered1'),
+    t('notCovered2'),
+    t('notCovered3'),
+    t('notCovered4'),
+    t('notCovered5')
+  ];
+
+  const warrantyProcess = [
+    {
+      step: 1,
+      title: t('processStep1'),
+      description: t('processStep1Desc')
+    },
+    {
+      step: 2,
+      title: t('processStep2'),
+      description: t('processStep2Desc')
+    },
+    {
+      step: 3,
+      title: t('processStep3'),
+      description: t('processStep3Desc')
+    }
+  ];
+
   return (
     <Layout>
       <div className="container mx-auto px-4 py-8">
@@ -79,14 +82,13 @@ export default function WarrantyPage() {
         >
           <Badge className="mb-4 bg-primary/20 text-primary border-primary/30">
             <ShieldCheck className="h-3 w-3 mr-1" />
-            Cam kết uy tín
+            {t('warrantyHeader')}
           </Badge>
           <h1 className="text-3xl md:text-4xl font-gaming font-bold text-gradient mb-4">
-            🛡️ Chính Sách Bảo Hành
+            {t('warrantyTitle')}
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Chúng tôi cam kết mang đến trải nghiệm mua sắm an toàn và đáng tin cậy. 
-            Mọi giao dịch đều được bảo hành theo chính sách rõ ràng.
+            {t('warrantyDesc')}
           </p>
         </motion.div>
 
@@ -129,7 +131,7 @@ export default function WarrantyPage() {
               <CardHeader>
                 <CardTitle className="text-lg font-gaming flex items-center gap-2 text-green-600">
                   <CheckCircle className="h-5 w-5" />
-                  Được bảo hành
+                  {t('coveredCases')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -154,7 +156,7 @@ export default function WarrantyPage() {
               <CardHeader>
                 <CardTitle className="text-lg font-gaming flex items-center gap-2 text-red-600">
                   <XCircle className="h-5 w-5" />
-                  Không bảo hành
+                  {t('notCoveredCases')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -180,7 +182,7 @@ export default function WarrantyPage() {
           <Card className="border-2 border-primary/20 mb-8">
             <CardHeader>
               <CardTitle className="text-xl font-gaming flex items-center gap-2">
-                📋 Quy Trình Bảo Hành
+                {t('warrantyProcess')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -217,12 +219,12 @@ export default function WarrantyPage() {
                   <AlertTriangle className="h-6 w-6 text-yellow-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-gaming font-bold mb-2 text-yellow-600">⚠️ Lưu ý quan trọng</h3>
+                  <h3 className="text-lg font-gaming font-bold mb-2 text-yellow-600">{t('importantNotice')}</h3>
                   <ul className="space-y-2 text-sm text-muted-foreground">
-                    <li>• Sau khi nhận acc, vui lòng <strong>đổi mật khẩu ngay</strong> để bảo mật.</li>
-                    <li>• <strong>Không chia sẻ</strong> thông tin đăng nhập cho bất kỳ ai.</li>
-                    <li>• Lưu lại <strong>mã đơn hàng</strong> để tiện theo dõi và bảo hành.</li>
-                    <li>• Kiểm tra acc <strong>ngay sau khi nhận</strong> để đảm bảo quyền lợi bảo hành.</li>
+                    <li dangerouslySetInnerHTML={{ __html: `• ${t('notice1')}` }} />
+                    <li dangerouslySetInnerHTML={{ __html: `• ${t('notice2')}` }} />
+                    <li dangerouslySetInnerHTML={{ __html: `• ${t('notice3')}` }} />
+                    <li dangerouslySetInnerHTML={{ __html: `• ${t('notice4')}` }} />
                   </ul>
                 </div>
               </div>
@@ -244,16 +246,15 @@ export default function WarrantyPage() {
                   <MessageCircle className="h-8 w-8 text-primary" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-lg font-gaming font-bold mb-2">Yêu cầu bảo hành</h3>
+                  <h3 className="text-lg font-gaming font-bold mb-2">{t('requestWarranty')}</h3>
                   <p className="text-muted-foreground text-sm">
-                    Liên hệ ngay với chúng tôi qua Zalo hoặc Telegram kèm mã đơn hàng để được hỗ trợ nhanh nhất. 
-                    Đội ngũ luôn sẵn sàng giải quyết mọi vấn đề của bạn!
+                    {t('requestWarrantyDesc')}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <Badge className="bg-primary/20 text-primary border-primary/30">
                     <Sparkles className="h-3 w-3 mr-1" />
-                    Hỗ trợ 24/7
+                    {t('support247')}
                   </Badge>
                 </div>
               </div>

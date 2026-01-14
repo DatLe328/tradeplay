@@ -11,6 +11,7 @@ import {
 import { Gamepad2, Loader2 } from "lucide-react";
 import type { GameAccount } from "@/types";
 import { useLocation, useSearchParams } from "react-router-dom";
+import { useTranslation } from "@/stores/languageStore";
 
 interface FilterState {
 	search: string;
@@ -20,6 +21,7 @@ interface FilterState {
 }
 
 export default function AccountsPage() {
+	const { t, language } = useTranslation();
 	const [searchParams] = useSearchParams();
 	const location = useLocation();
 
@@ -29,7 +31,9 @@ export default function AccountsPage() {
 
 		return {
 			search: searchParams.get("search") || "",
-			game: searchParams.get("game") || "Tất cả",
+			game:
+				searchParams.get("game") ||
+				(language === "vi" ? "Tất cả" : "All Games"),
 			priceRange: hiddenPrice || urlPrice || "all",
 			status: "available",
 		};
@@ -73,11 +77,14 @@ export default function AccountsPage() {
 					page: currentPage,
 					limit: pageSize,
 					game_name:
-						filters.game === "Tất cả" ? undefined : filters.game,
+						filters.game === "Tất cả" ||
+						filters.game === "All Games"
+							? undefined
+							: filters.game,
 					min_price: minPrice,
 					max_price: maxPrice,
 					search: debouncedSearch,
-					status: "available",
+					status: ["available", "reserved"],
 				};
 
 				const res = await accountService.getAll(params);
@@ -116,12 +123,10 @@ export default function AccountsPage() {
 					className="mb-8"
 				>
 					<h1 className="font-gaming text-3xl md:text-4xl font-bold mb-2">
-						Danh Sách{" "}
-						<span className="text-gradient">Acc Game</span>
+						{t("accountsList")}{" "}
+						<span className="text-gradient">{t("accGame")}</span>
 					</h1>
-					<p className="text-muted-foreground">
-						Tìm kiếm và mua acc game chất lượng với giá tốt nhất
-					</p>
+					<p className="text-muted-foreground">{t("accountsDesc")}</p>
 				</motion.div>
 
 				{/* Filters */}
@@ -139,11 +144,11 @@ export default function AccountsPage() {
 
 				{/* Results count */}
 				<div className="mb-6 text-muted-foreground">
-					Tìm thấy{" "}
+					{t("found")}{" "}
 					<span className="text-primary font-semibold">
 						{totalItems}
 					</span>{" "}
-					acc game
+					{t("accGameCount")}
 				</div>
 
 				{/* Content */}
@@ -185,10 +190,10 @@ export default function AccountsPage() {
 							<Gamepad2 className="h-12 w-12 text-muted-foreground" />
 						</div>
 						<h3 className="font-gaming text-xl font-semibold mb-2">
-							Không tìm thấy acc game
+							{t("noAccountsFound")}
 						</h3>
 						<p className="text-muted-foreground">
-							Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm
+							{t("tryChangeFilter")}
 						</p>
 					</motion.div>
 				)}

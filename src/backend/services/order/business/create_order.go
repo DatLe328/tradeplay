@@ -19,6 +19,16 @@ func (biz *business) CreateOrder(ctx context.Context, userId int, accountId int)
 		return nil, core.ErrInvalidRequest(errors.New("account is not available"))
 	}
 
+	existingOrder, _ := biz.repo.GetOrderByUserAndAccount(ctx, userId, accountId)
+
+	if existingOrder != nil {
+		if existingOrder.Status == entity.OrderStatusPending {
+			return nil, core.ErrInvalidRequest(errors.New("you already have a pending order for this account"))
+		}
+		if existingOrder.Status == entity.OrderStatusPaid || existingOrder.Status == entity.OrderStatusDelivered {
+			return nil, core.ErrInvalidRequest(errors.New("you already bought this account"))
+		}
+	}
 	newOrder := &entity.Order{
 		SQLModel:   core.NewSQLModel(),
 		UserId:     userId,

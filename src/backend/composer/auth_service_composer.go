@@ -22,6 +22,7 @@ type AuthService interface {
 	GoogleLoginHdl() gin.HandlerFunc
 	RefreshTokenHandler() func(*gin.Context)
 	LogoutHdl() func(*gin.Context)
+	ChangePasswordHandler() gin.HandlerFunc
 }
 
 func ComposeAuthAPIService(serviceCtx sctx.ServiceContext) AuthService {

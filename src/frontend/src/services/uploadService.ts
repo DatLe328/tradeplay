@@ -59,7 +59,7 @@ export const uploadService = {
 		onProgress?: (percent: number) => void
 	): Promise<string> => {
 		if (file.size > 1 * 1024 * 1024) {
-			throw new Error("File quá lớn (Max 5MB)");
+			throw new Error("File quá lớn (Max 1MB)");
 		}
 		const response = await uploadService.getPresignedURL(
 			file.name,

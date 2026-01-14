@@ -5,7 +5,7 @@ CREATE TABLE `users` (
   id INT NOT NULL AUTO_INCREMENT,
   first_name VARCHAR(50) NOT NULL,
   last_name VARCHAR(50) NOT NULL,
-  phone VARCHAR(20) DEFAULT NULL,
+  phone_number VARCHAR(20) DEFAULT NULL,
   system_role ENUM('user', 'admin') NOT NULL DEFAULT 'user',
   status TINYINT NOT NULL DEFAULT 1,
   created_at TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,

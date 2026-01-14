@@ -17,6 +17,7 @@ type Business interface {
 	LoginWithGoogle(ctx context.Context, code string) (*entity.TokenResponse, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*entity.TokenResponse, error)
 	Logout(ctx context.Context, refreshToken string) error
+	ChangePassword(ctx context.Context, userId int, data *entity.ChangePasswordRequest) error
 }
 
 type api struct {

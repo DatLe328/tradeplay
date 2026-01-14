@@ -11,7 +11,6 @@ import (
 
 func (api *api) RefreshTokenHandler() func(*gin.Context) {
 	return func(c *gin.Context) {
-		// ✅ Lấy refresh token từ cookie thay vì từ body
 		refreshToken, err := c.Cookie("refreshToken")
 		if err != nil || refreshToken == "" {
 			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
@@ -27,21 +26,18 @@ func (api *api) RefreshTokenHandler() func(*gin.Context) {
 		origin := c.GetHeader("Origin")
 		cookieDomain := common.GetCookieDomainForOrigin(origin)
 
-		// ✅ Set SameSite cho các cookies bên dưới
 		c.SetSameSite(http.SameSiteNoneMode)
 
-		// 1. Set Access Token
 		c.SetCookie(
 			"accessToken",
 			resp.AccessToken.Token,
 			resp.AccessToken.ExpiredIn,
 			"/",
 			cookieDomain,
-			true, // Secure
-			true, // HttpOnly
+			true,
+			true,
 		)
 
-		// 2. Set Refresh Token (nếu có)
 		if resp.RefreshToken != nil {
 			c.SetCookie(
 				"refreshToken",
@@ -54,7 +50,6 @@ func (api *api) RefreshTokenHandler() func(*gin.Context) {
 			)
 		}
 
-		// 3. Refresh CSRF Token
 		csrfToken, err := middleware.SetCSRFToken(c)
 		if err != nil {
 			csrfToken = ""

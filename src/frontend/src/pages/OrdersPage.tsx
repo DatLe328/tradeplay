@@ -18,38 +18,33 @@ import { orderService } from "@/services/orderService";
 import { formatCurrency, formatDateTime } from "@/utils/format";
 import { useEffect, useState } from "react";
 import type { Order } from "@/types";
+import { useTranslation } from "@/stores/languageStore";
 
 type OrderStatus = "pending" | "paid" | "cancelled" | "refunded" | "delivered";
 
 type StatusConfig = {
-	label: string;
 	icon: React.ElementType;
 	className: string;
 };
 
-const statusMap: Record<OrderStatus, StatusConfig> = {
+const statusConfigMap: Record<OrderStatus, StatusConfig> = {
 	pending: {
-		label: "Pending",
 		icon: Clock,
 		className: "text-yellow-500",
 	},
 	paid: {
-		label: "Paid",
 		icon: CheckCircle,
 		className: "text-green-500",
 	},
 	delivered: {
-		label: "Delivered",
 		icon: Truck,
 		className: "text-blue-500",
 	},
 	cancelled: {
-		label: "Cancelled",
 		icon: XCircle,
 		className: "text-red-500",
 	},
 	refunded: {
-		label: "Refunded",
 		icon: RotateCcw,
 		className: "text-gray-500",
 	},
@@ -59,6 +54,7 @@ export default function OrdersPage() {
 	const { isAuthenticated } = useAuthStore();
 	const [orders, setOrders] = useState<Order[]>([]);
 	const [_isLoading, setIsLoading] = useState(false);
+	const { t } = useTranslation();
 
 	// Server-side pagination state
 	const [currentPage, setCurrentPage] = useState(1);
@@ -88,6 +84,24 @@ export default function OrdersPage() {
 		}
 	};
 
+	// Hàm helper để lấy text hiển thị dựa trên status
+	const getStatusLabel = (status: OrderStatus) => {
+		switch (status) {
+			case "pending":
+				return t("statusPending");
+			case "paid":
+				return t("statusPaid");
+			case "delivered":
+				return t("statusDelivered");
+			case "cancelled":
+				return t("statusCancelled");
+			case "refunded":
+				return t("statusRefunded");
+			default:
+				return status;
+		}
+	};
+
 	if (!isAuthenticated) {
 		return (
 			<Layout>
@@ -96,13 +110,13 @@ export default function OrdersPage() {
 						<Package className="h-12 w-12 text-muted-foreground" />
 					</div>
 					<h1 className="font-gaming text-2xl font-bold mb-4">
-						Đăng nhập để xem đơn hàng
+						{t("loginToViewOrders")}
 					</h1>
 					<p className="text-muted-foreground mb-6">
-						Bạn cần đăng nhập để xem lịch sử đơn hàng của mình
+						{t("loginToViewOrdersDesc")}
 					</p>
 					<Link to="/auth">
-						<Button className="btn-gaming">Đăng nhập ngay</Button>
+						<Button className="btn-gaming">{t("loginNow")}</Button>
 					</Link>
 				</div>
 			</Layout>
@@ -118,10 +132,10 @@ export default function OrdersPage() {
 					className="mb-8"
 				>
 					<h1 className="font-gaming text-3xl md:text-4xl font-bold mb-2">
-						Đơn Hàng <span className="text-gradient">Của Tôi</span>
+						{t("myOrders")} <span className="text-gradient">{t("ofMe")}</span>
 					</h1>
 					<p className="text-muted-foreground">
-						Theo dõi trạng thái các đơn hàng của bạn
+						{t("trackOrders")}
 					</p>
 				</motion.div>
 
@@ -129,29 +143,30 @@ export default function OrdersPage() {
 					<>
 						<div className="space-y-4">
 							{orders.map((order) => {
-								const status =
-									statusMap[order.status] ||
-									statusMap.pending;
-								const StatusIcon = status.icon;
+								const config =
+									statusConfigMap[order.status] ||
+									statusConfigMap.pending;
+								const StatusIcon = config.icon;
 
 								return (
 									<motion.div
 										key={order.id}
-										// ... animation props
-										className="p-6 rounded-xl bg-card border border-border ..."
+										className="p-6 rounded-xl bg-card border border-border"
 									>
 										<div className="flex flex-col md:flex-row md:items-center gap-4">
-											{/* Thumbnail: Cần check optional chaining vì account có thể null nếu backend chưa preload */}
-											<div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-												<img
-													src={
-														order.account
-															?.thumbnail ||
-														"/placeholder.png"
-													}
-													alt={order.account?.title}
-													className="w-full h-full object-cover"
-												/>
+											{/* Thumbnail */}
+											<div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-muted">
+												{order.account?.images?.[0] ? (
+													<img
+														src={order.account.images[0]}
+														alt={order.account?.title}
+														className="w-full h-full object-cover"
+													/>
+												) : (
+													<div className="w-full h-full flex items-center justify-center text-muted-foreground">
+														<Package className="h-8 w-8" />
+													</div>
+												)}
 											</div>
 
 											{/* Info */}
@@ -162,16 +177,16 @@ export default function OrdersPage() {
 													</span>
 													<Badge
 														className={
-															status.className
+															config.className
 														}
 													>
 														<StatusIcon className="h-3 w-3 mr-1" />
-														{status.label}
+														{getStatusLabel(order.status)}
 													</Badge>
 												</div>
 												<h3 className="font-gaming font-semibold">
 													{order.account?.title ||
-														"Account không tồn tại"}
+														t("accountNotFound")}
 												</h3>
 												<div className="text-sm text-muted-foreground">
 													{formatDateTime(
@@ -197,7 +212,7 @@ export default function OrdersPage() {
 																size="sm"
 																className="btn-gaming"
 															>
-																Thanh toán
+																{t("pay")}
 															</Button>
 														</Link>
 													)}
@@ -211,7 +226,7 @@ export default function OrdersPage() {
 																className="gap-1"
 															>
 																<Eye className="h-4 w-4" />
-																Chi tiết
+																{t("details")}
 															</Button>
 														</Link>
 													)}
@@ -230,7 +245,7 @@ export default function OrdersPage() {
 							pageSize={pageSize}
 						/>
 					</>
-				) : orders.length > 0 ? null : (
+				) : (
 					<motion.div
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
@@ -240,13 +255,13 @@ export default function OrdersPage() {
 							<Package className="h-12 w-12 text-muted-foreground" />
 						</div>
 						<h3 className="font-gaming text-xl font-semibold mb-2">
-							Chưa có đơn hàng nào
+							{t("noOrders")}
 						</h3>
 						<p className="text-muted-foreground mb-6">
-							Bắt đầu mua acc game đầu tiên của bạn ngay!
+							{t("startBuying")}
 						</p>
 						<Link to="/accounts">
-							<Button className="btn-gaming">Xem Acc Game</Button>
+							<Button className="btn-gaming">{t("viewAccGame")}</Button>
 						</Link>
 					</motion.div>
 				)}

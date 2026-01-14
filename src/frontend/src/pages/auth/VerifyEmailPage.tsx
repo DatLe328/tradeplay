@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/services/api";
+import { useTranslation } from "@/stores/languageStore";
 
 export default function VerifyEmailPage() {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const { toast } = useToast();
-
+	const { t } = useTranslation();
 	
 	const email = location.state?.email;
 
@@ -36,15 +37,15 @@ export default function VerifyEmailPage() {
 			});
 
 			toast({
-				title: "Xác thực thành công",
-				description: "Tài khoản đã được kích hoạt. Vui lòng đăng nhập.",
+				title: t("verifySuccess"),
+				description: t("verifySuccessDesc"),
 			});
 
 			navigate("/auth");
 		} catch (error: any) {
 			toast({
-				title: "Xác thực thất bại",
-				description: error.message || "Mã OTP không chính xác",
+				title: t("verifyFailed"),
+				description: error.message || t("verifyFailedDesc"),
 				variant: "destructive",
 			});
 		} finally {
@@ -69,7 +70,7 @@ export default function VerifyEmailPage() {
 					className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
 				>
 					<ArrowLeft className="h-4 w-4" />
-					Quay lại đăng ký
+					{t("backToRegister")}
 				</Link>
 
 				<div className="p-8 rounded-2xl bg-card border border-border shadow-lg text-center">
@@ -77,9 +78,9 @@ export default function VerifyEmailPage() {
 						<ShieldCheck className="h-6 w-6 text-primary" />
 					</div>
 					
-					<h1 className="font-gaming text-2xl font-bold mb-2">Xác thực Email</h1>
+					<h1 className="font-gaming text-2xl font-bold mb-2">{t("verifyEmailTitle")}</h1>
 					<p className="text-muted-foreground text-sm mb-6">
-						Chúng tôi đã gửi mã xác thực 6 số đến email:
+						{t("verifyEmailDesc")}
 						<br />
 						<span className="font-medium text-foreground">{email}</span>
 					</p>
@@ -88,7 +89,7 @@ export default function VerifyEmailPage() {
 						<div className="space-y-2">
 							<Input
 								type="text"
-								placeholder="Nhập mã 6 số (VD: 123456)"
+								placeholder={t("enterOtpPlaceholder")}
 								value={otp}
 								onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
 								className="text-center text-2xl tracking-[0.5em] font-mono h-14"
@@ -102,7 +103,7 @@ export default function VerifyEmailPage() {
 							className="btn-gaming w-full py-6 text-lg"
 							disabled={isLoading || otp.length < 6}
 						>
-							{isLoading ? "Đang kiểm tra..." : "Xác nhận"}
+							{isLoading ? t("verifying") : t("confirm")}
 						</Button>
 					</form>
 				</div>

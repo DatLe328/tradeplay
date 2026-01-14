@@ -12,77 +12,50 @@ import {
 	Sparkles,
 } from "lucide-react";
 import { motion } from "framer-motion";
-
-const steps = [
-	{
-		step: 1,
-		icon: Search,
-		title: "Tìm kiếm acc phù hợp",
-		description:
-			"Truy cập trang Danh sách acc, sử dụng bộ lọc theo giá, game để tìm acc ưng ý.",
-		// tips: [
-		// 	"Lọc theo khoảng giá phù hợp ngân sách",
-		// 	"Xem kỹ hình ảnh và mô tả acc",
-		// 	"Kiểm tra các thuộc tính đặc biệt",
-		// ],
-	},
-	{
-		step: 2,
-		icon: MousePointer,
-		title: "Xem chi tiết acc",
-		description:
-			"Click vào acc để xem thông tin chi tiết, bao gồm hình ảnh, mô tả và các thuộc tính.",
-		// tips: [
-		// 	"Xem đầy đủ hình ảnh của acc",
-		// 	"Đọc kỹ mô tả về trang bị, skin",
-		// 	"Kiểm tra thông tin acc có đúng nhu cầu",
-		// ],
-	},
-	{
-		step: 3,
-		icon: CreditCard,
-		title: "Đặt hàng & Thanh toán",
-		description:
-			"Vì trang web đang trong quá trình phát triển, vui lòng liên hệ qua zalo hoặc telegram để được hỗ trợ mua acc.",
-		tips: [],
-	},
-	{
-		step: 4,
-		icon: CheckCircle,
-		title: "Nhận acc & Kiểm tra",
-		description:
-			"Sau khi thanh toán thành công, bạn sẽ nhận được thông tin đăng nhập acc.",
-		tips: [
-			"Đăng nhập và kiểm tra acc ngay",
-			"Đổi mật khẩu để bảo mật",
-			"Liên hệ hỗ trợ nếu có vấn đề",
-		],
-	},
-	// {
-	//   step: 3,
-	//   icon: CreditCard,
-	//   title: "Đặt hàng & Thanh toán",
-	//   description: "Nhấn nút 'Mua ngay' và thực hiện thanh toán theo hướng dẫn.",
-	//   tips: ["Chọn phương thức thanh toán phù hợp", "Kiểm tra lại thông tin đơn hàng", "Lưu lại mã đơn hàng để theo dõi"]
-	// },
-	// {
-	//   step: 4,
-	//   icon: CheckCircle,
-	//   title: "Nhận acc & Kiểm tra",
-	//   description: "Sau khi thanh toán thành công, bạn sẽ nhận được thông tin đăng nhập acc.",
-	//   tips: ["Đăng nhập và kiểm tra acc ngay", "Đổi mật khẩu để bảo mật", "Liên hệ hỗ trợ nếu có vấn đề"]
-	// }
-];
-
-const paymentMethods = [
-	{
-		name: "Chuyển khoản ngân hàng",
-		description: "Hỗ trợ tất cả ngân hàng nội địa",
-	},
-	{ name: "Ví MoMo", description: "Thanh toán nhanh qua ví điện tử" },
-];
+import { useTranslation } from "@/stores/languageStore";
 
 export default function GuidePage() {
+	const { t, tArray } = useTranslation();
+
+	const steps = [
+		{
+			step: 1,
+			icon: Search,
+			title: t("step1Title"),
+			description: t("step1Desc"),
+			tips: tArray("step1Tips"),
+		},
+		{
+			step: 2,
+			icon: MousePointer,
+			title: t("step2Title"),
+			description: t("step2Desc"),
+			tips: tArray("step2Tips"),
+		},
+		{
+			step: 3,
+			icon: CreditCard,
+			title: t("step3Title"),
+			description: t("step3Desc"),
+			tips: tArray("step3Tips"),
+		},
+		{
+			step: 4,
+			icon: CheckCircle,
+			title: t("step4Title"),
+			description: t("step4Desc"),
+			tips: tArray("step4Tips"),
+		},
+	];
+
+	const paymentMethods = [
+		{
+			name: t("bankTransfer"),
+			description: t("bankTransferDesc"),
+		},
+		{ name: t("momo"), description: t("momoDesc") },
+	];
+
 	return (
 		<Layout>
 			<div className="container mx-auto px-4 py-8">
@@ -94,15 +67,13 @@ export default function GuidePage() {
 				>
 					<Badge className="mb-4 bg-primary/20 text-primary border-primary/30">
 						<Sparkles className="h-3 w-3 mr-1" />
-						Hướng dẫn chi tiết
+						{t("guideHeader")}
 					</Badge>
 					<h1 className="text-3xl md:text-4xl font-gaming font-bold text-gradient mb-4">
-						📖 Hướng Dẫn Mua Tài Khoản
+						{t("guideTitle")}
 					</h1>
 					<p className="text-muted-foreground max-w-2xl mx-auto">
-						Chỉ với 4 bước đơn giản, bạn có thể sở hữu acc Play
-						Together ưng ý. Theo dõi hướng dẫn bên dưới để mua hàng
-						dễ dàng!
+						{t("guideDesc")}
 					</p>
 				</motion.div>
 
@@ -130,7 +101,7 @@ export default function GuidePage() {
 													variant="outline"
 													className="bg-primary/10 text-primary border-primary/30"
 												>
-													Bước {item.step}
+													{t("step")} {item.step}
 												</Badge>
 											</div>
 											<CardTitle className="text-xl font-gaming">
@@ -146,7 +117,7 @@ export default function GuidePage() {
 									{item.tips && item.tips.length > 0 && (
 										<div className="bg-muted/50 rounded-xl p-4">
 											<p className="text-sm font-medium mb-2 flex items-center gap-2">
-												💡 Lưu ý:
+												{t("tips")}
 											</p>
 											<ul className="space-y-1">
 												{item.tips.map((tip, i) => (
@@ -178,7 +149,7 @@ export default function GuidePage() {
 					<Card className="border-2 border-primary/20">
 						<CardHeader>
 							<CardTitle className="text-xl font-gaming flex items-center gap-2">
-								💳 Phương Thức Thanh Toán
+								{t("paymentMethods")}
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -221,24 +192,20 @@ export default function GuidePage() {
 								</div>
 								<div className="flex-1">
 									<h3 className="text-lg font-gaming font-bold mb-2">
-										Cần hỗ trợ?
+										{t("needSupport")}
 									</h3>
 									<p className="text-muted-foreground text-sm">
-										Nếu bạn gặp bất kỳ vấn đề nào trong quá
-										trình mua hàng, đừng ngần ngại liên hệ
-										với chúng tôi qua Zalo hoặc Telegram.
-										Đội ngũ hỗ trợ luôn sẵn sàng giúp đỡ bạn
-										24/7!
+										{t("supportDesc")}
 									</p>
 								</div>
 								<div className="flex gap-2">
 									<Badge className="bg-primary/20 text-primary border-primary/30">
 										<Clock className="h-3 w-3 mr-1" />
-										24/7
+										{t("support247")}
 									</Badge>
 									<Badge className="bg-green-500/20 text-green-600 border-green-500/30">
 										<ShieldCheck className="h-3 w-3 mr-1" />
-										Uy tín
+										{t("reliable")}
 									</Badge>
 								</div>
 							</div>
