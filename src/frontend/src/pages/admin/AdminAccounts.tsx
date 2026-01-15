@@ -983,7 +983,7 @@ export default function AdminAccounts() {
 
 						<div className="space-y-4 p-4 rounded-lg bg-secondary/30 border border-border">
 							<h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-								Mô tả & Hình ảnh/Video (v0.0.1)
+								Mô tả & Hình ảnh/Video
 							</h3>
 							<div className="space-y-2">
 								<Label htmlFor="description">

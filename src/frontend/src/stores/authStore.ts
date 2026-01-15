@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { type User } from "@/types";
 import { authService } from "@/services/authService";
+import { IDLE_TIMEOUT } from "@/hooks/useIdleTimeout";
 
 interface AuthStore {
 	user: User | null;
@@ -17,7 +18,7 @@ interface AuthStore {
 		email: string,
 		password: string,
 		firstName: string,
-        lastName: string,
+		lastName: string,
 		captchaToken: string
 	) => Promise<boolean>;
 	logout: () => void;
@@ -65,21 +66,21 @@ export const useAuthStore = create<AuthStore>()(
 				}
 			},
 			updateProfile: async (data) => {
-                set({ isLoading: true });
-                try {
-                    await authService.updateProfile(data);
+				set({ isLoading: true });
+				try {
+					await authService.updateProfile(data);
 
-                    const freshUser = await authService.getMe();
+					const freshUser = await authService.getMe();
 
-                    set({ user: freshUser });
-                    
-                    return true;
-                } catch (error) {
-                    throw error;
-                } finally {
-                    set({ isLoading: false });
-                }
-            },
+					set({ user: freshUser });
+
+					return true;
+				} catch (error) {
+					throw error;
+				} finally {
+					set({ isLoading: false });
+				}
+			},
 
 			login: async (
 				email: string,
@@ -188,12 +189,30 @@ export const useAuthStore = create<AuthStore>()(
 				}
 			},
 		}),
+
 		{
 			name: "auth-storage",
 			partialize: (state) => ({
 				user: state.user,
 				isAuthenticated: state.isAuthenticated,
 			}),
+			onRehydrateStorage: () => (state) => {
+				const lastActivity = localStorage.getItem("lastActivity");
+
+				if (lastActivity) {
+					const idleTime = Date.now() - parseInt(lastActivity);
+
+					if (idleTime > IDLE_TIMEOUT) {
+						console.log("Session expired on startup (Rehydrate)");
+
+						state?.logout();
+					}
+				} else {
+					if (state?.isAuthenticated) {
+						state.logout();
+					}
+				}
+			},
 		}
 	)
 );

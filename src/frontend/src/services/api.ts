@@ -8,6 +8,9 @@ import { useAuthStore } from "@/stores/authStore";
 import { WELCOME_POPUP_KEY } from "@/components/layout/WelcomePopup";
 
 const IDLE_TIMEOUT = 60 * 60 * 1000;
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 1000;
+const RETRY_METHODS = ['GET'];
 
 const isUserIdle = (): boolean => {
   const lastActivity = localStorage.getItem('lastActivity');
@@ -56,6 +59,8 @@ const processQueue = (error: any, token: string | null = null) => {
 	failedQueue = [];
 };
 
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 api.interceptors.response.use(
 	(response) => {
 		if (response.data?.data?.csrf_token) {
@@ -65,7 +70,7 @@ api.interceptors.response.use(
 		return response;
 	},
 	async (error: AxiosError) => {
-		const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
+		const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean, _retryCount?: number };
 
 		if ((error.response?.status === 401 || error.response?.status === 403) && !originalRequest._retry) {
 			
@@ -140,6 +145,23 @@ api.interceptors.response.use(
 				isRefreshing = false;
 			}
 		}
+
+        const isNetworkError = !error.response;
+        const isServerError = error.response && error.response.status >= 500 && error.response.status < 600;
+        const isIdempotentMethod = originalRequest.method && RETRY_METHODS.includes(originalRequest.method.toUpperCase());
+
+        if ((isNetworkError || isServerError) && isIdempotentMethod) {
+            originalRequest._retryCount = originalRequest._retryCount || 0;
+
+            if (originalRequest._retryCount < MAX_RETRIES) {
+                originalRequest._retryCount++;
+                
+                const delay = RETRY_DELAY * Math.pow(2, originalRequest._retryCount - 1);
+                
+                await wait(delay);
+                return api(originalRequest);
+            }
+        }
 
 		return Promise.reject(error);
 	}
