@@ -107,7 +107,7 @@ export function Footer() {
 						<Heart className="h-4 w-4 text-primary fill-primary animate-pulse" />{" "}
 						{t("by")} © 2026
 					</p>
-					<p className="text-xs text-muted-foreground/60">v0.1.0</p>
+					<p className="text-xs text-muted-foreground/60">{import.meta.env.VITE_APP_VERSION}</p>
 				</div>
 			</div>
 		</footer>
