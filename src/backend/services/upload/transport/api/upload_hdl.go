@@ -26,7 +26,7 @@ func (a *api) GeneratePresignedURLHandler() gin.HandlerFunc {
 			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
 			return
 		}
-		const MAX_UPLOAD_SIZE = 1 * 1024 * 1024
+		const MAX_UPLOAD_SIZE = 10 * 1024 * 1024
 		if req.Size > MAX_UPLOAD_SIZE {
 			common.WriteErrorResponse(c, core.ErrInvalidRequest(
 				fmt.Errorf("file size %d bytes exceeds limit of %d bytes", req.Size, MAX_UPLOAD_SIZE),
@@ -37,6 +37,7 @@ func (a *api) GeneratePresignedURLHandler() gin.HandlerFunc {
 		ext := strings.ToLower(filepath.Ext(req.Filename))
 		allowedExts := map[string]bool{
 			".jpg": true, ".jpeg": true, ".png": true, ".webp": true,
+			".mp4": true, ".mov": true, ".avi": true, ".webm": true,
 		}
 		if !allowedExts[ext] {
 			common.WriteErrorResponse(c, core.ErrInvalidRequest(
@@ -50,7 +51,10 @@ func (a *api) GeneratePresignedURLHandler() gin.HandlerFunc {
 			contentType = "application/octet-stream"
 		}
 
-		key := fmt.Sprintf("accounts/%s%s", uuid.New().String(), ext)
+		configComp := c.MustGet(common.KeyComConf).(common.ConfigComponent)
+		prefix := configComp.S3Prefix()
+
+		key := fmt.Sprintf("%s%s%s", prefix, uuid.New().String(), ext)
 
 		result, err := a.uploadComp.GeneratePresignedURL(c.Request.Context(), key, contentType, 15*time.Minute, req.Size)
 		if err != nil {

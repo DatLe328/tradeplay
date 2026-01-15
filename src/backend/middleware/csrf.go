@@ -36,6 +36,7 @@ func SetCSRFToken(c *gin.Context) (string, error) {
 	}
 
 	cookieDomain := common.GetCookieDomainForOrigin(c.GetHeader("Origin"))
+	c.SetSameSite(http.SameSiteLaxMode)
 
 	c.SetCookie(
 		CSRFTokenCookieName,

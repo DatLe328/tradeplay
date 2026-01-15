@@ -34,7 +34,7 @@ export function Footer() {
 									to="/"
 									className="text-sm text-muted-foreground hover:text-primary transition-colors"
 								>
-									{t('homeLink')}
+									{t("homeLink")}
 								</Link>
 							</li>
 							<li>
@@ -42,7 +42,7 @@ export function Footer() {
 									to="/accounts"
 									className="text-sm text-muted-foreground hover:text-primary transition-colors"
 								>
-									{t('accountsLink')}
+									{t("accountsLink")}
 								</Link>
 							</li>
 							<li>
@@ -50,7 +50,7 @@ export function Footer() {
 									to="/guide"
 									className="text-sm text-muted-foreground hover:text-primary transition-colors"
 								>
-									{t('guideLink')}
+									{t("guideLink")}
 								</Link>
 							</li>
 							<li>
@@ -58,7 +58,7 @@ export function Footer() {
 									to="/warranty"
 									className="text-sm text-muted-foreground hover:text-primary transition-colors"
 								>
-									{t('warrantyLink')}
+									{t("warrantyLink")}
 								</Link>
 							</li>
 						</ul>
@@ -101,10 +101,13 @@ export function Footer() {
 					</div>
 				</div>
 
-				<div className="mt-8 pt-8 border-t-2 border-primary/20 text-center">
+				<div className="mt-8 pt-8 border-t-2 border-primary/20 text-center space-y-2">
 					<p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
-						{t('madeWith')} <Heart className="h-4 w-4 text-primary fill-primary animate-pulse" /> {t('by')} © 2026
+						{t("madeWith")}{" "}
+						<Heart className="h-4 w-4 text-primary fill-primary animate-pulse" />{" "}
+						{t("by")} © 2026
 					</p>
+					<p className="text-xs text-muted-foreground/60">v0.1.0</p>
 				</div>
 			</div>
 		</footer>

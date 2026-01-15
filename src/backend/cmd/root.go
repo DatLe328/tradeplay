@@ -24,6 +24,7 @@ import (
 func newServiceCtx() sctx.ServiceContext {
 	return sctx.NewServiceContext(
 		sctx.WithName("tradeplay"),
+		sctx.WithComponent(NewConfig()),
 		sctx.WithComponent(jwtc.NewJWT(common.KeyCompJWT)),
 		sctx.WithComponent(ginc.NewGin(common.KeyCompGIN)),
 		sctx.WithComponent(gormc.NewGormDB(common.KeyCompMySQL, "")),
@@ -73,21 +74,17 @@ func setupRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 		auth.PATCH("/change-password", requireAuthMdw, csrfValidate, authAPI.ChangePasswordHandler())
 	}
 
-	account := v1.Group("/accounts")
+	account := v1.Group("/accounts", csrfValidate)
 	{
 		account.GET("", accountAPI.ListAccountHandler())
-		account.POST("", requireAuthMdw, csrfValidate, accountAPI.CreateAccountHandler())
-		account.PATCH("/:id", requireAuthMdw, csrfValidate, accountAPI.UpdateAccountHandler())
-		account.DELETE("/:id", requireAuthMdw, csrfValidate, accountAPI.DeleteAccountHandler())
 		account.GET("/:id", accountAPI.GetAccountHandler())
 	}
 
-	orders := v1.Group("/orders", requireAuthMdw, identifyMdw)
+	orders := v1.Group("/orders", requireAuthMdw, csrfValidate)
 	{
-		orders.POST("", csrfValidate, orderAPI.CreateOrderHandler())
-		orders.GET("", orderAPI.ListOrderHandler())
+		orders.GET("", identifyMdw, orderAPI.ListOrderHandler())
 		orders.GET("/:id", orderAPI.GetOrderHandler())
-		orders.PATCH("/:id", csrfValidate, orderAPI.UpdateOrderStatusHandler())
+		orders.POST("", orderAPI.CreateOrderHandler())
 	}
 }
 
@@ -97,13 +94,31 @@ func setupAdminRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	userRepo := userRepository.NewMySQLRepository(db.GetDB())
 	requireAuthMdw := middleware.RequireAuth(authBusiness)
 	requireAdminMdw := middleware.RequireAdmin(userRepo)
+	csrfProtection := middleware.CSRFProtection()
+	csrfValidate := middleware.ValidateCSRFToken()
 
 	adminAPI := composer.ComposeAdminAPIService(serviceCtx)
 	uploadAPI := composer.ComposeUploadAPIService(serviceCtx)
 
-	v1Admin := router.Group("/v1", middleware.RateLimitMiddleware(10, 100))
+	v1Admin := router.Group("/v1", middleware.RateLimitMiddleware(50, 300))
+	v1Admin.Use(requireAuthMdw, requireAdminMdw, csrfProtection)
 
-	admin := v1Admin.Group("/admin", requireAuthMdw, requireAdminMdw)
+	accountAPI := composer.ComposeAccountAPIService(serviceCtx)
+	orderAPI := composer.ComposeOrderAPIService(serviceCtx)
+
+	account := v1Admin.Group("/accounts", csrfValidate)
+	{
+		account.POST("", accountAPI.CreateAccountHandler())
+		account.PATCH("/:id", accountAPI.UpdateAccountHandler())
+		account.DELETE("/:id", accountAPI.DeleteAccountHandler())
+	}
+
+	orders := v1Admin.Group("/orders", csrfValidate)
+	{
+		orders.PATCH("/:id", orderAPI.UpdateOrderStatusHandler())
+	}
+
+	admin := v1Admin.Group("/admin", csrfValidate)
 	{
 		admin.GET("/stats", adminAPI.GetStatsHandler())
 		admin.POST("/upload/presign", uploadAPI.GeneratePresignedURLHandler())

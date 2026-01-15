@@ -55,26 +55,48 @@ export const uploadService = {
 	},
 
 	uploadImage: async (
-		file: File,
-		onProgress?: (percent: number) => void
-	): Promise<string> => {
-		if (file.size > 1 * 1024 * 1024) {
-			throw new Error("File quá lớn (Max 1MB)");
-		}
-		const response = await uploadService.getPresignedURL(
-			file.name,
-			file.type,
-			file.size 
-		);
+        file: File,
+        onProgress?: (percent: number) => void,
+        maxRetries: number = 3
+    ): Promise<string> => {
+        const isVideo = file.type.startsWith('video/');
+        const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+        const MAX_VIDEO_SIZE = 10 * 1024 * 1024;
 
-		if (!response.data) {
-			throw new Error("Failed to get presigned URL");
-		}
+        if (isVideo) {
+            if (file.size > MAX_VIDEO_SIZE) throw new Error("Video quá lớn (Max 10MB)");
+        } else {
+            if (file.size > MAX_IMAGE_SIZE) throw new Error("Ảnh quá lớn (Max 2MB)");
+        }
 
-		const { upload_url, file_url } = response.data;
+        let attempt = 0;
+        while (true) {
+            try {
+                const response = await uploadService.getPresignedURL(
+                    file.name,
+                    file.type,
+                    file.size
+                );
 
-		await uploadService.uploadToS3(upload_url, file, onProgress);
+                if (!response.data) {
+                    throw new Error("Failed to get presigned URL");
+                }
 
-		return file_url;
-	},
+                const { upload_url, file_url } = response.data;
+
+                await uploadService.uploadToS3(upload_url, file, onProgress);
+
+                return file_url;
+
+            } catch (error) {
+                attempt++;
+                if (attempt >= maxRetries) {
+                    throw error;
+                }
+
+                console.warn(`Upload failed (attempt ${attempt}/${maxRetries}). Retrying in 1s...`);
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+            }
+        }
+    },
 };

@@ -54,6 +54,7 @@ import {
 	sortableKeyboardCoordinates,
 	rectSortingStrategy,
 } from "@dnd-kit/sortable";
+import { authService } from "@/services/authService";
 
 function CircularProgress({ value }: { value: number }) {
 	const radius = 18;
@@ -101,6 +102,7 @@ interface SortableImageProps {
 	onRemove: () => void;
 	onSetThumbnail: () => void;
 	progress?: number;
+	mediaType?: "image" | "video";
 }
 
 export function SortableImage({
@@ -110,6 +112,7 @@ export function SortableImage({
 	onRemove,
 	onSetThumbnail,
 	progress,
+	mediaType = "image",
 }: SortableImageProps) {
 	const {
 		attributes,
@@ -143,13 +146,42 @@ export function SortableImage({
 					: "hover:ring-2 hover:ring-muted-foreground/50"
 			}`}
 		>
-			<img
-				src={url}
-				alt=""
-				className={`w-full h-full object-cover select-none ${
-					isUploading ? "brightness-50 blur-[1px]" : ""
-				}`}
-			/>
+			{/* Logic hiển thị Video hoặc Ảnh */}
+			{mediaType === "video" ? (
+				<video
+					src={url}
+					className={`w-full h-full object-cover select-none bg-black ${
+						isUploading ? "brightness-50 blur-[1px]" : ""
+					}`}
+					muted
+					loop
+					// autoPlay // Bỏ comment nếu muốn tự chạy
+					playsInline
+				/>
+			) : (
+				<img
+					src={url}
+					alt=""
+					className={`w-full h-full object-cover select-none ${
+						isUploading ? "brightness-50 blur-[1px]" : ""
+					}`}
+				/>
+			)}
+
+			{/* Icon Play cho Video để dễ nhận biết */}
+			{mediaType === "video" && !isUploading && (
+				<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+					<div className="bg-black/40 rounded-full p-1.5 backdrop-blur-[1px]">
+						<svg
+							className="w-5 h-5 text-white/90"
+							fill="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path d="M8 5v14l11-7z" />
+						</svg>
+					</div>
+				</div>
+			)}
 
 			{isUploading && (
 				<div className="absolute inset-0 flex items-center justify-center z-30 bg-black/40">
@@ -210,6 +242,7 @@ interface FormData {
 type SortablePhoto = {
 	id: string;
 	url: string;
+	mediaType: "image" | "video";
 };
 
 const initialFormData: FormData = {
@@ -222,6 +255,11 @@ const initialFormData: FormData = {
 	status: "available",
 	attributes: {},
 	thumbnailIndex: 0,
+};
+
+const getMediaType = (url: string): "image" | "video" => {
+	if (/\.(mp4|mov|avi|webm|mkv)$/i.test(url)) return "video";
+	return "image";
 };
 
 export default function AdminAccounts() {
@@ -368,10 +406,13 @@ export default function AdminAccounts() {
 			thumbnailIndex: thumbnailIndex >= 0 ? thumbnailIndex : 0,
 		});
 
-		const formattedImages = (account.images || []).map((url) => ({
-			id: crypto.randomUUID(),
-			url: url,
-		}));
+		const formattedImages: SortablePhoto[] = (account.images || []).map(
+			(url) => ({
+				id: crypto.randomUUID(),
+				url: url,
+				mediaType: getMediaType(url),
+			})
+		);
 		setPreviewImages(formattedImages);
 		setLocalFiles({});
 		setImageUrlInput("");
@@ -389,9 +430,12 @@ export default function AdminAccounts() {
 			const url = URL.createObjectURL(file);
 			newFilesMap[url] = file;
 
+			const isVideo = file.type.startsWith("video/");
+
 			newPhotos.push({
 				id: crypto.randomUUID(),
 				url: url,
+				mediaType: isVideo ? "video" : "image",
 			});
 		});
 
@@ -402,11 +446,13 @@ export default function AdminAccounts() {
 
 	const handleAddImageUrl = () => {
 		if (imageUrlInput.trim()) {
+			const url = imageUrlInput.trim();
 			setPreviewImages([
 				...previewImages,
 				{
 					id: crypto.randomUUID(),
-					url: imageUrlInput.trim(),
+					url: url,
+					mediaType: getMediaType(url),
 				},
 			]);
 			setImageUrlInput("");
@@ -444,6 +490,8 @@ export default function AdminAccounts() {
 		setUploadProgress({ current: 0, total: 0 });
 		setImageProgressMap({});
 
+		let failedCount = 0;
+
 		try {
 			const filesToUpload = previewImages
 				.map((img, index) => ({ ...img, index }))
@@ -456,7 +504,7 @@ export default function AdminAccounts() {
 
 			const finalImageUrls = previewImages.map((img) => img.url);
 
-			const BATCH_SIZE = 3;
+			const BATCH_SIZE = 5;
 
 			for (let i = 0; i < filesToUpload.length; i += BATCH_SIZE) {
 				const batch = filesToUpload.slice(i, i + BATCH_SIZE);
@@ -491,8 +539,7 @@ export default function AdminAccounts() {
 							return fileUrl;
 						} catch (err) {
 							console.error(
-								"Image upload error at index",
-								item.index,
+								`Upload failed at index ${item.index}`,
 								err
 							);
 							setImageProgressMap((prev) => {
@@ -505,14 +552,10 @@ export default function AdminAccounts() {
 					})
 				);
 
-				const failedUploads = batchResults.filter(
+				const failedInBatch = batchResults.filter(
 					(r) => r.status === "rejected"
 				);
-				if (failedUploads.length > 0) {
-					throw new Error(
-						`${failedUploads.length} image upload(s) failed.`
-					);
-				}
+				failedCount += failedInBatch.length;
 
 				setUploadProgress((prev) => ({
 					...prev,
@@ -520,15 +563,43 @@ export default function AdminAccounts() {
 				}));
 			}
 
+			try {
+				await authService.getMe();
+			} catch (error) {
+				toast({
+					title: "Phiên đăng nhập hết hạn",
+					description:
+						"Vui lòng mở tab mới đăng nhập lại rồi quay lại bấm Lưu.",
+					variant: "destructive",
+					duration: 10000,
+				});
+				setIsSubmitting(false);
+				return;
+			}
+
 			const cleanedImageUrls = finalImageUrls.filter(
 				(url) =>
 					url && typeof url === "string" && !url.startsWith("blob:")
 			);
 
-			const thumbnailImage =
-				cleanedImageUrls[formData.thumbnailIndex] ||
-				cleanedImageUrls[0] ||
-				"";
+			if (failedCount > 0) {
+				toast({
+					title: "Cảnh báo upload",
+					description: `Có ${failedCount} hình/video upload thất bại. Hệ thống đã lưu các hình thành công.`,
+					className: "bg-yellow-500 text-white border-none",
+					duration: 5000,
+				});
+			}
+
+			let thumbnailImage = "";
+			if (
+				cleanedImageUrls[formData.thumbnailIndex] &&
+				!cleanedImageUrls[formData.thumbnailIndex].startsWith("blob:")
+			) {
+				thumbnailImage = cleanedImageUrls[formData.thumbnailIndex];
+			} else {
+				thumbnailImage = cleanedImageUrls[0] || "";
+			}
 
 			const payload = {
 				game_name: formData.gameName,
@@ -553,17 +624,22 @@ export default function AdminAccounts() {
 
 			if (editingAccount) {
 				await accountService.update(editingAccount.id, payload);
-				toast({ title: "Cập nhật thành công" });
+				if (failedCount === 0) {
+					toast({ title: "Cập nhật thành công" });
+				}
 			} else {
 				await accountService.create(payload);
-				toast({ title: "Thêm mới thành công" });
+				if (failedCount === 0) {
+					toast({ title: "Thêm mới thành công" });
+				}
 			}
 
 			loadAccounts(currentPage);
 			setIsDialogOpen(false);
 		} catch (error: any) {
 			toast({
-				title: error.message || "Có lỗi xảy ra khi lưu",
+				title: "Lỗi lưu dữ liệu",
+				description: error.message || "Có lỗi xảy ra",
 				variant: "destructive",
 			});
 		} finally {
@@ -907,7 +983,7 @@ export default function AdminAccounts() {
 
 						<div className="space-y-4 p-4 rounded-lg bg-secondary/30 border border-border">
 							<h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-								Mô tả & Hình ảnh
+								Mô tả & Hình ảnh/Video (v0.0.1)
 							</h3>
 							<div className="space-y-2">
 								<Label htmlFor="description">
@@ -943,7 +1019,7 @@ export default function AdminAccounts() {
 							</div>
 
 							<div className="space-y-2">
-								<Label>Hình ảnh</Label>
+								<Label>Hình ảnh/Video</Label>
 								<p className="text-xs text-muted-foreground">
 									Kéo thả để sắp xếp. Click "Set Thumbnail" để
 									đặt làm ảnh đại diện
@@ -985,6 +1061,7 @@ export default function AdminAccounts() {
 													key={img.id}
 													id={img.id}
 													url={img.url}
+													mediaType={img.mediaType}
 													isThumbnail={
 														index ===
 														formData.thumbnailIndex
@@ -1004,14 +1081,14 @@ export default function AdminAccounts() {
 											<label className="aspect-square rounded-lg border-2 border-dashed border-border hover:border-primary flex flex-col items-center justify-center cursor-pointer transition-colors bg-secondary/20 hover:bg-secondary/40">
 												<input
 													type="file"
-													accept="image/*"
+													accept="image/*,video/mp4,video/webm,video/quicktime"
 													multiple
 													onChange={handleImageSelect}
 													className="hidden"
 												/>
 												<Upload className="h-6 w-6 mb-1 text-muted-foreground" />
 												<span className="text-xs text-muted-foreground">
-													Chọn ảnh
+													Chọn ảnh/video
 												</span>
 											</label>
 										</div>
@@ -1041,8 +1118,9 @@ export default function AdminAccounts() {
 								{isSubmitting ? (
 									uploadProgress.total > 0 ? (
 										<span>
-											Đang up ảnh {uploadProgress.current}
-											/{uploadProgress.total}...
+											Đang up ảnh/video{" "}
+											{uploadProgress.current}/
+											{uploadProgress.total}...
 										</span>
 									) : (
 										"Đang xử lý..."
