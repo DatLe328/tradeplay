@@ -52,7 +52,7 @@ func (u *UserDataCreation) Validate() error {
 type UserDataPatch struct {
 	FirstName *string `json:"first_name" gorm:"first_name"`
 	LastName  *string `json:"last_name" gorm:"last_name"`
-	Phone     *string `json:"phone" phone:"phone"`
+	Phone     *string `json:"phone_number" gorm:"phone_number"`
 }
 
 func (*UserDataPatch) TableName() string { return User{}.TableName() }
@@ -91,7 +91,7 @@ func (u *UserDataPatch) ToUpdateMap() map[string]interface{} {
 		updates["last_name"] = *u.LastName
 	}
 	if u.Phone != nil {
-		updates["phone"] = *u.Phone
+		updates["phone_number"] = *u.Phone
 	}
 
 	return updates

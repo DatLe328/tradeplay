@@ -8,11 +8,14 @@ import { formatCurrency } from "@/utils/format";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { genVietQR } from "@/utils/qr";
+import { useTranslation } from "@/stores/languageStore";
 
 export default function PaymentPage() {
 	const { orderId } = useParams();
 	const { fetchOrderDetail, currentOrder, isLoading } = useOrderStore();
 	const { toast } = useToast();
+	const { t } = useTranslation();
+
 	useEffect(() => {
 		if (orderId) {
 			fetchOrderDetail(orderId);
@@ -31,10 +34,10 @@ export default function PaymentPage() {
 			<Layout>
 				<div className="container mx-auto px-4 py-20 text-center">
 					<h1 className="font-gaming text-2xl font-bold mb-4">
-						Không tìm thấy đơn hàng
+						{t("orderNotFound")}
 					</h1>
 					<Link to="/orders">
-						<Button variant="outline">Xem đơn hàng của tôi</Button>
+						<Button variant="outline">{t("viewMyOrders")}</Button>
 					</Link>
 				</div>
 			</Layout>
@@ -44,7 +47,7 @@ export default function PaymentPage() {
 	const copyToClipboard = (text: string) => {
 		navigator.clipboard.writeText(text);
 		toast({
-			title: "Đã sao chép",
+			title: t("copied"),
 			description: text,
 		});
 	};
@@ -58,6 +61,7 @@ export default function PaymentPage() {
 		orderId: transferContent,
 		accountName: "LE VAN DAT",
 	});
+
 	return (
 		<Layout>
 			<div className="container mx-auto px-4 py-8 max-w-2xl">
@@ -70,7 +74,7 @@ export default function PaymentPage() {
 					<Link to="/orders">
 						<Button variant="ghost" className="gap-2">
 							<ArrowLeft className="h-4 w-4" />
-							Đơn hàng của tôi
+							{t("myOrders")}
 						</Button>
 					</Link>
 				</motion.div>
@@ -86,10 +90,10 @@ export default function PaymentPage() {
 							<Clock className="h-10 w-10 text-warning" />
 						</div>
 						<h1 className="font-gaming text-2xl font-bold">
-							Chờ Thanh Toán
+							{t("waitingPayment")}
 						</h1>
 						<p className="text-muted-foreground">
-							Vui lòng chuyển khoản theo thông tin bên dưới
+							{t("transferInfo")}
 						</p>
 					</div>
 
@@ -97,7 +101,7 @@ export default function PaymentPage() {
 					<div className="p-6 rounded-xl bg-card border border-border space-y-4">
 						<div className="flex justify-between items-center">
 							<span className="text-muted-foreground">
-								Order ID
+								{t("orderId")}
 							</span>
 							<div className="flex items-center gap-2">
 								<span className="font-mono font-semibold">
@@ -115,7 +119,7 @@ export default function PaymentPage() {
 						</div>
 						<div className="flex justify-between items-center">
 							<span className="text-muted-foreground">
-								Acc Game
+								{t("accGameLabel")}
 							</span>
 							<span className="font-semibold">
 								{order.account?.title}
@@ -123,7 +127,7 @@ export default function PaymentPage() {
 						</div>
 						<div className="flex justify-between items-center">
 							<span className="text-muted-foreground">
-								Tổng tiền
+								{t("totalAmount")}
 							</span>
 							<span className="font-gaming text-xl font-bold text-primary">
 								{formatCurrency(order.total_price)}
@@ -134,7 +138,7 @@ export default function PaymentPage() {
 					{/* QR Code */}
 					<div className="p-6 rounded-xl bg-card border border-border space-y-4">
 						<h3 className="font-gaming font-semibold text-center">
-							Quét mã QR thanh toán
+							{t("scanQRTitle")}
 						</h3>
 						<div className="aspect-square max-w-[260px] mx-auto bg-white p-3 rounded-xl border">
 							<img
@@ -144,20 +148,20 @@ export default function PaymentPage() {
 							/>
 						</div>
 						<p className="text-sm text-muted-foreground text-center">
-							Hoặc chuyển khoản theo thông tin bên dưới
+							{t("orTransfer")}
 						</p>
 					</div>
 
 					{/* Transfer Info */}
 					<div className="p-6 rounded-xl bg-card border border-border space-y-4">
 						<h3 className="font-gaming font-semibold">
-							Thông tin chuyển khoản
+							{t("transferDetails")}
 						</h3>
 
 						<div className="space-y-3">
 							<div className="flex justify-between items-center p-3 rounded-lg bg-secondary">
 								<span className="text-muted-foreground">
-									Ngân hàng
+									{t("bank")}
 								</span>
 								<div className="flex items-center gap-2">
 									<span className="font-mono font-semibold">
@@ -167,7 +171,7 @@ export default function PaymentPage() {
 							</div>
 							<div className="flex justify-between items-center p-3 rounded-lg bg-secondary">
 								<span className="text-muted-foreground">
-									Số tài khoản
+									{t("accountNumber")}
 								</span>
 								<div className="flex items-center gap-2">
 									<span className="font-mono font-semibold">
@@ -188,14 +192,14 @@ export default function PaymentPage() {
 
 							<div className="flex justify-between items-center p-3 rounded-lg bg-secondary">
 								<span className="text-muted-foreground">
-									Tên tài khoản
+									{t("accountName")}
 								</span>
 								<span className="font-semibold">LE VAN DAT</span>
 							</div>
 
 							<div className="flex justify-between items-center p-3 rounded-lg bg-primary/10 border border-primary/30">
 								<span className="text-muted-foreground">
-									Nội dung chuyển khoản
+									{t("transferContent")}
 								</span>
 								<div className="flex items-center gap-2">
 									<span className="font-mono font-bold text-primary">
@@ -221,15 +225,10 @@ export default function PaymentPage() {
 						<AlertCircle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
 						<div className="space-y-1">
 							<p className="font-semibold text-warning">
-								Lưu ý quan trọng
+								{t("importantNote")}
 							</p>
 							<p className="text-sm text-muted-foreground">
-								Sau khi chuyển khoản, vui lòng chờ admin xác
-								nhận. Thông tin acc game sẽ được gửi qua email
-								của bạn trong vòng 5-15 phút.
-								Tuy nhiên, khi không trong giờ hành chính, thời gian
-								xử lý có thể lâu hơn. Nếu có thắc mắc, vui lòng
-								liên hệ qua zalo/telegram.
+								{t("paymentNotice")}
 							</p>
 						</div>
 					</div>
@@ -238,12 +237,12 @@ export default function PaymentPage() {
 					<div className="flex gap-4">
 						<Link to="/orders" className="flex-1">
 							<Button variant="outline" className="w-full">
-								Xem đơn hàng
+								{t("viewOrders")}
 							</Button>
 						</Link>
 						<Link to="/accounts" className="flex-1">
 							<Button className="btn-gaming w-full">
-								Tiếp tục mua sắm
+								{t("continueShopping")}
 							</Button>
 						</Link>
 					</div>

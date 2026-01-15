@@ -30,17 +30,14 @@ func (api *api) GoogleLoginHdl() gin.HandlerFunc {
 
 func (api *api) GoogleCallbackHdl() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 1. Lấy Frontend URL
-		frontendURL := os.Getenv("FRONTEND_ORIGINS") // Ví dụ: https://test.tadeldev.site
+		frontendURL := os.Getenv("FRONTEND_ORIGINS")
 
-		// 2. Kiểm tra Code
 		code := c.Query("code")
 		if code == "" {
 			c.Redirect(http.StatusTemporaryRedirect, fmt.Sprintf("%s/auth/login?error=%s", frontendURL, "No code provided"))
 			return
 		}
 
-		// 3. Gọi Business xử lý
 		tokenResp, err := api.business.LoginWithGoogle(c.Request.Context(), code)
 		if err != nil {
 			redirectErr := fmt.Sprintf("%s/auth/login?error=%s", frontendURL, url.QueryEscape("Login failed: "+err.Error()))
@@ -48,29 +45,20 @@ func (api *api) GoogleCallbackHdl() gin.HandlerFunc {
 			return
 		}
 
-		// =================================================================
-		// ✅ SỬA ĐỔI QUAN TRỌNG: SET COOKIE THAY VÌ TRẢ VỀ URL
-		// =================================================================
-
-		// A. Tính toán Cookie Domain dựa trên frontendURL
-		// (Vì request này là redirect từ Google nên header Origin có thể không có, ta dùng frontendURL cấu hình trong env)
 		cookieDomain := common.GetCookieDomainForOrigin(frontendURL)
 
-		// B. Cấu hình SameSite
 		c.SetSameSite(http.SameSiteNoneMode)
 
-		// C. Set Access Token Cookie
 		c.SetCookie(
 			"accessToken",
 			tokenResp.AccessToken.Token,
 			tokenResp.AccessToken.ExpiredIn,
 			"/",
 			cookieDomain,
-			true, // Secure
-			true, // HttpOnly
+			true,
+			true,
 		)
 
-		// D. Set Refresh Token Cookie
 		if tokenResp.RefreshToken != nil {
 			c.SetCookie(
 				"refreshToken",
@@ -83,15 +71,11 @@ func (api *api) GoogleCallbackHdl() gin.HandlerFunc {
 			)
 		}
 
-		// E. Tạo và Set CSRF Token (Để frontend dùng cho các request sau)
 		csrfToken, err := middleware.SetCSRFToken(c)
 		if err != nil {
 			csrfToken = ""
 		}
 
-		// 4. Redirect về Frontend (Thành công)
-		// ⚠️ KHÔNG gửi token lên URL nữa. Chỉ gửi csrf_token (không nhạy cảm) để frontend lưu lại.
-		// Frontend sẽ tự gọi /user/me để lấy thông tin user nhờ vào cookie vừa set.
 		redirectSuccess := fmt.Sprintf("%s/auth/google-success?csrf_token=%s", frontendURL, csrfToken)
 
 		c.Redirect(http.StatusTemporaryRedirect, redirectSuccess)

@@ -21,3 +21,5 @@ func (m *UserRepositoryMock) CreateUser(
 	m.CreateUserCalled++
 	return m.CreateUserFn(ctx, data)
 }
+
+func (m *UserRepositoryMock) GetUserByID(ctx context.Context, id int) (*userEntity.User, error)

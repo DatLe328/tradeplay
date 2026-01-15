@@ -9,16 +9,20 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) VerifyEmailHandler() func(*gin.Context) {
+func (api *api) ChangePasswordHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var data entity.VerifyEmailData
-
+		var data entity.ChangePasswordRequest
 		if err := c.ShouldBindJSON(&data); err != nil {
 			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
 			return
 		}
 
-		if err := api.business.VerifyEmail(c.Request.Context(), &data); err != nil {
+		requester := c.MustGet(core.KeyRequester).(core.Requester)
+
+		uid, _ := core.FromBase58(requester.GetSubject())
+		userId := int(uid.GetLocalID())
+
+		if err := api.business.ChangePassword(c.Request.Context(), userId, &data); err != nil {
 			common.WriteErrorResponse(c, err)
 			return
 		}

@@ -8,6 +8,7 @@ const (
 	KeyCompMySQL  = "mysql"
 	KeyCompEmail  = "email"
 	KeyCompUpload = "upload"
+	KeyComConf    = "config"
 )
 
 const (

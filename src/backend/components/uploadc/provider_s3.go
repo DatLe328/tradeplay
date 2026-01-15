@@ -101,6 +101,12 @@ func getContentType(filename string) string {
 		return "image/webp"
 	case ".svg":
 		return "image/svg+xml"
+	case ".mp4":
+		return "video/mp4"
+	case ".mov":
+		return "video/quicktime"
+	case ".webm":
+		return "video/webm"
 	default:
 		return "application/octet-stream"
 	}

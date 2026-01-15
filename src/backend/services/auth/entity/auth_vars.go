@@ -71,3 +71,22 @@ type TokenResponse struct {
 	// to issue new pair access token and refresh token.
 	RefreshToken *Token `json:"refresh_token,omitempty"`
 }
+
+type ChangePasswordRequest struct {
+	OldPassword string `json:"old_password" binding:"required,min=8"`
+	NewPassword string `json:"new_password" binding:"required,min=8"`
+}
+
+func (cpr *ChangePasswordRequest) Validate() error {
+	cpr.OldPassword = strings.TrimSpace(cpr.OldPassword)
+	if err := checkPassword(cpr.OldPassword); err != nil {
+		return err
+	}
+
+	cpr.NewPassword = strings.TrimSpace(cpr.NewPassword)
+	if err := checkPassword(cpr.NewPassword); err != nil {
+		return err
+	}
+
+	return nil
+}

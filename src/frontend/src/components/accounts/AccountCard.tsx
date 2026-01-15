@@ -5,6 +5,7 @@ import { formatCurrency } from "@/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, ShoppingCart } from "lucide-react";
+import { useTranslation } from '@/stores/languageStore';
 
 interface AccountCardProps {
 	account: GameAccount;
@@ -12,6 +13,7 @@ interface AccountCardProps {
 }
 
 export function AccountCard({ account, index = 0 }: AccountCardProps) {
+  const { t } = useTranslation();
   const isAvailable = account.status === 'available';
 
   return (
@@ -85,7 +87,7 @@ export function AccountCard({ account, index = 0 }: AccountCardProps) {
           <Link to={`/accounts/${account.id}`} className="flex-1">
             <Button variant="outline" className="w-full gap-2">
               <Eye className="h-4 w-4" />
-              Chi tiết
+              {t('details')}
             </Button>
           </Link>
           {isAvailable && (

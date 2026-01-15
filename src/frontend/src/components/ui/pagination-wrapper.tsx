@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useTranslation } from "@/stores/languageStore"; // 1. Import hook
 
 interface PaginationWrapperProps {
   currentPage: number;
@@ -36,6 +37,8 @@ export function PaginationWrapper({
   pageSizeOptions = [5, 10, 20, 50],
   showPageSizeSelector = true,
 }: PaginationWrapperProps) {
+  const { t } = useTranslation(); // 2. Sử dụng hook
+
   if (totalItems === 0 || (totalPages <= 1 && !showPageSizeSelector)) return null;
 
   const start = totalItems === 0 ? 0 : (currentPage - 1) * pageSize + 1;
@@ -79,12 +82,15 @@ export function PaginationWrapper({
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
       {/* Info & Page Size */}
       <div className="flex items-center gap-4 text-sm text-muted-foreground">
+        {/* 3. Thay thế text cứng bằng t() với tham số */}
         <span>
-          Hiển thị {start}-{end} / {totalItems} kết quả
+          {t("showingResults", { start, end, totalItems })}
         </span>
+        
         {showPageSizeSelector && onPageSizeChange && (
           <div className="flex items-center gap-2">
-            <span>Mỗi trang:</span>
+            {/* 4. Thay thế text cứng */}
+            <span>{t("perPage")}</span>
             <Select
               value={String(pageSize)}
               onValueChange={(value) => onPageSizeChange(Number(value))}

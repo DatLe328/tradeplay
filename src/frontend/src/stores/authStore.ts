@@ -16,12 +16,22 @@ interface AuthStore {
 	register: (
 		email: string,
 		password: string,
-		name: string,
+		firstName: string,
+        lastName: string,
 		captchaToken: string
 	) => Promise<boolean>;
 	logout: () => void;
 	checkAuth: () => Promise<void>;
 	setCSRFToken: (token: string | null) => void;
+	updateProfile: (data: {
+		first_name: string;
+		last_name: string;
+		phone_number: string;
+	}) => Promise<boolean>;
+	changePassword: (
+		oldPassword: string,
+		newPassword: string
+	) => Promise<boolean>;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -40,6 +50,36 @@ export const useAuthStore = create<AuthStore>()(
 					localStorage.removeItem("csrf_token");
 				}
 			},
+			changePassword: async (oldPassword, newPassword) => {
+				set({ isLoading: true });
+				try {
+					await authService.changePassword({
+						old_password: oldPassword,
+						new_password: newPassword,
+					});
+					return true;
+				} catch (error) {
+					throw error;
+				} finally {
+					set({ isLoading: false });
+				}
+			},
+			updateProfile: async (data) => {
+                set({ isLoading: true });
+                try {
+                    await authService.updateProfile(data);
+
+                    const freshUser = await authService.getMe();
+
+                    set({ user: freshUser });
+                    
+                    return true;
+                } catch (error) {
+                    throw error;
+                } finally {
+                    set({ isLoading: false });
+                }
+            },
 
 			login: async (
 				email: string,
@@ -78,7 +118,8 @@ export const useAuthStore = create<AuthStore>()(
 			register: async (
 				email: string,
 				password: string,
-				name: string,
+				firstName: string,
+				lastName: string,
 				captchaToken: string
 			) => {
 				set({ isLoading: true });
@@ -86,7 +127,8 @@ export const useAuthStore = create<AuthStore>()(
 					const res = await authService.register(
 						email,
 						password,
-						name,
+						firstName,
+						lastName,
 						captchaToken
 					);
 

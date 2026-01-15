@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, ZoomIn, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AccountGalleryProps {
@@ -8,13 +8,20 @@ interface AccountGalleryProps {
 	title: string;
 }
 
+const isVideo = (url: string) => {
+	return /\.(mp4|webm|ogg|mov|avi)$/i.test(url);
+};
+
 export function AccountGallery({ images, title }: AccountGalleryProps) {
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const thumbnailsRef = useRef<HTMLDivElement>(null);
 	const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
-	// Auto-scroll to selected thumbnail
+	const mainVideoRef = useRef<HTMLVideoElement>(null);
+	const modalVideoRef = useRef<HTMLVideoElement>(null);
+
+	// Auto-scroll thumbnail
 	useEffect(() => {
 		const thumbnail = thumbnailRefs.current[selectedIndex];
 		if (thumbnail && thumbnailsRef.current) {
@@ -26,6 +33,24 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 		}
 	}, [selectedIndex]);
 
+	const currentItem = images[selectedIndex];
+
+	const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
+		const video = e.currentTarget;
+		const time = video.currentTime;
+		sessionStorage.setItem(`vid_time_${currentItem}`, time.toString());
+	};
+
+	const handleLoadedMetadata = (
+		e: React.SyntheticEvent<HTMLVideoElement>
+	) => {
+		const video = e.currentTarget;
+		const savedTime = sessionStorage.getItem(`vid_time_${currentItem}`);
+		if (savedTime) {
+			video.currentTime = parseFloat(savedTime);
+		}
+	};
+
 	const handlePrevious = () => {
 		setSelectedIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
 	};
@@ -34,26 +59,47 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 		setSelectedIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
 	};
 
+	const isCurrentVideo = isVideo(currentItem);
+
+	const posterImage = images.find((img) => !isVideo(img)) || "";
+
 	return (
 		<>
 			<div className="grid grid-cols-1 lg:grid-cols-[1fr_120px] gap-4">
-				{/* Main Image */}
-				<div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-secondary">
-					<motion.img
-						key={selectedIndex}
-						initial={{ opacity: 0 }}
-						animate={{ opacity: 1 }}
-						transition={{ duration: 0.3 }}
-						src={images[selectedIndex]}
-						alt={`${title} - Ảnh ${selectedIndex + 1}`}
-						className="w-full h-full object-contain cursor-zoom-in"
-						onClick={() => setIsModalOpen(true)}
-					/>
+				{/* Main Image / Video Display */}
+				<div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-secondary group">
+					{isCurrentVideo ? (
+						<div className="w-full h-full flex items-center justify-center bg-black">
+							<video
+								ref={mainVideoRef}
+								key={currentItem}
+								src={currentItem}
+								controls
+								className="w-full h-full object-contain"
+								preload="metadata"
+								poster={posterImage}
+								onTimeUpdate={handleTimeUpdate}
+								onLoadedMetadata={handleLoadedMetadata}
+								playsInline
+							/>
+						</div>
+					) : (
+						<motion.img
+							key={selectedIndex}
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							transition={{ duration: 0.3 }}
+							src={currentItem}
+							alt={`${title} - ${selectedIndex + 1}`}
+							className="w-full h-full object-contain cursor-zoom-in"
+							onClick={() => setIsModalOpen(true)}
+						/>
+					)}
 
-					{/* Zoom indicator */}
+					{/* Zoom indicator & Expand Button */}
 					<button
 						onClick={() => setIsModalOpen(true)}
-						className="absolute top-4 right-4 p-2 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background transition-colors"
+						className="absolute top-4 right-4 p-2 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background transition-colors opacity-0 group-hover:opacity-100 z-10"
 					>
 						<ZoomIn className="h-5 w-5" />
 					</button>
@@ -63,13 +109,13 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 						<>
 							<button
 								onClick={handlePrevious}
-								className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background transition-colors"
+								className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background transition-colors z-10"
 							>
 								<ChevronLeft className="h-5 w-5" />
 							</button>
 							<button
 								onClick={handleNext}
-								className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background transition-colors"
+								className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background transition-colors z-10"
 							>
 								<ChevronRight className="h-5 w-5" />
 							</button>
@@ -77,33 +123,57 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 					)}
 				</div>
 
-				{/* Thumbnails */}
 				<div
 					ref={thumbnailsRef}
 					className="flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:max-h-[400px] p-1 pb-2 lg:pb-1 lg:pr-2"
 				>
-					{images.map((image, index) => (
-						<button
-							key={index}
-							ref={(el) => {
-								if (el) {
-									thumbnailRefs.current[index] = el;
-								}
-							}}
-							onClick={() => setSelectedIndex(index)}
-							className={`flex-shrink-0 w-20 h-20 lg:w-full lg:h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-								index === selectedIndex
-									? "border-primary ring-2 ring-primary/50 ring-offset-2 ring-offset-background"
-									: "border-muted-foreground/20 hover:border-primary/50"
-							}`}
-						>
-							<img
-								src={image}
-								alt={`Thumbnail ${index + 1}`}
-								className="w-full h-full object-cover"
-							/>
-						</button>
-					))}
+					{images.map((image, index) => {
+						const isItemVideo = isVideo(image);
+						return (
+							<button
+								key={index}
+								ref={(el) => {
+									if (el) thumbnailRefs.current[index] = el;
+								}}
+								onClick={() => setSelectedIndex(index)}
+								className={`relative flex-shrink-0 w-20 h-20 lg:w-full lg:h-20 rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+									index === selectedIndex
+										? "border-primary ring-2 ring-primary/50 ring-offset-2 ring-offset-background"
+										: "border-muted-foreground/20 hover:border-primary/50 bg-secondary/50"
+								}`}
+							>
+								{isItemVideo ? (
+									<div className="relative w-full h-full">
+										<img
+											src="/video-placeholder.jpg"
+											// src={images.find(img => !isVideo(img)) || "/logo.png"}
+
+											alt="Video thumbnail"
+											className="w-full h-full object-cover opacity-60 hover:opacity-80 transition-opacity blur-[1px]"
+										/>
+
+										<div className="absolute inset-0 bg-black/30" />
+
+										<div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+											<div className="rounded-full bg-black/50 p-1.5 backdrop-blur-sm">
+												<Play className="w-5 h-5 text-white fill-white" />
+											</div>
+											<span className="text-[9px] font-bold text-white uppercase drop-shadow-md">
+												Video {index + 1}
+											</span>
+										</div>
+									</div>
+								) : (
+									<img
+										src={image}
+										alt={`Thumbnail ${index + 1}`}
+										className="w-full h-full object-cover"
+										loading="lazy"
+									/>
+								)}
+							</button>
+						);
+					})}
 				</div>
 			</div>
 
@@ -114,19 +184,53 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
 						exit={{ opacity: 0 }}
-						className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+						className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-4"
 						onClick={() => setIsModalOpen(false)}
 					>
+						{/* Close Button */}
 						<Button
 							variant="ghost"
 							size="icon"
-							className="absolute top-4 right-4 text-white hover:bg-white/10"
+							className="absolute top-4 right-4 text-white hover:bg-white/10 z-50"
 							onClick={() => setIsModalOpen(false)}
 						>
 							<X className="h-6 w-6" />
 						</Button>
 
-						{/* Navigation */}
+						{/* Content Modal */}
+						{isCurrentVideo ? (
+							<motion.div
+								key={selectedIndex}
+								initial={{ scale: 0.9, opacity: 0 }}
+								animate={{ scale: 1, opacity: 1 }}
+								exit={{ scale: 0.9, opacity: 0 }}
+								className="w-full max-w-5xl max-h-[90vh] aspect-video bg-black rounded-lg overflow-hidden"
+								onClick={(e) => e.stopPropagation()}
+							>
+								<video
+									ref={modalVideoRef}
+									src={currentItem}
+									controls
+									autoPlay
+									className="w-full h-full"
+									onTimeUpdate={handleTimeUpdate}
+									onLoadedMetadata={handleLoadedMetadata}
+									playsInline
+								/>
+							</motion.div>
+						) : (
+							<motion.img
+								key={selectedIndex}
+								initial={{ scale: 0.9, opacity: 0 }}
+								animate={{ scale: 1, opacity: 1 }}
+								exit={{ scale: 0.9, opacity: 0 }}
+								src={currentItem}
+								alt={`${title} - Fullscreen`}
+								className="max-w-full max-h-[90vh] object-contain rounded-lg"
+								onClick={(e) => e.stopPropagation()}
+							/>
+						)}
+
 						{images.length > 1 && (
 							<>
 								<button
@@ -134,7 +238,7 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 										e.stopPropagation();
 										handlePrevious();
 									}}
-									className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+									className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-50"
 								>
 									<ChevronLeft className="h-8 w-8 text-white" />
 								</button>
@@ -143,26 +247,14 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 										e.stopPropagation();
 										handleNext();
 									}}
-									className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+									className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors z-50"
 								>
 									<ChevronRight className="h-8 w-8 text-white" />
 								</button>
 							</>
 						)}
 
-						<motion.img
-							key={selectedIndex}
-							initial={{ scale: 0.9, opacity: 0 }}
-							animate={{ scale: 1, opacity: 1 }}
-							exit={{ scale: 0.9, opacity: 0 }}
-							src={images[selectedIndex]}
-							alt={`${title} - Fullscreen`}
-							className="max-w-full max-h-[90vh] object-contain rounded-lg"
-							onClick={(e) => e.stopPropagation()}
-						/>
-
-						{/* Image counter */}
-						<div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-white/10 text-white text-sm">
+						<div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-white/10 text-white text-sm z-50">
 							{selectedIndex + 1} / {images.length}
 						</div>
 					</motion.div>

@@ -36,6 +36,7 @@ type AuthRepository interface {
 
 type UserRepository interface {
 	CreateUser(ctx context.Context, data *userEntity.UserDataCreation) (newId int, err error)
+	GetUserByID(ctx context.Context, id int) (*userEntity.User, error)
 }
 
 type business struct {

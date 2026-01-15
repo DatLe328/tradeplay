@@ -13,4 +13,5 @@ var (
 	ErrLastNameIsEmpty    = errors.New("last name can not be blank")
 	ErrLastNameTooLong    = errors.New("last name too long, max character is 30")
 	ErrCannotRegister     = errors.New("cannot register")
+	ErrPasswordsNotMatch  = errors.New("passwords do not match")
 )

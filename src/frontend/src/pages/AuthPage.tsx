@@ -6,18 +6,20 @@ import {
 	Gamepad2,
 	Mail,
 	Lock,
-	User,
 	Eye,
 	EyeOff,
 	ArrowLeft,
+	Type,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/authStore";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/stores/languageStore";
 
 export default function AuthPage() {
+	const { t } = useTranslation();
 	const [isLogin, setIsLogin] = useState(true);
 	const [showPassword, setShowPassword] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
@@ -30,7 +32,8 @@ export default function AuthPage() {
 		email: "",
 		password: "",
 		confirmPassword: "",
-		name: "",
+		firstName: "",
+		lastName: "",
 	});
 
 	const navigate = useNavigate();
@@ -89,14 +92,14 @@ export default function AuthPage() {
 				);
 				if (success) {
 					toast({
-						title: "Đăng nhập thành công",
-						description: "Chào mừng bạn quay trở lại!",
+						title: t("loginSuccess"),
+						description: t("welcomeBack"),
 					});
 					navigate("/");
 				} else {
 					toast({
-						title: "Đăng nhập thất bại",
-						description: "Email, mật khẩu sai hoặc xác thực lỗi.",
+						title: t("loginFailed"),
+						description: t("wrongCredentials"),
 						variant: "destructive",
 					});
 					setCaptchaToken("");
@@ -106,22 +109,22 @@ export default function AuthPage() {
 				const success = await register(
 					formData.email,
 					formData.password,
-					formData.name,
+					formData.firstName,
+					formData.lastName,
 					captchaToken
 				);
 				if (success) {
 					toast({
-						title: "Đăng ký thành công",
-						description:
-							"Vui lòng kiểm tra email để lấy mã xác thực",
+						title: t("registerSuccess"),
+						description: t("accountCreated"),
 					});
 					navigate("/verify-email", {
 						state: { email: formData.email },
 					});
 				} else {
 					toast({
-						title: "Đăng ký thất bại",
-						description: "Có lỗi xảy ra hoặc email đã tồn tại",
+						title: t("registerFailed"),
+						description: t("emailUsed"),
 						variant: "destructive",
 					});
 					setCaptchaToken("");
@@ -148,7 +151,7 @@ export default function AuthPage() {
 					className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
 				>
 					<ArrowLeft className="h-4 w-4" />
-					Về trang chủ
+					{t("backToHome")}
 				</Link>
 
 				<div className="p-8 rounded-2xl bg-card border border-border shadow-lg">
@@ -162,36 +165,60 @@ export default function AuthPage() {
 							</div>
 						</Link>
 						<h1 className="font-gaming text-2xl font-bold">
-							{isLogin ? "Đăng Nhập" : "Đăng Ký"}
+							{isLogin ? t("loginTitle") : t("registerTitle")}
 						</h1>
 						<p className="text-muted-foreground mt-2">
-							{isLogin
-								? "Đăng nhập để mua acc game"
-								: "Tạo tài khoản mới để bắt đầu"}
+							{isLogin ? t("loginDesc") : t("registerDesc")}
 						</p>
 					</div>
 
 					<form onSubmit={handleSubmit} className="space-y-4">
 						{!isLogin && (
-							<div className="space-y-2">
-								<Label htmlFor="name">Họ tên</Label>
-								<div className="relative">
-									<User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-									<Input
-										id="name"
-										type="text"
-										placeholder="Nhập họ tên"
-										value={formData.name}
-										onChange={(e) =>
-											setFormData({
-												...formData,
-												name: e.target.value,
-											})
-										}
-										className="pl-10 input-gaming"
-										required={!isLogin}
-										autoFocus
-									/>
+							<div className="grid grid-cols-2 gap-4">
+								<div className="space-y-2">
+									<Label htmlFor="firstName">
+										{t("firstName")}
+									</Label>
+									<div className="relative">
+										<Type className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+										<Input
+											id="firstName"
+											type="text"
+											placeholder="Nguyễn"
+											value={formData.firstName}
+											onChange={(e) =>
+												setFormData({
+													...formData,
+													firstName: e.target.value,
+												})
+											}
+											className="pl-10 input-gaming"
+											required={!isLogin}
+											autoFocus
+										/>
+									</div>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="lastName">
+										{t("lastName")}
+									</Label>
+									<div className="relative">
+										<Type className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+										<Input
+											id="lastName"
+											type="text"
+											placeholder="Văn A"
+											value={formData.lastName}
+											onChange={(e) =>
+												setFormData({
+													...formData,
+													lastName: e.target.value,
+												})
+											}
+											className="pl-10 input-gaming"
+											required={!isLogin}
+										/>
+									</div>
 								</div>
 							</div>
 						)}
@@ -219,13 +246,15 @@ export default function AuthPage() {
 						</div>
 
 						<div className="space-y-2">
-							<Label htmlFor="password">Mật khẩu</Label>
+							<Label htmlFor="password">
+								{t("enterPassword")}
+							</Label>
 							<div className="relative">
 								<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 								<Input
 									id="password"
 									type={showPassword ? "text" : "password"}
-									placeholder="Nhập mật khẩu"
+									placeholder={t('enterPassword')}
 									value={formData.password}
 									onChange={(e) =>
 										setFormData({
@@ -258,7 +287,7 @@ export default function AuthPage() {
 						{!isLogin && (
 							<div className="space-y-2">
 								<Label htmlFor="confirmPassword">
-									Nhập lại mật khẩu
+									{t("confirmPassword")}
 								</Label>
 								<div className="relative">
 									<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -269,7 +298,7 @@ export default function AuthPage() {
 												? "text"
 												: "password"
 										}
-										placeholder="Xác nhận mật khẩu"
+										placeholder={t("confirmPassword")}
 										value={formData.confirmPassword}
 										onChange={(e) =>
 											setFormData({
@@ -306,7 +335,6 @@ export default function AuthPage() {
 							<Turnstile
 								ref={turnstileRef}
 								key={isLogin ? "login" : "register"}
-
 								siteKey={
 									import.meta.env.VITE_TURNSTILE_SITE_KEY
 								}
@@ -325,10 +353,10 @@ export default function AuthPage() {
 							disabled={isLoading}
 						>
 							{isLoading
-								? "Đang xử lý..."
+								? t("processing")
 								: isLogin
-								? "Đăng Nhập"
-								: "Đăng Ký"}
+								? t("loginTitle")
+								: t("registerTitle")}
 						</Button>
 					</form>
 
@@ -339,7 +367,7 @@ export default function AuthPage() {
 								to="/forgot-password"
 								className="text-sm text-primary hover:underline"
 							>
-								Quên mật khẩu?
+								{t('forgotPassword')}
 							</Link>
 						</div>
 					)}
@@ -350,7 +378,7 @@ export default function AuthPage() {
 							</div>
 							<div className="relative flex justify-center text-xs uppercase">
 								<span className="bg-background px-2 text-muted-foreground">
-									Hoặc tiếp tục với
+									{t('orContinueWith')}
 								</span>
 							</div>
 						</div>
@@ -385,15 +413,13 @@ export default function AuthPage() {
 
 					<div className="mt-6 text-center">
 						<p className="text-muted-foreground">
-							{isLogin
-								? "Chưa có tài khoản?"
-								: "Đã có tài khoản?"}
+							{isLogin ? t('noAccount') : t('hasAccount')}
 							<button
 								type="button"
 								onClick={toggleMode}
 								className="text-primary font-semibold ml-2 hover:underline"
 							>
-								{isLogin ? "Đăng ký ngay" : "Đăng nhập"}
+								{isLogin ? t('registerNow') : t('loginTitle')}
 							</button>
 						</p>
 					</div>

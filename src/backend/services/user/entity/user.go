@@ -25,7 +25,7 @@ type User struct {
 	core.SQLModel
 	FirstName  string     `json:"first_name" gorm:"column:first_name" db:"first_name"`
 	LastName   string     `json:"last_name" gorm:"column:last_name" db:"last_name"`
-	Phone      string     `json:"phone" gorm:"column:phone" db:"phone"`
+	Phone      string     `json:"phone_number" gorm:"column:phone_number" db:"phone_number"`
 	SystemRole SystemRole `json:"system_role" gorm:"column:system_role" db:"system_role"`
 	Status     Status     `json:"status" gorm:"column:status" db:"status"`
 	Email      string     `json:"email" gorm:"-"`

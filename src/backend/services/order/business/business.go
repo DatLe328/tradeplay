@@ -14,6 +14,7 @@ type OrderRepository interface {
 	ListAllOrders(ctx context.Context, paging *core.Paging) ([]entity.Order, error)
 	GetOrder(ctx context.Context, id int) (*entity.Order, error)
 	UpdateOrderStatus(ctx context.Context, id int, status entity.OrderStatus) error
+	GetOrderByUserAndAccount(ctx context.Context, userId, accountId int) (*entity.Order, error)
 }
 
 type AccountRepository interface {

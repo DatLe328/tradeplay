@@ -9,7 +9,7 @@ export interface GetAccountsParams {
 	game_name?: string;
 	min_price?: number;
 	max_price?: number;
-	status?: string;
+	status?: string | string[];
 	search?: string;
 }
 
@@ -26,8 +26,13 @@ export const accountService = {
 		if (params.max_price !== undefined)
 			query.append("max_price", params.max_price.toString());
 
-		if (params.status && params.status !== "all")
-			query.append("status", params.status);
+		if (params.status && params.status !== "all") {
+			if (Array.isArray(params.status)) {
+				params.status.forEach((s) => query.append("status", s));
+			} else {
+				query.append("status", params.status);
+			}
+		}
 		if (params.search) query.append("search", params.search);
 
 		return apiRequest<ApiResponse<GameAccount[]>>(

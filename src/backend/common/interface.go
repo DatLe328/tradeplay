@@ -42,3 +42,7 @@ type UploadComponent interface {
 	DeleteFiles(ctx context.Context, urls []string) error
 	GeneratePresignedURL(ctx context.Context, key, contentType string, expiration time.Duration, maxSize int64) (*PresignedURLResponse, error)
 }
+
+type ConfigComponent interface {
+	S3Prefix() string
+}

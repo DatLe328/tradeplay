@@ -10,6 +10,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import { useTranslation } from "@/stores/languageStore";
 
 interface FilterState {
 	search: string;
@@ -23,23 +24,22 @@ interface AccountFilterProps {
 	initialFilters?: FilterState;
 }
 
-const games = [
-	"Tất cả",
-	"Play Together",
-];
-
-const priceRanges = [
-	{ value: "all", label: "Tất cả giá" },
-	{ value: "0-1000000", label: "Dưới 1 Triệu" },
-	{ value: "1000000-5000000", label: "1 - 5 Triệu" },
-	{ value: "5000000-10000000", label: "5 - 10 Triệu" },
-	{ value: "10000000-20000000", label: "10 - 20 Triệu" },
-	{ value: "20000000-999999999", label: "Trên 20 Triệu" },
-];
-
-
-export function AccountFilter({ onFilterChange, initialFilters }: AccountFilterProps) {
+export function AccountFilter({
+	onFilterChange,
+	initialFilters,
+}: AccountFilterProps) {
+	const { t, language } = useTranslation();
 	const [searchParams] = useSearchParams();
+	const allGamesValue = language === "vi" ? "Tất cả" : "All Games";
+	const priceRanges = [
+		{ value: "all", label: t("allPrices") },
+		{ value: "0-1000000", label: t("priceUnder1m") },
+		{ value: "1000000-5000000", label: t("price1mTo5m") },
+		{ value: "5000000-10000000", label: t("price5mTo10m") },
+		{ value: "10000000-20000000", label: t("price10mTo20m") },
+		{ value: "20000000-999999999", label: t("priceAbove20m") },
+	];
+	const games = [allGamesValue, "Play Together"];
 
 	const [filters, setFilters] = useState<FilterState>(() => {
 		if (initialFilters) {
@@ -48,7 +48,7 @@ export function AccountFilter({ onFilterChange, initialFilters }: AccountFilterP
 
 		const priceRange = searchParams.get("priceRange") || "all";
 		const search = searchParams.get("search") || "";
-		const game = searchParams.get("game") || "Tất cả";
+		const game = searchParams.get("game") || allGamesValue;
 
 		return {
 			search,
@@ -57,6 +57,15 @@ export function AccountFilter({ onFilterChange, initialFilters }: AccountFilterP
 			status: "all",
 		};
 	});
+
+	useEffect(() => {
+		const oldAllGames = language === "vi" ? "All Games" : "Tất cả";
+		if (filters.game === oldAllGames) {
+			const newFilters = { ...filters, game: allGamesValue };
+			setFilters(newFilters);
+			onFilterChange(newFilters);
+		}
+	}, [language]);
 
 	// Sync filter when URL changes
 	useEffect(() => {
@@ -78,7 +87,7 @@ export function AccountFilter({ onFilterChange, initialFilters }: AccountFilterP
 	const clearFilters = () => {
 		const defaultFilters = {
 			search: "",
-			game: "Tất cả",
+			game: allGamesValue,
 			priceRange: "all",
 			status: "all",
 		};
@@ -88,8 +97,8 @@ export function AccountFilter({ onFilterChange, initialFilters }: AccountFilterP
 
 	const hasActiveFilters =
 		filters.search ||
-		filters.game !== "Tất cả" ||
-		filters.priceRange !== "all"
+		filters.game !== allGamesValue ||
+		filters.priceRange !== "all";
 
 	return (
 		<div className="space-y-4">
@@ -98,7 +107,7 @@ export function AccountFilter({ onFilterChange, initialFilters }: AccountFilterP
 				<div className="relative flex-1">
 					<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 					<Input
-						placeholder="Tìm kiếm acc game có mã số, tựa đề..."
+						placeholder={t("searchPlaceholder")}
 						value={filters.search}
 						onChange={(e) => updateFilter("search", e.target.value)}
 						className="pl-10 input-gaming"
@@ -120,7 +129,7 @@ export function AccountFilter({ onFilterChange, initialFilters }: AccountFilterP
 					onValueChange={(value) => updateFilter("game", value)}
 				>
 					<SelectTrigger className="w-[180px]">
-						<SelectValue placeholder="Chọn game" />
+						<SelectValue placeholder={t("allGames")} />
 					</SelectTrigger>
 					<SelectContent>
 						{games.map((game) => (
@@ -136,7 +145,7 @@ export function AccountFilter({ onFilterChange, initialFilters }: AccountFilterP
 					onValueChange={(value) => updateFilter("priceRange", value)}
 				>
 					<SelectTrigger className="w-[180px]">
-						<SelectValue placeholder="Khoảng giá" />
+						<SelectValue placeholder={t("allPrices")} />
 					</SelectTrigger>
 					<SelectContent>
 						{priceRanges.map((range) => (
@@ -154,7 +163,7 @@ export function AccountFilter({ onFilterChange, initialFilters }: AccountFilterP
 						className="gap-2"
 					>
 						<X className="h-4 w-4" />
-						Xóa bộ lọc
+						{t("clearFilters")}
 					</Button>
 				)}
 			</div>
@@ -167,7 +176,7 @@ export function AccountFilter({ onFilterChange, initialFilters }: AccountFilterP
 						onValueChange={(value) => updateFilter("game", value)}
 					>
 						<SelectTrigger>
-							<SelectValue placeholder="Chọn game" />
+							<SelectValue placeholder={t("allGames")} />
 						</SelectTrigger>
 						<SelectContent>
 							{games.map((game) => (
@@ -185,7 +194,7 @@ export function AccountFilter({ onFilterChange, initialFilters }: AccountFilterP
 						}
 					>
 						<SelectTrigger>
-							<SelectValue placeholder="Khoảng giá" />
+							<SelectValue placeholder={t("allPrices")} />
 						</SelectTrigger>
 						<SelectContent>
 							{priceRanges.map((range) => (
@@ -206,7 +215,7 @@ export function AccountFilter({ onFilterChange, initialFilters }: AccountFilterP
 							className="w-full gap-2"
 						>
 							<X className="h-4 w-4" />
-							Xóa bộ lọc
+							{t("clearFilters")}
 						</Button>
 					)}
 				</div>

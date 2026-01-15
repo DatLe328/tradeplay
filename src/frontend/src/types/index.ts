@@ -47,6 +47,7 @@ export interface User {
   email: string;
   first_name: string;
   last_name: string;
+  phone_number?: string;
   system_role: 'user' | 'admin';
   created_at: string;
 }
