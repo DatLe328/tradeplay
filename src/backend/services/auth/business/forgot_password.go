@@ -16,7 +16,7 @@ func (biz *business) ForgotPassword(ctx context.Context, email string) error {
 		return core.ErrInvalidRequest(err)
 	}
 
-	if auth.Status == entity.AuthStatusBanned {
+	if auth.Status == entity.AuthStatusSuspended {
 		return core.ErrInvalidRequest(fmt.Errorf("tài khoản đã bị khóa"))
 	}
 

@@ -38,7 +38,10 @@ func (api *api) GoogleCallbackHdl() gin.HandlerFunc {
 			return
 		}
 
-		tokenResp, err := api.business.LoginWithGoogle(c.Request.Context(), code)
+		userAgent := c.Request.UserAgent()
+		clientIP := c.ClientIP()
+
+		tokenResp, err := api.business.LoginWithGoogle(c.Request.Context(), code, userAgent, clientIP)
 		if err != nil {
 			redirectErr := fmt.Sprintf("%s/auth/login?error=%s", frontendURL, url.QueryEscape("Login failed: "+err.Error()))
 			c.Redirect(http.StatusTemporaryRedirect, redirectErr)

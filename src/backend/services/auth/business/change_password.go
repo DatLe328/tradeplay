@@ -2,6 +2,7 @@ package business
 
 import (
 	"context"
+	"tradeplay/common"
 	authEntity "tradeplay/services/auth/entity"
 
 	"github.com/DatLe328/service-context/core"
@@ -24,7 +25,7 @@ func (biz *business) ChangePassword(ctx context.Context, userId int, data *authE
 		return core.ErrInvalidRequest(authEntity.ErrPasswordsNotMatch)
 	}
 
-	newSalt, err := core.GenSalt(16)
+	newSalt, err := core.GenSalt(common.DefaultSaltLength)
 	if err != nil {
 		return core.ErrInternal(err)
 	}

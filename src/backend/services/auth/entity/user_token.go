@@ -13,6 +13,8 @@ type UserToken struct {
 	Token     string    `gorm:"column:token;"`
 	ExpiresAt time.Time `gorm:"column:expires_at;"`
 	IsRevoked bool      `gorm:"column:is_revoked;default:false;"`
+	IpAddress string    `gorm:"column:ip_address;"`
+	UserAgent string    `gorm:"column:user_agent;"`
 }
 
 func (UserToken) TableName() string {

@@ -25,7 +25,13 @@ func (api *api) UpdateOrderStatusHandler() func(*gin.Context) {
 			return
 		}
 
-		if err := api.business.UpdateOrderStatus(c.Request.Context(), id, data.Status); err != nil {
+		requester := c.MustGet(core.KeyRequester).(core.Requester)
+		requesterUID, _ := core.FromBase58(requester.GetSubject())
+		requesterId := int(requesterUID.GetLocalID())
+
+		ipAddress := c.ClientIP()
+
+		if err := api.business.UpdateOrderStatus(c.Request.Context(), id, data.Status, requesterId, ipAddress); err != nil {
 			common.WriteErrorResponse(c, err)
 			return
 		}

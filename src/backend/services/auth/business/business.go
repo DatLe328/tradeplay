@@ -6,6 +6,7 @@ import (
 	"tradeplay/components/emailc"
 	authEntity "tradeplay/services/auth/entity"
 	userEntity "tradeplay/services/user/entity"
+	walletEntity "tradeplay/services/wallet/entity"
 )
 
 type Hasher interface {
@@ -25,6 +26,8 @@ type AuthRepository interface {
 
 	CreateUserAndAuthGoogle(ctx context.Context, user *userEntity.User, auth *authEntity.Auth) error
 
+	FindAuthByGoogleID(ctx context.Context, googleID string) (*authEntity.Auth, error)
+	FindAuthByEmailAndType(ctx context.Context, email string, authType authEntity.AuthType) (*authEntity.Auth, error)
 	FindAuthByGoogleIDOrEmail(ctx context.Context, googleID, email string) (*authEntity.Auth, error)
 	UpdateAuthGoogleID(ctx context.Context, id int, googleID string) error
 
@@ -32,6 +35,9 @@ type AuthRepository interface {
 	FindUserToken(ctx context.Context, tokenID string) (*authEntity.UserToken, error)
 	DeleteUserToken(ctx context.Context, tokenID string) error
 	DeleteExpiredTokens(ctx context.Context, userId int) error
+
+	FindAvailableVerifyCode(ctx context.Context, email, code string, verifyType authEntity.VerifyType) (*authEntity.VerifyCode, error)
+	MarkCodeAsUsed(ctx context.Context, id int) error
 }
 
 type UserRepository interface {
@@ -39,26 +45,34 @@ type UserRepository interface {
 	GetUserByID(ctx context.Context, id int) (*userEntity.User, error)
 }
 
+type WalletRepository interface {
+	CreateWallet(ctx context.Context, wallet *walletEntity.Wallet) error
+	GetWalletByUserID(ctx context.Context, userId int, currency string) (*walletEntity.Wallet, error)
+}
+
 type business struct {
-	authRepository AuthRepository
-	userRepository UserRepository
-	jwtProvider    common.JWTProvider
-	hasher         Hasher
-	emailProvider  emailc.EmailProvider
+	authRepository   AuthRepository
+	userRepository   UserRepository
+	walletRepository WalletRepository
+	jwtProvider      common.JWTProvider
+	hasher           Hasher
+	emailProvider    emailc.EmailProvider
 }
 
 func NewBusiness(
 	authRepository AuthRepository,
 	userRepository UserRepository,
+	walletRepository WalletRepository,
 	jwtProvider common.JWTProvider,
 	hasher Hasher,
 	emailProvider emailc.EmailProvider,
 ) *business {
 	return &business{
-		authRepository: authRepository,
-		userRepository: userRepository,
-		jwtProvider:    jwtProvider,
-		hasher:         hasher,
-		emailProvider:  emailProvider,
+		authRepository:   authRepository,
+		userRepository:   userRepository,
+		walletRepository: walletRepository,
+		jwtProvider:      jwtProvider,
+		hasher:           hasher,
+		emailProvider:    emailProvider,
 	}
 }

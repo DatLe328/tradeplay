@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"tradeplay/common"
+	userEntity "tradeplay/services/user/entity"
 
 	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
@@ -20,7 +21,7 @@ func IdentifyAdmin(userStore UserStore) gin.HandlerFunc {
 
 		user, err := userStore.GetUserByID(c.Request.Context(), int(uid.GetLocalID()))
 
-		if err == nil && user.SystemRole == "admin" {
+		if err == nil && user.SystemRole == userEntity.RoleAdmin {
 			c.Set(string(common.KeyIsAdmin), true)
 		}
 

@@ -38,3 +38,7 @@ func (m *AuthRepositoryMock) FindUserToken(ctx context.Context, tokenID string) 
 func (m *AuthRepositoryMock) DeleteUserToken(ctx context.Context, tokenID string) error
 func (m *AuthRepositoryMock) FindAuthByUserID(ctx context.Context, userId int) (*authEntity.Auth, error)
 func (m *AuthRepositoryMock) DeleteExpiredTokens(ctx context.Context, userId int) error
+func (m *AuthRepositoryMock) FindAuthByEmailAndType(ctx context.Context, email string, authType authEntity.AuthType) (*authEntity.Auth, error)
+func (m *AuthRepositoryMock) FindAuthByGoogleID(ctx context.Context, googleID string) (*authEntity.Auth, error)
+func (m *AuthRepositoryMock) FindAvailableVerifyCode(ctx context.Context, email, code string, verifyType authEntity.VerifyType) (*authEntity.VerifyCode, error)
+func (m *AuthRepositoryMock) MarkCodeAsUsed(ctx context.Context, id int) error

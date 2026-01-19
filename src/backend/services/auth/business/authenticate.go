@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"time"
+	"tradeplay/common"
 	"tradeplay/services/auth/entity"
 
 	"github.com/DatLe328/service-context/core"
@@ -13,6 +14,8 @@ import (
 func (biz *business) Authenticate(
 	ctx context.Context,
 	data *entity.AuthEmailPassword,
+	userAgent string,
+	ipAddress string,
 ) (*entity.TokenResponse, error) {
 	authData, err := biz.authRepository.GetAuth(ctx, data.Email)
 
@@ -20,11 +23,11 @@ func (biz *business) Authenticate(
 		return nil, core.ErrInvalidRequest(entity.ErrLoginFailed)
 	}
 
-	if authData.Status == entity.AuthStatusBanned {
+	if authData.Status == entity.AuthStatusSuspended {
 		return nil, core.ErrAccountLocked(errors.New("account has been banned"))
 	}
 
-	if authData.Status == entity.AuthStatusInactive {
+	if authData.Status == entity.AuthStatusUnverified {
 		return nil, core.ErrInvalidRequest(errors.New("account hasn't verified"))
 	}
 
@@ -36,7 +39,7 @@ func (biz *business) Authenticate(
 		return nil, core.ErrInvalidRequest(entity.ErrLoginFailed)
 	}
 
-	uid := core.NewUID(uint32(authData.UserID), 1, 1)
+	uid := core.NewUID(uint32(authData.UserID), common.DbTypeAuth, 1)
 	sub := uid.String()
 
 	accessTid := uuid.New().String()
@@ -57,6 +60,8 @@ func (biz *business) Authenticate(
 		Token:     refreshToken,
 		ExpiresAt: time.Now().Add(time.Second * time.Duration(refreshExp)),
 		IsRevoked: false,
+		UserAgent: userAgent,
+		IpAddress: ipAddress,
 	})
 	if err != nil {
 		return nil, core.ErrInternal(err)

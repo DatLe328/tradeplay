@@ -35,7 +35,7 @@ func newServiceCtx() sctx.ServiceContext {
 
 func setupRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	db := serviceCtx.MustGet(common.KeyCompMySQL).(common.GormComponent)
-	authBusiness := authBusiness.NewBusiness(nil, nil, serviceCtx.MustGet(common.KeyCompJWT).(common.JWTProvider), nil, nil)
+	authBusiness := authBusiness.NewBusiness(nil, nil, nil, serviceCtx.MustGet(common.KeyCompJWT).(common.JWTProvider), nil, nil)
 	userRepo := userRepository.NewMySQLRepository(db.GetDB())
 	requireAuthMdw := middleware.RequireAuth(authBusiness)
 	identifyMdw := middleware.IdentifyAdmin(userRepo)
@@ -45,6 +45,7 @@ func setupRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	authAPI := composer.ComposeAuthAPIService(serviceCtx)
 	accountAPI := composer.ComposeAccountAPIService(serviceCtx)
 	orderAPI := composer.ComposeOrderAPIService(serviceCtx)
+	walletAPI := composer.ComposeWalletAPIService(serviceCtx)
 
 	csrfProtection := middleware.CSRFProtection()
 	csrfValidate := middleware.ValidateCSRFToken()
@@ -86,11 +87,26 @@ func setupRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 		orders.GET("/:id", orderAPI.GetOrderHandler())
 		orders.POST("", orderAPI.CreateOrderHandler())
 	}
+
+	wallets := v1.Group("/wallets", requireAuthMdw, csrfValidate)
+	{
+		wallets.GET("/me", walletAPI.GetMeHandler())
+	}
+
+}
+
+func setupWebhook(serviceCtx sctx.ServiceContext, router *gin.Engine) {
+	paymentAPI := composer.ComposePaymentAPIService(serviceCtx)
+
+	v1 := router.Group("/v1",
+		middleware.RateLimitMiddleware(5, 10),
+	)
+	v1.POST("/webhook/sepay", paymentAPI.HandleSepayWebhook)
 }
 
 func setupAdminRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	db := serviceCtx.MustGet(common.KeyCompMySQL).(common.GormComponent)
-	authBusiness := authBusiness.NewBusiness(nil, nil, serviceCtx.MustGet(common.KeyCompJWT).(common.JWTProvider), nil, nil)
+	authBusiness := authBusiness.NewBusiness(nil, nil, nil, serviceCtx.MustGet(common.KeyCompJWT).(common.JWTProvider), nil, nil)
 	userRepo := userRepository.NewMySQLRepository(db.GetDB())
 	requireAuthMdw := middleware.RequireAuth(authBusiness)
 	requireAdminMdw := middleware.RequireAdmin(userRepo)
@@ -143,6 +159,7 @@ func Execute() {
 
 	setupRoute(serviceCtx, router)
 	setupAdminRoute(serviceCtx, router)
+	setupWebhook(serviceCtx, router)
 
 	s := &http.Server{
 		Addr:           fmt.Sprintf(":%d", ginComp.GetPort()),

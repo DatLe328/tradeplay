@@ -8,7 +8,8 @@ import (
 )
 
 type config struct {
-	s3Prefix string
+	s3Prefix    string
+	sepayApiKey string
 }
 
 func NewConfig() *config {
@@ -16,7 +17,7 @@ func NewConfig() *config {
 }
 
 func (*config) ID() string {
-	return common.KeyComConf
+	return common.KeyCompConf
 }
 
 func (c *config) InitFlags() {
@@ -25,6 +26,13 @@ func (c *config) InitFlags() {
 		"s3-prefix",
 		"",
 		"S3 prefix for uploaded account files",
+	)
+
+	flag.StringVar(
+		&c.sepayApiKey,
+		"sepay-api-key",
+		"",
+		"Sepay api key",
 	)
 }
 
@@ -38,4 +46,8 @@ func (c *config) Stop() error {
 
 func (c *config) S3Prefix() string {
 	return c.s3Prefix
+}
+
+func (c *config) SepayAPIKey() string {
+	return c.sepayApiKey
 }

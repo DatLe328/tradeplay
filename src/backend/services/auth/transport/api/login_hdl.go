@@ -18,7 +18,10 @@ func (api *api) LoginHdl() func(*gin.Context) {
 			return
 		}
 
-		response, err := api.business.Authenticate(c.Request.Context(), &data)
+		userAgent := c.Request.UserAgent()
+		clientIP := c.ClientIP()
+
+		response, err := api.business.Authenticate(c.Request.Context(), &data, userAgent, clientIP)
 		if err != nil {
 			common.WriteErrorResponse(c, err)
 			return

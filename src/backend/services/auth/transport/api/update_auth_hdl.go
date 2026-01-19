@@ -18,9 +18,9 @@ func (api *api) UpdateAuthStatusHandler() func(*gin.Context) {
 			return
 		}
 
-		if data.Status != entity.AuthStatusActive &&
-			data.Status != entity.AuthStatusInactive &&
-			data.Status != entity.AuthStatusBanned {
+		if data.Status != entity.AuthStatusSuspended &&
+			data.Status != entity.AuthStatusUnverified &&
+			data.Status != entity.AuthStatusVerified {
 			common.WriteErrorResponse(c, core.ErrInvalidRequest(nil))
 			return
 		}

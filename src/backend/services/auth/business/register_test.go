@@ -31,7 +31,7 @@ func TestRegister_Success(t *testing.T) {
 		},
 	}
 
-	biz := NewBusiness(authRepo, userRepo, nil, hasher, nil)
+	biz := NewBusiness(authRepo, userRepo, nil, nil, hasher, nil)
 
 	err := biz.Register(context.Background(), &authEntity.AuthRegister{
 		FirstName: "Dat",

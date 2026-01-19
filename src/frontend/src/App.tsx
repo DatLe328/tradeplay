@@ -25,6 +25,7 @@ import WarrantyPage from "./pages/WarrantyPage";
 import { useIdleTimeout } from "./hooks/useIdleTimeout";
 import { ScrollToTop } from "./components/layout/ScrollToTop";
 import ProfilePage from "./pages/ProfilePage";
+import DepositPage from "./pages/DepositPage";
 
 const queryClient = new QueryClient();
 
@@ -64,6 +65,7 @@ const App = () => {
 						<Route path="/guide" element={<GuidePage />} />
 						<Route path="/warranty" element={<WarrantyPage />} />
 						<Route path="/profile" element={<ProfilePage />} />
+						<Route path="/deposit" element={<DepositPage />} />
 						<Route path="/auth" element={<AuthPage />} />
 						<Route
 							path="/auth/google-success"

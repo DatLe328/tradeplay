@@ -16,7 +16,7 @@ func TestCreateUser_Success(t *testing.T) {
 
 	biz := NewUserBusiness(&userRepo)
 
-	data := entity.NewUserForCreation("dat", "le")
+	data := entity.NewUserCreation("dat", "le")
 	_, err := biz.CreateUser(context.Background(), data)
 
 	if err != nil {

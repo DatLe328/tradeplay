@@ -3,6 +3,7 @@ package middleware
 import (
 	"errors"
 	"net/http"
+	userEntity "tradeplay/services/user/entity"
 
 	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
@@ -20,7 +21,7 @@ func RequireAdmin(userStore UserStore) gin.HandlerFunc {
 			return
 		}
 
-		if user.SystemRole != "admin" {
+		if user.SystemRole != userEntity.RoleAdmin {
 			c.AbortWithStatusJSON(http.StatusForbidden, core.ErrForbidden(errors.New("admin access required"), "Bạn không có quyền truy cập trang này"))
 			return
 		}

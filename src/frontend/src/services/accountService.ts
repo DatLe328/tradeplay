@@ -2,6 +2,7 @@ import { apiRequest } from "./api";
 import type { GameAccount } from "@/types";
 import type { ApiResponse } from "@/types";
 import { uploadService } from "./uploadService";
+import type { AccountStatus } from "@/constants/enums";
 
 export interface GetAccountsParams {
 	page?: number;
@@ -9,7 +10,7 @@ export interface GetAccountsParams {
 	game_name?: string;
 	min_price?: number;
 	max_price?: number;
-	status?: string | string[];
+	status?: AccountStatus | AccountStatus[];
 	search?: string;
 }
 
@@ -26,13 +27,16 @@ export const accountService = {
 		if (params.max_price !== undefined)
 			query.append("max_price", params.max_price.toString());
 
-		if (params.status && params.status !== "all") {
+		if (params.status !== undefined) {
 			if (Array.isArray(params.status)) {
-				params.status.forEach((s) => query.append("status", s));
+				params.status.forEach((s) => 
+                    query.append("status", s.toString())
+                );
 			} else {
-				query.append("status", params.status);
+				query.append("status", params.status.toString());
 			}
 		}
+		
 		if (params.search) query.append("search", params.search);
 
 		return apiRequest<ApiResponse<GameAccount[]>>(

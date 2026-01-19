@@ -13,6 +13,7 @@ import { adminService } from "@/services/adminService";
 import { orderService } from "@/services/orderService";
 import { useToast } from "@/hooks/use-toast";
 import type { AdminStats, Order } from "@/types";
+import { OrderStatus, OrderStatusLabel } from "@/constants/enums"; // 1. IMPORT ENUM
 
 export default function AdminDashboard() {
 	const [stats, setStats] = useState<AdminStats>({
@@ -64,24 +65,39 @@ export default function AdminDashboard() {
 			title: "Còn Hàng",
 			value: stats.availableAccounts,
 			icon: Package,
-			color: "text-success",
-			bgColor: "bg-success/10",
+			color: "text-green-500",
+			bgColor: "bg-green-500/10",
 		},
 		{
 			title: "Đã Bán",
 			value: stats.soldAccounts,
 			icon: TrendingUp,
-			color: "text-warning",
-			bgColor: "bg-warning/10",
+			color: "text-yellow-500", 
+			bgColor: "bg-yellow-500/10",
 		},
 		{
 			title: "Chờ Xử Lý",
 			value: stats.pendingOrders,
 			icon: Clock,
-			color: "text-destructive",
-			bgColor: "bg-destructive/10",
+			color: "text-red-500",
+			bgColor: "bg-red-500/10",
 		},
 	];
+
+    const getStatusColorClass = (status: number) => {
+        switch (status) {
+            case OrderStatus.Pending:
+                return "bg-yellow-100 text-yellow-800 border-yellow-200";
+            case OrderStatus.Paid:
+                return "bg-green-100 text-green-800 border-green-200";
+            case OrderStatus.Completed:
+            case OrderStatus.Refunded:
+            case OrderStatus.Cancelled:
+                return "bg-gray-100 text-gray-800 border-gray-200";
+            default:
+                return "bg-secondary text-secondary-foreground";
+        }
+    };
 
 	if (isLoading) {
 		return <div className="p-6">Đang tải dữ liệu...</div>;
@@ -202,24 +218,12 @@ export default function AdminDashboard() {
 											{formatCurrency(order.total_price)}
 										</td>
 										<td className="px-4 py-3">
+                                            {/* 2. SỬA LOGIC HIỂN THỊ TRẠNG THÁI */}
 											<span
-												className={`inline-flex px-2 py-1 rounded text-xs font-medium ${
-													order.status === "pending"
-														? "badge-pending"
-														: order.status ===
-														  "paid"
-														? "badge-available"
-														: "badge-completed"
-												}`}
+												className={`inline-flex px-2 py-1 rounded text-xs font-medium border ${getStatusColorClass(order.status)}`}
 											>
-												{order.status === "pending"
-													? "Chờ thanh toán"
-													: order.status === "paid"
-													? "Đã thanh toán"
-													: order.status ===
-													  "delivered"
-													? "Đã gửi acc"
-													: order.status}
+                                                {/* Hiển thị label từ Enum thay vì hardcode */}
+												{OrderStatusLabel[order.status] || "Unknown"}
 											</span>
 										</td>
 									</tr>

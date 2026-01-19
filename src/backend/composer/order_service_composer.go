@@ -6,6 +6,7 @@ import (
 	"tradeplay/services/order/business"
 	orderRepo "tradeplay/services/order/repository/mysql"
 	"tradeplay/services/order/transport/api"
+	walletRepo "tradeplay/services/wallet/repository/mysql"
 
 	sctx "github.com/DatLe328/service-context"
 	"github.com/gin-gonic/gin"
@@ -23,7 +24,8 @@ func ComposeOrderAPIService(serviceCtx sctx.ServiceContext) OrderService {
 
 	accRepo := accountRepo.NewMySQLRepository(db)
 	ordRepo := orderRepo.NewMySQLRepository(db)
-	biz := business.NewBusiness(ordRepo, accRepo)
+	wltRepo := walletRepo.NewMySQLRepository(db)
+	biz := business.NewBusiness(ordRepo, accRepo, wltRepo)
 
 	serviceAPI := api.NewOrderAPI(biz)
 

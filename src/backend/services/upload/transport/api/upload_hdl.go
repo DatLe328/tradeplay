@@ -26,7 +26,7 @@ func (a *api) GeneratePresignedURLHandler() gin.HandlerFunc {
 			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
 			return
 		}
-		const MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+		const MAX_UPLOAD_SIZE = 200 * 1024 * 1024
 		if req.Size > MAX_UPLOAD_SIZE {
 			common.WriteErrorResponse(c, core.ErrInvalidRequest(
 				fmt.Errorf("file size %d bytes exceeds limit of %d bytes", req.Size, MAX_UPLOAD_SIZE),
@@ -51,7 +51,7 @@ func (a *api) GeneratePresignedURLHandler() gin.HandlerFunc {
 			contentType = "application/octet-stream"
 		}
 
-		configComp := c.MustGet(common.KeyComConf).(common.ConfigComponent)
+		configComp := a.serviceCtx.MustGet(common.KeyCompConf).(common.ConfigComponent)
 		prefix := configComp.S3Prefix()
 
 		key := fmt.Sprintf("%s%s%s", prefix, uuid.New().String(), ext)

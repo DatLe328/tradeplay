@@ -8,25 +8,37 @@ const (
 	KeyCompMySQL  = "mysql"
 	KeyCompEmail  = "email"
 	KeyCompUpload = "upload"
-	KeyComConf    = "config"
+	KeyCompConf    = "config"
 )
 
 const (
-	DbTypeAccount = 1
-	DbTypeUser    = 2
-	DbTypeOrder   = 3
+	DbTypeAuth            = 1
+	DbTypeAccount         = 2
+	DbTypeUser            = 3
+	DbTypeOrder           = 4
+	DbTypeBankTransaction = 5
+	DbTypeWallet          = 6
 )
 
 const (
-	MaskTypeAccount = 1
-	MaskTypeUser    = 2
-	MaskTypeOrder   = 3
+	MaskTypeAuth            = 1
+	MaskTypeAccount         = 2
+	MaskTypeUser            = 3
+	MaskTypeOrder           = 4
+	MaskTypeBankTransaction = 5
+	MaskTypeWallet          = 6
+	MaskTypeWalletTx        = 7
 )
 
 type ContextKey string
 
 const (
 	KeyIsAdmin ContextKey = "is_admin"
+)
+
+const (
+	DefaultCurrency   = "VND"
+	DefaultSaltLength = 16
 )
 
 func AppRecover() {

@@ -23,3 +23,4 @@ func (m *UserRepositoryMock) CreateUser(
 }
 
 func (m *UserRepositoryMock) GetUserByID(ctx context.Context, id int) (*userEntity.User, error)
+func (m *UserRepositoryMock) DeleteUser(ctx context.Context, id int) error

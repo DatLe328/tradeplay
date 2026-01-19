@@ -17,7 +17,7 @@ func TestIntrospectToken_Success(t *testing.T) {
 		},
 	}
 
-	biz := NewBusiness(nil, nil, jwt, nil, nil)
+	biz := NewBusiness(nil, nil, nil, jwt, nil, nil)
 
 	claims, err := biz.IntrospectToken(context.Background(), "token")
 

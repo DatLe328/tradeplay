@@ -14,12 +14,12 @@ type UserDataCreation struct {
 	Status     Status     `json:"-" gorm:"column:status"`
 }
 
-func NewUserForCreation(firstName, lastName string) *UserDataCreation {
+func NewUserCreation(firstName, lastName string) *UserDataCreation {
 	return &UserDataCreation{
 		FirstName:  firstName,
 		LastName:   lastName,
 		SystemRole: RoleUser,
-		Status:     StatusActive,
+		Status:     StatusInactive,
 	}
 }
 

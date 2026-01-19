@@ -4,15 +4,17 @@ import (
 	"context"
 	"errors"
 	"time"
+	"tradeplay/common"
 	"tradeplay/services/auth/entity"
 
 	"github.com/DatLe328/service-context/core"
 )
 
 func (biz *business) ResetPassword(ctx context.Context, data *entity.ResetPasswordData) error {
-	verifyEntry, err := biz.authRepository.FindVerifyCode(ctx, data.Email, data.Code, "forgot_password")
+	verifyEntry, err := biz.authRepository.FindAvailableVerifyCode(ctx, data.Email, data.Code, entity.ForgotPasswordVerify)
+
 	if err != nil {
-		return core.ErrInvalidRequest(errors.New("mã xác thực không đúng"))
+		return core.ErrInvalidRequest(errors.New("mã xác thực không chính xác hoặc đã được sử dụng"))
 	}
 
 	if verifyEntry.ExpiredAt.Before(time.Now()) {
@@ -24,7 +26,7 @@ func (biz *business) ResetPassword(ctx context.Context, data *entity.ResetPasswo
 		return core.ErrEntityNotFound(auth.TableName(), entity.ErrEmailIsNotValid)
 	}
 
-	salt, err := core.GenSalt(16)
+	salt, err := core.GenSalt(common.DefaultSaltLength)
 	if err != nil {
 		return core.ErrInternal(err)
 	}
@@ -36,13 +38,13 @@ func (biz *business) ResetPassword(ctx context.Context, data *entity.ResetPasswo
 
 	auth.Password = &hashedPassword
 	auth.Salt = &salt
-	auth.Status = entity.AuthStatusActive
+	auth.Status = entity.AuthStatusVerified
 
 	if err := biz.authRepository.UpdateAuth(ctx, auth); err != nil {
 		return core.ErrInternal(err)
 	}
 
-	_ = biz.authRepository.DeleteVerifyCode(ctx, verifyEntry.Id)
+	_ = biz.authRepository.MarkCodeAsUsed(ctx, verifyEntry.Id)
 
 	return nil
 }

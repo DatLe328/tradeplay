@@ -17,7 +17,10 @@ func (api *api) RefreshTokenHandler() func(*gin.Context) {
 			return
 		}
 
-		resp, err := api.business.RefreshToken(c.Request.Context(), refreshToken)
+		userAgent := c.Request.UserAgent()
+		clientIP := c.ClientIP()
+
+		resp, err := api.business.RefreshToken(c.Request.Context(), refreshToken, userAgent, clientIP)
 		if err != nil {
 			common.WriteErrorResponse(c, err)
 			return

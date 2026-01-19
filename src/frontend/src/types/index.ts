@@ -1,4 +1,5 @@
 import type { GameAttributes } from './gameSchemas';
+import { AccountStatus, OrderStatus, SystemRole, OrderType } from '@/constants/enums'; // Import enum
 
 export interface GameAccount {
   id: string;
@@ -8,15 +9,16 @@ export interface GameAccount {
   original_price?: number;
   images: string[];
   thumbnail: string;
-  status: 'available' | 'reserved' | 'delivered' | 'deleted';
+  
+  status: AccountStatus; 
+  
   description: string;
   features: string[];
   createdAt: string;
   created_at?: string;
   attributes?: GameAttributes;
-  rank?: string;
-  level?: number;
-  server?: string;
+  
+  view_count?: number; 
 }
 
 export interface ApiResponse<T> {
@@ -37,7 +39,14 @@ export interface Order {
   account?: GameAccount; 
   
   total_price: number;
-  status: 'pending' | 'paid' | 'cancelled' | 'refunded' | 'delivered';
+  
+  status: OrderStatus;
+  
+  type: OrderType;
+  payment_method?: string;
+  payment_ref?: string;
+  notes?: string;
+
   created_at: string;
   updated_at: string;
 }
@@ -48,7 +57,11 @@ export interface User {
   first_name: string;
   last_name: string;
   phone_number?: string;
-  system_role: 'user' | 'admin';
+  
+  system_role: SystemRole;
+  
+  status?: number;
+  
   created_at: string;
 }
 

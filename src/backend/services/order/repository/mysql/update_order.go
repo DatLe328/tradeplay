@@ -15,3 +15,13 @@ func (repo *mysqlRepo) UpdateOrderStatus(ctx context.Context, id int, status ent
 	}
 	return nil
 }
+
+func (r *mysqlRepo) UpdateOrderPaid(ctx context.Context, id int, method string, ref string) error {
+	updates := map[string]interface{}{
+		"status":         entity.OrderStatusPaid,
+		"payment_method": method,
+		"payment_ref":    ref,
+	}
+
+	return r.db.Model(&entity.Order{}).Where("id = ?", id).Updates(updates).Error
+}

@@ -2,7 +2,6 @@ package api
 
 import (
 	"net/http"
-	"strconv"
 	"tradeplay/common"
 	"tradeplay/services/order/entity"
 
@@ -17,18 +16,15 @@ func (api *api) CreateOrderHandler() func(*gin.Context) {
 			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
 			return
 		}
-		realAccountId, err := strconv.Atoi(data.AccountId)
 
-		if err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
-			return
-		}
-		// realAccountId := common.UnmaskID(tmpId, common.AccountIdOffset)
 		requester := c.MustGet(core.KeyRequester).(core.Requester)
 		uid, _ := core.FromBase58(requester.GetSubject())
 		userId := int(uid.GetLocalID())
 
-		newOrder, err := api.business.CreateOrder(c.Request.Context(), userId, realAccountId)
+		ipAddress := c.ClientIP()
+
+		// SỬA: Truyền &data vào
+		newOrder, err := api.business.CreateOrder(c.Request.Context(), userId, &data, ipAddress)
 
 		if err != nil {
 			common.WriteErrorResponse(c, err)

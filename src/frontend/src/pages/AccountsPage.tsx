@@ -12,6 +12,7 @@ import { Gamepad2, Loader2 } from "lucide-react";
 import type { GameAccount } from "@/types";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "@/stores/languageStore";
+import { AccountStatus } from "@/constants/enums";
 
 interface FilterState {
 	search: string;
@@ -35,7 +36,8 @@ export default function AccountsPage() {
 				searchParams.get("game") ||
 				(language === "vi" ? "Tất cả" : "All Games"),
 			priceRange: hiddenPrice || urlPrice || "all",
-			status: "available",
+			// 2. GIÁ TRỊ KHỞI TẠO: Lấy từ URL hoặc mặc định là "all"
+			status: searchParams.get("status") || "all", 
 		};
 	});
 
@@ -47,6 +49,7 @@ export default function AccountsPage() {
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalItems, setTotalItems] = useState(0);
 	const [debouncedSearch, setDebouncedSearch] = useState(filters.search);
+	
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			setDebouncedSearch(filters.search);
@@ -73,6 +76,18 @@ export default function AccountsPage() {
 					maxPrice = Number(maxStr);
 				}
 
+				let statusParam: AccountStatus | AccountStatus[] | undefined;
+
+				if (filters.status && filters.status !== "all") {
+					statusParam = Number(filters.status) as AccountStatus;
+				} else {
+					statusParam = [
+						AccountStatus.Available,
+						AccountStatus.Reserved,
+						AccountStatus.Sold,
+					];
+				}
+
 				const params: GetAccountsParams = {
 					page: currentPage,
 					limit: pageSize,
@@ -84,7 +99,7 @@ export default function AccountsPage() {
 					min_price: minPrice,
 					max_price: maxPrice,
 					search: debouncedSearch,
-					status: ["available", "reserved"],
+					status: statusParam,
 				};
 
 				const res = await accountService.getAll(params);
@@ -94,7 +109,7 @@ export default function AccountsPage() {
 				if (res.paging) {
 					setTotalItems(Number(res.paging.total));
 					setTotalPages(
-						Math.ceil(Number(res.paging.total) / pageSize)
+						Math.ceil(Number(res.paging.total) / pageSize),
 					);
 				}
 			} catch (error) {
@@ -110,6 +125,7 @@ export default function AccountsPage() {
 		pageSize,
 		filters.game,
 		filters.priceRange,
+		filters.status, // Dependency này giờ là string, hook sẽ chạy lại khi string thay đổi
 		debouncedSearch,
 	]);
 
@@ -169,7 +185,7 @@ export default function AccountsPage() {
 							))}
 						</div>
 
-						{/* Pagination Wrapper (Đã sửa props) */}
+						{/* Pagination Wrapper */}
 						<PaginationWrapper
 							currentPage={currentPage}
 							totalPages={totalPages}

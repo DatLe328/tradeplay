@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"time"
+	"tradeplay/common"
 	"tradeplay/services/auth/entity"
 	userEntity "tradeplay/services/user/entity"
+	walletEntity "tradeplay/services/wallet/entity"
 
 	"github.com/DatLe328/service-context/core"
 	"github.com/google/uuid"
@@ -26,59 +29,87 @@ type GoogleUser struct {
 	Picture       string `json:"picture"`
 }
 
-func (biz *business) LoginWithGoogle(ctx context.Context, code string) (*entity.TokenResponse, error) {
+func (biz *business) LoginWithGoogle(
+	ctx context.Context,
+	code string,
+	userAgent, ipAddress string,
+) (*entity.TokenResponse, error) {
 	googleToken, err := biz.exchangeGoogleToken(code)
 	if err != nil {
 		return nil, core.ErrInvalidRequest(err)
 	}
-
 	googleUser, err := biz.getGoogleUserInfo(googleToken)
 	if err != nil {
 		return nil, core.ErrInvalidRequest(err)
 	}
 
-	authData, err := biz.authRepository.FindAuthByGoogleIDOrEmail(ctx, googleUser.ID, googleUser.Email)
+	authGoogle, err := biz.authRepository.FindAuthByGoogleID(ctx, googleUser.ID)
 
 	var userID int
 
-	if err == nil && authData != nil {
-		if authData.Status == entity.AuthStatusBanned {
-			return nil, core.ErrAccountLocked(errors.New("account has been banned"))
+	if err == nil && authGoogle != nil {
+		if authGoogle.Status == entity.AuthStatusSuspended {
+			return nil, core.ErrAccountLocked(errors.New("account has been suspended"))
 		}
-
-		userID = int(authData.UserID)
-
-		if *authData.GoogleID == "" {
-			_ = biz.authRepository.UpdateAuthGoogleID(ctx, authData.Id, googleUser.ID)
-		}
-
+		userID = int(authGoogle.UserID)
 	} else {
-		newUser := &userEntity.User{
-			FirstName:  googleUser.GivenName,
-			LastName:   googleUser.FamilyName,
-			SystemRole: "user",
-			Status:     1,
+		authByEmail, errEmail := biz.authRepository.GetAuth(ctx, googleUser.Email)
+
+		if errEmail == nil && authByEmail != nil {
+			userID = int(authByEmail.UserID)
+
+			if authByEmail.Status == entity.AuthStatusSuspended {
+				return nil, core.ErrAccountLocked(errors.New("account has been suspended"))
+			}
+
+			newAuth := &entity.Auth{
+				UserID:   int64(userID),
+				AuthType: entity.AuthTypeGoogle,
+				Email:    googleUser.Email,
+				GoogleID: &googleUser.ID,
+				Status:   entity.AuthStatusVerified,
+			}
+
+			if err := biz.authRepository.AddAuth(ctx, newAuth); err != nil {
+				return nil, core.ErrInternal(err)
+			}
+
+		} else {
+			newUser := userEntity.NewUser(googleUser.GivenName, googleUser.FamilyName)
+			newUser.Status = userEntity.StatusActive
+			if newUser.FirstName == "" {
+				newUser.FirstName = googleUser.Name
+			}
+
+			newAuth := &entity.Auth{
+				AuthType: entity.AuthTypeGoogle,
+				Email:    googleUser.Email,
+				GoogleID: &googleUser.ID,
+				Status:   entity.AuthStatusVerified,
+			}
+
+			if err := biz.authRepository.CreateUserAndAuthGoogle(ctx, newUser, newAuth); err != nil {
+				return nil, core.ErrInternal(err)
+			}
+			userID = newUser.Id
+		}
+	}
+	existingWallet, err := biz.walletRepository.GetWalletByUserID(ctx, userID, common.DefaultCurrency)
+
+	if err != nil || existingWallet == nil {
+		newWallet := &walletEntity.Wallet{
+			UserId:   userID,
+			Balance:  0,
+			Currency: common.DefaultCurrency,
 		}
 
-		if newUser.FirstName == "" {
-			newUser.FirstName = googleUser.Name
-		}
-
-		newAuth := &entity.Auth{
-			AuthType: entity.AuthTypeGoogle,
-			Email:    googleUser.Email,
-			GoogleID: &googleUser.ID,
-			Status:   entity.AuthStatusActive,
-		}
-
-		if err := biz.authRepository.CreateUserAndAuthGoogle(ctx, newUser, newAuth); err != nil {
+		if err := biz.walletRepository.CreateWallet(ctx, newWallet); err != nil {
+			log.Printf("[WARNING] GoogleLogin: Failed to create wallet for user %d: %v\n", userID, err)
 			return nil, core.ErrInternal(err)
 		}
-
-		userID = newUser.Id
 	}
 
-	uid := core.NewUID(uint32(userID), 1, 1)
+	uid := core.NewUID(uint32(userID), common.MaskTypeAuth, 1)
 	sub := uid.String()
 
 	accessTid := uuid.New().String()
@@ -99,6 +130,8 @@ func (biz *business) LoginWithGoogle(ctx context.Context, code string) (*entity.
 		Token:     refreshToken,
 		ExpiresAt: time.Now().Add(time.Second * time.Duration(refreshExp)),
 		IsRevoked: false,
+		UserAgent: userAgent,
+		IpAddress: ipAddress,
 	})
 	if err != nil {
 		return nil, core.ErrInternal(err)

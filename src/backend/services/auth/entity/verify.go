@@ -6,11 +6,13 @@ import (
 	"github.com/DatLe328/service-context/core"
 )
 
-type VerifyType string
+type VerifyType int
 
 const (
-	RegisterVerify       VerifyType = "register"
-	ForgotPasswordVerify VerifyType = "forgot_password"
+	RegisterVerify VerifyType = iota
+	ForgotPasswordVerify
+	TwoFactorVerify
+	PhoneVerify
 )
 
 type VerifyCode struct {
@@ -19,6 +21,8 @@ type VerifyCode struct {
 	Code      string     `json:"code" gorm:"column:code"`
 	Type      VerifyType `json:"type" gorm:"column:type"`
 	ExpiredAt time.Time  `json:"expired_at" gorm:"column:expired_at"`
+	IsUsed    bool       `json:"is_used" gorm:"column:is_used;default:false;"`
+	UsedAt    *time.Time `json:"used_at" gorm:"column:used_at;"`
 }
 
 func (VerifyCode) TableName() string { return "verify_codes" }
@@ -33,6 +37,6 @@ type UpdateStatusRequest struct {
 }
 
 type VerifyEmailData struct {
-	Email string `json:"email"`
-	Code  string `json:"code"`
+	Email string `json:"email" binding:"required,email"`
+	Code  string `json:"code" binding:"required,len=6"`
 }

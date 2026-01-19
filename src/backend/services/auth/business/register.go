@@ -3,11 +3,13 @@ package business
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 	"tradeplay/common"
 	"tradeplay/services/auth/entity"
 	authEntity "tradeplay/services/auth/entity"
 	userEntity "tradeplay/services/user/entity"
+	walletEntity "tradeplay/services/wallet/entity"
 
 	"github.com/DatLe328/service-context/core"
 )
@@ -17,47 +19,58 @@ func (biz *business) Register(ctx context.Context, data *authEntity.AuthRegister
 		return core.ErrInvalidRequest(err)
 	}
 
-	auth, err := biz.authRepository.GetAuth(ctx, data.Email)
+	salt, err := core.GenSalt(common.DefaultSaltLength)
+	if err != nil {
+		return core.ErrInternal(err)
+	}
+	hashedPassword, err := biz.hasher.HashPassword(salt, data.Password)
+	if err != nil {
+		return core.ErrInternal(err)
+	}
 
-	if err == nil {
-		if auth.Status != authEntity.AuthStatusInactive {
+	authEmail, err := biz.authRepository.FindAuthByEmailAndType(ctx, data.Email, entity.AuthTypeEmailPassword)
+
+	if err == nil && authEmail != nil {
+		if authEmail.Status == authEntity.AuthStatusVerified || authEmail.Status == authEntity.AuthStatusSuspended {
 			return core.ErrInvalidRequest(authEntity.ErrEmailHasExisted)
 		}
 
-		salt, err := core.GenSalt(16)
-		if err != nil {
-			return core.ErrInternal(err)
-		}
-		hashedPassword, err := biz.hasher.HashPassword(salt, data.Password)
-		if err != nil {
+		authEmail.Password = &hashedPassword
+		authEmail.Salt = &salt
+		if err := biz.authRepository.UpdateAuth(ctx, authEmail); err != nil {
 			return core.ErrInternal(err)
 		}
 
-		auth.Password = &hashedPassword
-		auth.Salt = &salt
-
-		if err := biz.authRepository.UpdateAuth(ctx, auth); err != nil {
-			return core.ErrInternal(err)
-		}
 	} else {
-		dto := userEntity.NewUserForCreation(data.FirstName, data.LastName)
-		userId, err := biz.userRepository.CreateUser(ctx, dto)
-		if err != nil {
-			return core.ErrInternal(err)
-		}
 
-		salt, err := core.GenSalt(16)
-		if err != nil {
-			return core.ErrInternal(err)
-		}
+		var userId int
 
-		hashedPassword, err := biz.hasher.HashPassword(salt, data.Password)
-		if err != nil {
-			return core.ErrInternal(err)
+		authGoogle, errG := biz.authRepository.FindAuthByEmailAndType(ctx, data.Email, entity.AuthTypeGoogle)
+
+		if errG == nil && authGoogle != nil {
+			userId = int(authGoogle.UserID)
+		} else {
+			dto := userEntity.NewUserCreation(data.FirstName, data.LastName)
+			newUserId, err := biz.userRepository.CreateUser(ctx, dto)
+			if err != nil {
+				return core.ErrInternal(err)
+			}
+			userId = newUserId
+
+			// Tạo Wallet
+			const DefaultCurrency = "VND"
+			newWallet := &walletEntity.Wallet{
+				UserId:   userId,
+				Balance:  0,
+				Currency: DefaultCurrency,
+			}
+			if errCreate := biz.walletRepository.CreateWallet(ctx, newWallet); errCreate != nil {
+				log.Printf("[WARNING] Register: Failed to create wallet for user %d: %v\n", userId, errCreate)
+			}
 		}
 
 		newAuth := authEntity.NewAuthWithEmailPassword(userId, data.Email, hashedPassword, salt)
-		newAuth.Status = authEntity.AuthStatusInactive
+		newAuth.Status = authEntity.AuthStatusUnverified
 
 		if err := biz.authRepository.AddAuth(ctx, newAuth); err != nil {
 			return core.ErrInternal(err)

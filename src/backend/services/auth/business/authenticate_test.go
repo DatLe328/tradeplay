@@ -36,12 +36,15 @@ func TestLogin_Success(t *testing.T) {
 		},
 	}
 
-	biz := NewBusiness(authRepo, nil, jwt, hasher, nil)
+	biz := NewBusiness(authRepo, nil, nil, jwt, hasher, nil)
 
 	resp, err := biz.Authenticate(context.Background(), &entity.AuthEmailPassword{
 		Email:    "dat@test.com",
 		Password: "123456",
-	})
+	},
+		"",
+		"",
+	)
 
 	if err != nil {
 		t.Fatal(err)

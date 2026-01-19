@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (biz *business) RefreshToken(ctx context.Context, refreshToken string) (*entity.TokenResponse, error) {
+func (biz *business) RefreshToken(ctx context.Context, refreshToken, userAgent, ipAddress string) (*entity.TokenResponse, error) {
 	claims, err := biz.jwtProvider.ParseToken(ctx, refreshToken)
 	if err != nil {
 		return nil, core.ErrUnauthorized(errors.New("invalid refresh token"), "invalid refresh token", "unauthorized")
@@ -26,12 +26,12 @@ func (biz *business) RefreshToken(ctx context.Context, refreshToken string) (*en
 		return nil, core.ErrUnauthorized(errors.New("token has been revoked"), "token has been revoked", "unauthorized")
 	}
 
-	uid, _ := core.FromBase58(claims.Subject)
-	userId := int(uid.GetLocalID())
-
 	if err := biz.authRepository.DeleteUserToken(ctx, storedToken.TokenId); err != nil {
 		return nil, core.ErrInternal(err)
 	}
+
+	uid, _ := core.FromBase58(claims.Subject)
+	userId := int(uid.GetLocalID())
 
 	go func() {
 		log.Println("Starting cleanup of expired tokens for user ID:", userId)
@@ -40,7 +40,7 @@ func (biz *business) RefreshToken(ctx context.Context, refreshToken string) (*en
 
 	newAccessTid := uuid.New().String()
 	sub := claims.Subject
-	newAccessToken, newExp, err := biz.jwtProvider.IssueToken(ctx, newAccessTid, sub, 60)
+	newAccessToken, newExp, err := biz.jwtProvider.IssueToken(ctx, newAccessTid, sub, 3600)
 	if err != nil {
 		return nil, core.ErrInternal(err)
 	}
@@ -57,6 +57,8 @@ func (biz *business) RefreshToken(ctx context.Context, refreshToken string) (*en
 		Token:     newRefreshToken,
 		ExpiresAt: time.Now().Add(time.Second * time.Duration(newRefreshExp)),
 		IsRevoked: false,
+		UserAgent: userAgent,
+		IpAddress: ipAddress,
 	})
 	if err != nil {
 		return nil, core.ErrInternal(err)

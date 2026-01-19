@@ -24,7 +24,7 @@ func GetCookieDomainForOrigin(originURL string) string {
 
 	domainsEnv := os.Getenv("COOKIE_DOMAINS")
 	if domainsEnv == "" {
-		domainsEnv = "tadeldev.site" // Fallback
+		domainsEnv = "tadeldev.site"
 	}
 	allowedRoots := strings.Split(domainsEnv, ",")
 

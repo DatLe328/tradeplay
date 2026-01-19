@@ -8,10 +8,10 @@ import (
 )
 
 type Business interface {
-	CreateOrder(ctx context.Context, userId int, accountId int) (*entity.Order, error)
-	ListOrders(ctx context.Context, userId int, paging *core.Paging) ([]entity.Order, error)
+	CreateOrder(ctx context.Context, userId int, data *entity.OrderCreate, ipAddress string) (*entity.Order, error)
+	ListOrders(ctx context.Context, userId int, filter *entity.OrderFilter, paging *core.Paging) ([]entity.Order, error)
 	GetOrder(ctx context.Context, id int) (*entity.Order, error)
-	UpdateOrderStatus(ctx context.Context, id int, status entity.OrderStatus) error
+	UpdateOrderStatus(ctx context.Context, id int, status entity.OrderStatus, requesterId int, ipAddress string) error
 }
 
 type api struct {

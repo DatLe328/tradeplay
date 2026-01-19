@@ -4,8 +4,10 @@ import { type GameAccount } from "@/types";
 import { formatCurrency } from "@/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, ShoppingCart } from "lucide-react";
+import { Eye, ShoppingCart, Image as ImageIcon } from "lucide-react"; 
 import { useTranslation } from '@/stores/languageStore';
+import { AccountStatus, AccountStatusLabel } from "@/constants/enums";
+import { cn } from "@/lib/utils";
 
 interface AccountCardProps {
 	account: GameAccount;
@@ -14,7 +16,22 @@ interface AccountCardProps {
 
 export function AccountCard({ account, index = 0 }: AccountCardProps) {
   const { t } = useTranslation();
-  const isAvailable = account.status === 'available';
+  const isAvailable = account.status === AccountStatus.Available;
+
+  const getStatusColor = (status: number) => {
+    switch (status) {
+      case AccountStatus.Available:
+        return "bg-green-500/90 hover:bg-green-500";
+      case AccountStatus.Reserved:
+        return "bg-amber-500/90 hover:bg-amber-500";
+      case AccountStatus.Sold:
+        return "bg-red-500/90 hover:bg-red-500";
+      case AccountStatus.Deleted:
+        return "bg-gray-500/90 hover:bg-gray-500";
+      default:
+        return "bg-primary/90";
+    }
+  };
 
   return (
     <motion.div
@@ -23,52 +40,53 @@ export function AccountCard({ account, index = 0 }: AccountCardProps) {
       transition={{ duration: 0.4, delay: index * 0.1 }}
       className="card-gaming group"
     >
-      {/* Thumbnail */}
-      <div className="relative aspect-video overflow-hidden">
-        <img
-          src={account.thumbnail}
-          alt={account.title}
-          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-        />
+      <div className="relative aspect-video overflow-hidden bg-secondary/50">
+        {account.thumbnail ? (
+          <img
+            src={account.thumbnail}
+            alt={account.title}
+            className={cn(
+              "w-full h-full object-cover transition-transform duration-500 group-hover:scale-110",
+              account.status === AccountStatus.Sold && "grayscale-[0.5]"
+            )}
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
+            <ImageIcon className="h-12 w-12" />
+          </div>
+        )}
+
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
         
-        {/* Game Badge */}
+        {/* Game Badge (Top Left) */}
         <div className="absolute top-3 left-3">
           <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
             {account.game_name}
           </Badge>
         </div>
 
-        {/* ID Badge */}
+        {/* ID Badge (Top Right) */}
         <div className="absolute top-3 right-3">
           <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm font-mono">
             MS: {account.id}
           </Badge>
         </div>
 
+        <div className="absolute bottom-3 right-3">
+           <Badge className={cn("text-white border-none backdrop-blur-sm", getStatusColor(account.status))}>
+              {AccountStatusLabel[account.status]}
+           </Badge>
+        </div>
+
         {/* Overlay on hover */}
         <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
 
-      {/* Content */}
+      {/* Content - Giữ nguyên phần dưới */}
       <div className="p-4 space-y-3">
         <h3 className="font-gaming font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
           {account.title}
         </h3>
-
-        {/* Quick Info */}
-        <div className="flex flex-wrap gap-2">
-          {account.rank && (
-            <span className="text-xs px-2 py-1 rounded bg-secondary text-secondary-foreground">
-              {account.rank}
-            </span>
-          )}
-          {account.server && (
-            <span className="text-xs px-2 py-1 rounded bg-secondary text-secondary-foreground">
-              {account.server}
-            </span>
-          )}
-        </div>
 
         {/* Price */}
         <div className="flex items-baseline gap-2">
@@ -90,12 +108,16 @@ export function AccountCard({ account, index = 0 }: AccountCardProps) {
               {t('details')}
             </Button>
           </Link>
-          {isAvailable && (
+          {isAvailable ? (
             <Link to={`/accounts/${account.id}`}>
               <Button className="btn-gaming gap-2">
                 <ShoppingCart className="h-4 w-4" />
               </Button>
             </Link>
+          ) : (
+            <Button disabled className="gap-2 opacity-50 cursor-not-allowed">
+                <ShoppingCart className="h-4 w-4" />
+            </Button>
           )}
         </div>
       </div>

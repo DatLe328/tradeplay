@@ -8,6 +8,11 @@ import {
 	Upload,
 	Loader2,
 	Link as LinkIcon,
+	CheckCircle2,
+	Clock,
+	Banknote,
+	Ban,
+	ImageIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,7 +59,7 @@ import {
 	sortableKeyboardCoordinates,
 	rectSortingStrategy,
 } from "@dnd-kit/sortable";
-import { authService } from "@/services/authService";
+import { AccountStatus } from "@/constants/enums";
 
 function CircularProgress({ value }: { value: number }) {
 	const radius = 18;
@@ -234,7 +239,7 @@ interface FormData {
 	original_price: string;
 	description: string;
 	features: string;
-	status: "available" | "reserved" | "delivered" | "deleted" | "sold";
+	status: AccountStatus;
 	attributes: GameAttributes;
 	thumbnailIndex: number;
 }
@@ -252,7 +257,7 @@ const initialFormData: FormData = {
 	original_price: "",
 	description: "",
 	features: "",
-	status: "available",
+	status: AccountStatus.Available,
 	attributes: {},
 	thumbnailIndex: 0,
 };
@@ -273,7 +278,7 @@ export default function AdminAccounts() {
 
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [editingAccount, setEditingAccount] = useState<GameAccount | null>(
-		null
+		null,
 	);
 	const [previewImages, setPreviewImages] = useState<SortablePhoto[]>([]);
 	const [localFiles, setLocalFiles] = useState<Record<string, File>>({});
@@ -298,7 +303,7 @@ export default function AdminAccounts() {
 		}),
 		useSensor(KeyboardSensor, {
 			coordinateGetter: sortableKeyboardCoordinates,
-		})
+		}),
 	);
 
 	const handleDragEnd = (event: DragEndEvent) => {
@@ -307,7 +312,7 @@ export default function AdminAccounts() {
 		if (over && active.id !== over.id) {
 			setPreviewImages((items) => {
 				const oldIndex = items.findIndex(
-					(item) => item.id === active.id
+					(item) => item.id === active.id,
 				);
 				const newIndex = items.findIndex((item) => item.id === over.id);
 
@@ -315,7 +320,7 @@ export default function AdminAccounts() {
 				const newItems = arrayMove(items, oldIndex, newIndex);
 
 				const newThumbnailIndex = newItems.findIndex(
-					(item) => item.id === currentThumbnailItem.id
+					(item) => item.id === currentThumbnailItem.id,
 				);
 
 				if (
@@ -390,7 +395,7 @@ export default function AdminAccounts() {
 	const openEditDialog = (account: GameAccount) => {
 		setEditingAccount(account);
 		const thumbnailIndex = account.images.findIndex(
-			(img) => img === account.thumbnail
+			(img) => img === account.thumbnail,
 		);
 		setFormData({
 			gameName: account.game_name || "",
@@ -411,7 +416,7 @@ export default function AdminAccounts() {
 				id: crypto.randomUUID(),
 				url: url,
 				mediaType: getMediaType(url),
-			})
+			}),
 		);
 		setPreviewImages(formattedImages);
 		setLocalFiles({});
@@ -484,164 +489,166 @@ export default function AdminAccounts() {
 		setFormData({ ...formData, thumbnailIndex: index });
 	};
 
+	const uploadFiles = async (
+		filesToUpload: { url: string; index: number; id: string }[],
+		localFiles: Record<string, File>,
+		onProgress: (id: string, percent: number) => void,
+	) => {
+		const results: { index: number; url: string }[] = [];
+		const BATCH_SIZE = 5;
+
+		for (let i = 0; i < filesToUpload.length; i += BATCH_SIZE) {
+			const batch = filesToUpload.slice(i, i + BATCH_SIZE);
+			await Promise.all(
+				batch.map(async (item) => {
+					const file = localFiles[item.url];
+					onProgress(item.id, 0);
+					try {
+						const fileUrl = await accountService.uploadImageDirect(
+							file,
+							(percent) => onProgress(item.id, percent),
+						);
+						onProgress(item.id, 100);
+						results.push({ index: item.index, url: fileUrl });
+					} catch (error) {
+						console.error("Upload failed", error);
+						throw error;
+					}
+				}),
+			);
+		}
+		return results;
+	};
+
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		setIsSubmitting(true);
 		setUploadProgress({ current: 0, total: 0 });
 		setImageProgressMap({});
 
-		let failedCount = 0;
-
 		try {
 			const filesToUpload = previewImages
 				.map((img, index) => ({ ...img, index }))
 				.filter(
 					(item) =>
-						item.url.startsWith("blob:") && localFiles[item.url]
+						item.url.startsWith("blob:") && localFiles[item.url],
 				);
 
 			setUploadProgress({ current: 0, total: filesToUpload.length });
 
-			const finalImageUrls = previewImages.map((img) => img.url);
-
-			const BATCH_SIZE = 5;
-
-			for (let i = 0; i < filesToUpload.length; i += BATCH_SIZE) {
-				const batch = filesToUpload.slice(i, i + BATCH_SIZE);
-
-				const batchResults = await Promise.allSettled(
-					batch.map(async (item) => {
-						const file = localFiles[item.url];
-
-						setImageProgressMap((prev) => ({
-							...prev,
-							[item.id]: 0,
-						}));
-
-						try {
-							const fileUrl =
-								await accountService.uploadImageDirect(
-									file,
-									(percent) => {
-										setImageProgressMap((prev) => ({
-											...prev,
-											[item.id]: percent,
-										}));
-									}
-								);
-
-							setImageProgressMap((prev) => ({
-								...prev,
-								[item.id]: 100,
-							}));
-
-							finalImageUrls[item.index] = fileUrl;
-							return fileUrl;
-						} catch (err) {
-							console.error(
-								`Upload failed at index ${item.index}`,
-								err
-							);
-							setImageProgressMap((prev) => {
-								const newState = { ...prev };
-								delete newState[item.id];
-								return newState;
-							});
-							throw err;
-						}
-					})
-				);
-
-				const failedInBatch = batchResults.filter(
-					(r) => r.status === "rejected"
-				);
-				failedCount += failedInBatch.length;
-
-				setUploadProgress((prev) => ({
-					...prev,
-					current: Math.min(prev.total, i + BATCH_SIZE),
-				}));
-			}
-
-			try {
-				await authService.getMe();
-			} catch (error) {
-				toast({
-					title: "Phiên đăng nhập hết hạn",
-					description:
-						"Vui lòng mở tab mới đăng nhập lại rồi quay lại bấm Lưu.",
-					variant: "destructive",
-					duration: 10000,
-				});
-				setIsSubmitting(false);
-				return;
-			}
-
-			const cleanedImageUrls = finalImageUrls.filter(
-				(url) =>
-					url && typeof url === "string" && !url.startsWith("blob:")
+			const finalImageUrls = previewImages.map((img) =>
+				img.url.startsWith("blob:") ? "" : img.url,
 			);
 
-			if (failedCount > 0) {
-				toast({
-					title: "Cảnh báo upload",
-					description: `Có ${failedCount} hình/video upload thất bại. Hệ thống đã lưu các hình thành công.`,
-					className: "bg-yellow-500 text-white border-none",
-					duration: 5000,
+			if (!editingAccount) {
+				const createPayload = {
+					game_name: formData.gameName,
+					title: formData.title,
+					price: Number(formData.price),
+					original_price: formData.original_price
+						? Number(formData.original_price)
+						: undefined,
+					description: formData.description,
+					features: formData.features
+						.split(",")
+						.map((f) => f.trim())
+						.filter(Boolean),
+					attributes: formData.attributes,
+
+					images: [],
+					thumbnail: "",
+					status: AccountStatus.Deleted,
+				};
+
+				const res = await accountService.create(createPayload);
+				const newAccountId = res.data;
+
+				if (!newAccountId)
+					throw new Error("Không lấy được ID tài khoản mới");
+
+				if (filesToUpload.length > 0) {
+					const uploadedResults = await uploadFiles(
+						filesToUpload,
+						localFiles,
+						(id, percent) =>
+							setImageProgressMap((prev) => ({
+								...prev,
+								[id]: percent,
+							})),
+					);
+
+					uploadedResults.forEach((res) => {
+						finalImageUrls[res.index] = res.url;
+					});
+				}
+
+				const thumbnailImage =
+					finalImageUrls[formData.thumbnailIndex] ||
+					finalImageUrls[0] ||
+					"";
+
+				await accountService.update(String(newAccountId), {
+					images: finalImageUrls.filter(Boolean),
+					thumbnail: thumbnailImage,
+					status: formData.status,
 				});
-			}
 
-			let thumbnailImage = "";
-			if (
-				cleanedImageUrls[formData.thumbnailIndex] &&
-				!cleanedImageUrls[formData.thumbnailIndex].startsWith("blob:")
-			) {
-				thumbnailImage = cleanedImageUrls[formData.thumbnailIndex];
+				toast({ title: "Thêm mới thành công" });
 			} else {
-				thumbnailImage = cleanedImageUrls[0] || "";
-			}
-
-			const payload = {
-				game_name: formData.gameName,
-				title: formData.title,
-				price: Number(formData.price),
-				original_price: formData.original_price
-					? Number(formData.original_price)
-					: undefined,
-				description: formData.description,
-				status: formData.status,
-				rank: (formData.attributes.rank as string) || "",
-				level: Number(formData.attributes.level || 0),
-				server: (formData.attributes.server as string) || "",
-				attributes: formData.attributes,
-				images: cleanedImageUrls,
-				thumbnail: thumbnailImage,
-				features: formData.features
-					.split(",")
-					.map((f) => f.trim())
-					.filter(Boolean),
-			};
-
-			if (editingAccount) {
-				await accountService.update(editingAccount.id, payload);
-				if (failedCount === 0) {
-					toast({ title: "Cập nhật thành công" });
+				if (filesToUpload.length > 0) {
+					const uploadedResults = await uploadFiles(
+						filesToUpload,
+						localFiles,
+						(id, percent) =>
+							setImageProgressMap((prev) => ({
+								...prev,
+								[id]: percent,
+							})),
+					);
+					uploadedResults.forEach((res) => {
+						finalImageUrls[res.index] = res.url;
+					});
 				}
-			} else {
-				await accountService.create(payload);
-				if (failedCount === 0) {
-					toast({ title: "Thêm mới thành công" });
-				}
+
+				const thumbnailImage =
+					finalImageUrls[formData.thumbnailIndex] ||
+					finalImageUrls[0] ||
+					"";
+
+				await accountService.update(editingAccount.id, {
+					game_name: formData.gameName,
+					title: formData.title,
+					price: Number(formData.price),
+					original_price: formData.original_price
+						? Number(formData.original_price)
+						: undefined,
+					description: formData.description,
+					features: formData.features
+						.split(",")
+						.map((f) => f.trim())
+						.filter(Boolean),
+					attributes: formData.attributes,
+					status: formData.status,
+					images: finalImageUrls.filter(Boolean),
+					thumbnail: thumbnailImage,
+				});
+
+				toast({ title: "Cập nhật thành công" });
 			}
 
 			loadAccounts(currentPage);
 			setIsDialogOpen(false);
 		} catch (error: any) {
+			console.error(error);
 			toast({
-				title: "Lỗi lưu dữ liệu",
-				description: error.message || "Có lỗi xảy ra",
+				title: "Lỗi xử lý",
+				description:
+					error.message || "Upload hoặc lưu dữ liệu thất bại",
 				variant: "destructive",
 			});
+			// Lưu ý: Nếu tạo mới thành công nhưng upload thất bại,
+			// account rác (status=deleted) vẫn tồn tại trong DB.
+			// Bạn có thể gọi API delete(newAccountId) ở đây nếu muốn dọn dẹp triệt để.
 		} finally {
 			setIsSubmitting(false);
 			setUploadProgress({ current: 0, total: 0 });
@@ -665,21 +672,45 @@ export default function AdminAccounts() {
 		}
 	};
 
-	const getStatusBadge = (status: string) => {
-		switch (status) {
-			case "available":
-				return <Badge className="badge-available">Còn hàng</Badge>;
-			case "reserved":
+	const getStatusBadge = (status: any) => {
+		switch (Number(status)) {
+			case AccountStatus.Available:
 				return (
-					<Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-						Đang giữ
+					<Badge
+						variant="outline"
+						className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20 gap-1.5 pl-1.5 pr-2.5"
+					>
+						<CheckCircle2 className="w-3.5 h-3.5" />
+						Còn hàng
 					</Badge>
 				);
-			case "sold":
-				return <Badge className="badge-sold">Đã bán</Badge>;
-			case "deleted":
+			case AccountStatus.Reserved:
 				return (
-					<Badge className="bg-red-500/20 text-red-400 border-red-500/30">
+					<Badge
+						variant="outline"
+						className="bg-orange-500/10 text-orange-600 border-orange-500/20 hover:bg-orange-500/20 gap-1.5 pl-1.5 pr-2.5"
+					>
+						<Clock className="w-3.5 h-3.5" />
+						Đã đặt cọc
+					</Badge>
+				);
+			case AccountStatus.Sold:
+				return (
+					<Badge
+						variant="outline"
+						className="bg-blue-600/10 text-blue-600 border-blue-600/20 hover:bg-blue-600/20 gap-1.5 pl-1.5 pr-2.5"
+					>
+						<Banknote className="w-3.5 h-3.5" />
+						Đã bán
+					</Badge>
+				);
+			case AccountStatus.Deleted:
+				return (
+					<Badge
+						variant="outline"
+						className="bg-gray-500/10 text-gray-500 border-gray-500/20 hover:bg-gray-500/20 gap-1.5 pl-1.5 pr-2.5"
+					>
+						<Ban className="w-3.5 h-3.5" />
 						Đã xóa
 					</Badge>
 				);
@@ -786,11 +817,17 @@ export default function AdminAccounts() {
 									className="bg-card hover:bg-secondary/50 transition-colors"
 								>
 									<td className="px-4 py-3">
-										<img
-											src={account.thumbnail}
-											alt={account.title}
-											className="w-12 h-12 rounded-lg object-cover"
-										/>
+										{account.thumbnail ? (
+											<img
+												src={account.thumbnail}
+												alt={account.title}
+												className="w-12 h-12 rounded-lg object-cover border border-border"
+											/>
+										) : (
+											<div className="w-12 h-12 rounded-lg bg-secondary/50 border border-border flex items-center justify-center">
+												<ImageIcon className="h-5 w-5 text-muted-foreground" />
+											</div>
+										)}
 									</td>
 									<td className="px-4 py-3 text-sm font-medium text-primary">
 										{account.id}
@@ -810,7 +847,7 @@ export default function AdminAccounts() {
 									<td className="px-4 py-3 text-sm text-muted-foreground">
 										{formatDate(
 											account.created_at ||
-												account.createdAt
+												account.createdAt,
 										)}
 									</td>
 									<td className="px-4 py-3">
@@ -940,18 +977,13 @@ export default function AdminAccounts() {
 							<div className="space-y-2">
 								<Label>Trạng thái</Label>
 								<Select
-									value={formData.status}
-									onValueChange={(
-										value:
-											| "available"
-											| "reserved"
-											| "delivered"
-											| "deleted"
-											| "sold"
-									) =>
+									value={formData.status.toString()}
+									onValueChange={(value) =>
 										setFormData({
 											...formData,
-											status: value,
+											status: Number(
+												value,
+											) as AccountStatus,
 										})
 									}
 								>
@@ -959,14 +991,25 @@ export default function AdminAccounts() {
 										<SelectValue />
 									</SelectTrigger>
 									<SelectContent>
-										<SelectItem value="available">
+										<SelectItem
+											value={AccountStatus.Available.toString()}
+										>
 											Còn hàng
 										</SelectItem>
-										<SelectItem value="reserved">
-											Đang giữ
+										<SelectItem
+											value={AccountStatus.Reserved.toString()}
+										>
+											Đã đặt cọc
 										</SelectItem>
-										<SelectItem value="sold">
+										<SelectItem
+											value={AccountStatus.Sold.toString()}
+										>
 											Đã bán
+										</SelectItem>
+										<SelectItem
+											value={AccountStatus.Deleted.toString()}
+										>
+											Đã xóa
 										</SelectItem>
 									</SelectContent>
 								</Select>

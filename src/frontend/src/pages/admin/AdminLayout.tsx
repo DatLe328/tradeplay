@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/authStore";
 import { useThemeStore } from "@/stores/themeStore";
+import { SystemRole } from "@/constants/enums";
 
 const adminNavItems = [
 	{ to: "/admin", icon: LayoutDashboard, label: "Dashboard", exact: true },
@@ -23,7 +24,7 @@ export default function AdminLayout() {
 	const { theme, toggleTheme } = useThemeStore();
 
 	// Check if user is admin
-	if (!isAuthenticated || user?.system_role !== "admin") {
+	if (!isAuthenticated || user?.system_role !== SystemRole.Admin) {
 		return <Navigate to="/auth" replace />;
 	}
 

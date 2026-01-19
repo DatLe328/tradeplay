@@ -7,18 +7,19 @@ import (
 	"github.com/DatLe328/service-context/core"
 )
 
-type SystemRole string
+type SystemRole int
 
 const (
-	RoleAdmin SystemRole = "admin"
-	RoleUser  SystemRole = "user"
+	RoleUser SystemRole = iota
+	RoleAdmin
 )
 
 type Status int
 
 const (
-	StatusActive Status = iota + 1
-	StatusDisable
+	StatusInactive Status = iota
+	StatusActive
+	StatusBanned
 )
 
 type User struct {
@@ -31,14 +32,14 @@ type User struct {
 	Email      string     `json:"email" gorm:"-"`
 }
 
-func NewUser(firstName, lastName, email string) User {
-	return User{
+func NewUser(firstName, lastName string) *User {
+	return &User{
 		SQLModel:   core.NewSQLModel(),
 		FirstName:  firstName,
 		LastName:   lastName,
 		Phone:      "",
 		SystemRole: RoleUser,
-		Status:     StatusDisable,
+		Status:     StatusInactive,
 	}
 }
 

@@ -30,3 +30,26 @@ func (s *mysqlRepo) FindAuthByUserID(ctx context.Context, userId int) (*entity.A
 	}
 	return &authData, nil
 }
+
+func (repo *mysqlRepo) FindAuthByEmailAndType(ctx context.Context, email string, authType entity.AuthType) (*entity.Auth, error) {
+	var data entity.Auth
+
+	if err := repo.db.WithContext(ctx).
+		Where("email = ? AND auth_type = ?", email, authType).
+		First(&data).Error; err != nil {
+		return nil, err
+	}
+
+	return &data, nil
+}
+
+func (repo *mysqlRepo) FindAuthByGoogleID(ctx context.Context, googleID string) (*entity.Auth, error) {
+	var data entity.Auth
+	if err := repo.db.WithContext(ctx).
+		Where("google_id = ? AND auth_type = ?", googleID, entity.AuthTypeGoogle).
+		First(&data).Error; err != nil {
+		return nil, err
+	}
+
+	return &data, nil
+}

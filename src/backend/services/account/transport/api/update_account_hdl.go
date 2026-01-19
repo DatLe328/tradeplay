@@ -20,7 +20,7 @@ func (api *api) UpdateAccountHandler() func(*gin.Context) {
 			return
 		}
 
-		var data entity.AccountDataPatch
+		var data entity.AccountDataUpdate
 		if err := c.ShouldBindJSON(&data); err != nil {
 			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
 			return

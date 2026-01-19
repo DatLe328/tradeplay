@@ -11,6 +11,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "@/stores/languageStore";
+import { AccountStatus, AccountStatusLabel } from "@/constants/enums";
 
 interface FilterState {
 	search: string;
@@ -38,6 +39,21 @@ export function AccountFilter({
 		{ value: "5000000-10000000", label: t("price5mTo10m") },
 		{ value: "10000000-20000000", label: t("price10mTo20m") },
 		{ value: "20000000-999999999", label: t("priceAbove20m") },
+	];
+	const statusOptions = [
+		{ value: "all", label: t("allStatuses") },
+		{
+			value: AccountStatus.Available.toString(),
+			label: AccountStatusLabel[AccountStatus.Available],
+		},
+		{
+			value: AccountStatus.Sold.toString(),
+			label: AccountStatusLabel[AccountStatus.Sold],
+		},
+		{
+			value: AccountStatus.Reserved.toString(),
+			label: AccountStatusLabel[AccountStatus.Reserved],
+		},
 	];
 	const games = [allGamesValue, "Play Together"];
 
@@ -155,6 +171,21 @@ export function AccountFilter({
 						))}
 					</SelectContent>
 				</Select>
+				<Select
+					value={filters.status}
+					onValueChange={(value) => updateFilter("status", value)}
+				>
+					<SelectTrigger className="w-[180px]">
+						<SelectValue placeholder="Trạng thái" />
+					</SelectTrigger>
+					<SelectContent>
+						{statusOptions.map((option) => (
+							<SelectItem key={option.value} value={option.value}>
+								{option.label}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
 
 				{hasActiveFilters && (
 					<Button
@@ -203,6 +234,24 @@ export function AccountFilter({
 									value={range.value}
 								>
 									{range.label}
+								</SelectItem>
+							))}
+						</SelectContent>
+					</Select>
+					<Select
+						value={filters.status}
+						onValueChange={(value) => updateFilter("status", value)}
+					>
+						<SelectTrigger>
+							<SelectValue placeholder="Trạng thái" />
+						</SelectTrigger>
+						<SelectContent>
+							{statusOptions.map((option) => (
+								<SelectItem
+									key={option.value}
+									value={option.value}
+								>
+									{option.label}
 								</SelectItem>
 							))}
 						</SelectContent>

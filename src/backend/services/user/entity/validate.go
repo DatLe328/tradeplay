@@ -41,7 +41,7 @@ func checkRole(r SystemRole) error {
 
 func checkStatus(s Status) error {
 
-	if s != StatusActive && s != StatusDisable {
+	if s != StatusActive && s != StatusInactive {
 		return ErrStatusIsNotValid
 	}
 

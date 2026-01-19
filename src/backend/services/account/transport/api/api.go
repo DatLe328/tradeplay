@@ -8,9 +8,9 @@ import (
 )
 
 type Business interface {
-	CreateAccount(ctx context.Context, data *entity.Account) error
+	CreateAccount(ctx context.Context, userId int, data *entity.AccountDataCreation) (*int, error)
 	ListAccount(ctx context.Context, filter *entity.Filter, paging *core.Paging) ([]entity.Account, error)
-	UpdateAccount(ctx context.Context, id int, data *entity.AccountDataPatch) error
+	UpdateAccount(ctx context.Context, id int, data *entity.AccountDataUpdate) error
 	DeleteAccount(ctx context.Context, id int) error
 	GetAccount(ctx context.Context, id int) (*entity.Account, error)
 }

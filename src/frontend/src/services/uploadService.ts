@@ -60,13 +60,13 @@ export const uploadService = {
         maxRetries: number = 3
     ): Promise<string> => {
         const isVideo = file.type.startsWith('video/');
-        const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
-        const MAX_VIDEO_SIZE = 10 * 1024 * 1024;
+        const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+        const MAX_VIDEO_SIZE = 200 * 1024 * 1024;
 
         if (isVideo) {
-            if (file.size > MAX_VIDEO_SIZE) throw new Error("Video quá lớn (Max 10MB)");
+            if (file.size > MAX_VIDEO_SIZE) throw new Error("Video quá lớn (Max 200MB)");
         } else {
-            if (file.size > MAX_IMAGE_SIZE) throw new Error("Ảnh quá lớn (Max 2MB)");
+            if (file.size > MAX_IMAGE_SIZE) throw new Error("Ảnh quá lớn (Max 10MB)");
         }
 
         let attempt = 0;

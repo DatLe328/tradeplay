@@ -7,10 +7,11 @@ import (
 )
 
 type api struct {
+	serviceCtx sctx.ServiceContext
 	uploadComp common.UploadComponent
 }
 
 func NewUploadAPI(serviceCtx sctx.ServiceContext) *api {
 	uploadComp := serviceCtx.MustGet(common.KeyCompUpload).(common.UploadComponent)
-	return &api{uploadComp: uploadComp}
+	return &api{serviceCtx: serviceCtx, uploadComp: uploadComp}
 }

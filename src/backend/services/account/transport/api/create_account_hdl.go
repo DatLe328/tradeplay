@@ -11,7 +11,7 @@ import (
 
 func (api *api) CreateAccountHandler() func(*gin.Context) {
 	return func(c *gin.Context) {
-		var data entity.Account
+		var data entity.AccountDataCreation
 
 		if err := c.ShouldBindJSON(&data); err != nil {
 			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
@@ -21,15 +21,14 @@ func (api *api) CreateAccountHandler() func(*gin.Context) {
 		requester := c.MustGet(core.KeyRequester).(core.Requester)
 
 		uid, _ := core.FromBase58(requester.GetSubject())
-		data.OwnerId = int(uid.GetLocalID())
+		userId := int(uid.GetLocalID())
 
-		data.Status = entity.AccountStatusAvailable
-
-		if err := api.business.CreateAccount(c.Request.Context(), &data); err != nil {
+		newId, err := api.business.CreateAccount(c.Request.Context(), userId, &data)
+		if err != nil {
 			common.WriteErrorResponse(c, err)
 			return
 		}
 
-		c.JSON(http.StatusOK, core.ResponseData(true))
+		c.JSON(http.StatusOK, core.ResponseData(newId))
 	}
 }

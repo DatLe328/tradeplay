@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useAuthStore } from '@/stores/authStore';
 import { WELCOME_POPUP_KEY } from "@/components/layout/WelcomePopup";
 
-export const IDLE_TIMEOUT = 1 * 60 * 1000;
+export const IDLE_TIMEOUT = 8 * 60 * 60 * 1000;
 const CHECK_INTERVAL = 1 * 60 * 1000;
 
 export const useIdleTimeout = () => {

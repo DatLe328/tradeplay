@@ -7,9 +7,15 @@ import (
 	"github.com/DatLe328/service-context/core"
 )
 
-func (repo *mysqlRepo) ListAllOrders(ctx context.Context, paging *core.Paging) ([]orderEntity.Order, error) {
+func (repo *mysqlRepo) ListAllOrders(ctx context.Context, filter *orderEntity.OrderFilter, paging *core.Paging) ([]orderEntity.Order, error) {
 	var result []orderEntity.Order
 	db := repo.db.Table(orderEntity.Order{}.TableName())
+
+	if filter != nil {
+		if filter.Type != nil {
+			db = db.Where("type = ?", *filter.Type)
+		}
+	}
 
 	if err := db.Count(&paging.Total).Error; err != nil {
 		return nil, core.ErrDB(err)

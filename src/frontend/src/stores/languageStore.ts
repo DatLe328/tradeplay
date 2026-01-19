@@ -32,7 +32,7 @@ export const translations = {
 		no: "Không",
 		success: "Thành công",
 		error: "Lỗi",
-		
+
 		// Header
 		home: "🏠 Trang Chủ",
 		accounts: "🎮 Acc Game",
@@ -41,7 +41,7 @@ export const translations = {
 		orders: "Đơn Hàng",
 		login: "Đăng nhập",
 		logout: "Đăng xuất",
-		
+
 		// Header Navigation Keys
 		navHome: "Trang Chủ",
 		navAccounts: "Acc Game",
@@ -53,8 +53,7 @@ export const translations = {
 		shopBadge: "✨ Shop acc Play Together uy tín ✨",
 		heroTitle1: "TienCoTruong",
 		heroTitle2: "Shop 🎮💖",
-		heroDescription:
-			"🌟 Chuyên mua bán acc Play Together chất lượng cao!",
+		heroDescription: "🌟 Chuyên mua bán acc Play Together chất lượng cao!",
 		viewAccounts: "🎮 Xem Acc Ngay",
 		viewAccNow: "Xem Acc Ngay",
 		registerFree: "✨ Đăng ký miễn phí",
@@ -78,7 +77,7 @@ export const translations = {
 		findByPrice: "Tìm Acc theo",
 		price: "Giá",
 		findByPriceDesc: "Chọn khoảng giá phù hợp với túi tiền của bạn! 🎯",
-		
+
 		// Price Filters
 		priceUnder1m: "Dưới 1 Triệu",
 		price1mTo5m: "1 - 5 Triệu",
@@ -90,7 +89,7 @@ export const translations = {
 		filterPrice5mTo10m: "5 - 10 Triệu",
 		filterPrice10mTo20m: "10 - 20 Triệu",
 		filterPriceAbove20m: "Trên 20 Triệu",
-		
+
 		priceDescCheap: "Acc giá rẻ cho newbie",
 		priceDescGood: "Acc chất lượng tốt",
 		priceDescVip: "Acc VIP nhiều đồ",
@@ -367,7 +366,7 @@ export const translations = {
 		contactLabel: "📞 Liên hệ",
 		madeWith: "Made with",
 		by: "by TienCoTruong Shop",
-		
+
 		// Profile Page
 		profile: "Thông tin cá nhân",
 		profileDesc: "Xem và chỉnh sửa thông tin cá nhân của bạn",
@@ -380,6 +379,39 @@ export const translations = {
 		// Pagination
 		showingResults: "Hiển thị {start}-{end} / {totalItems} kết quả",
 		perPage: "Mỗi trang:",
+
+		// Payment Page
+		paymentSuccess: "Thanh toán thành công!",
+
+		// Deposit Page
+		balance: "Số dư",
+		deposit: "Nạp Tiền",
+		depositDesc: "Nạp tiền vào tài khoản để mua acc game",
+		depositSubtitle: "Chọn phương thức thanh toán và số tiền bạn muốn nạp",
+		currentBalance: "Số dư hiện tại",
+		selectPaymentMethod: "Chọn phương thức thanh toán",
+		depositBankTransferDesc: "Thanh toán qua QR code ngân hàng",
+		depositMomoDesc: "Thanh toán qua ví MoMo",
+		phoneScratchCard: "Thẻ cào điện thoại (Viettel, Mobifone, Vinaphone)",
+		phoneScratchCardDesc: "Thanh toán bằng thẻ cào điện thoại",
+		comingSoon: "Sắp có",
+		selectAmount: "Chọn số tiền nạp",
+		orEnterAmount: "Hoặc nhập số tiền khác",
+		minAmount: "Tối thiểu 10.000đ",
+		minAmountError: "Số tiền tối thiểu là 10.000đ",
+		depositAmount: "Số tiền nạp",
+		generateQR: "Tạo mã QR",
+		scanQRToPay: "Quét mã QR để thanh toán",
+		amount: "Số tiền",
+		transactionCode: "Mã giao dịch",
+		qrNote: "Vui lòng nhập đúng nội dung chuyển khoản để được cộng tiền tự động",
+		qrExpired: "Mã QR đã hết hạn",
+		qrExpiredDesc: "Mã QR này đã hết hạn sau 5 phút. Vui lòng tạo mã mới.",
+		generateNewQR: "Tạo mã QR mới",
+		createOrderFailed: "Tạo đơn hàng không thành công.",
+		depositSuccessDesc: "Nạp tiền thành công!",
+		unknown: "Không tồn tại.",
+		allStatuses: "Tất cả trạng thái",
 	},
 	en: {
 		yes: "Yes",
@@ -392,7 +424,7 @@ export const translations = {
 		accounts: "🎮 Accounts",
 		guide: "📖 Guide",
 		warranty: "🛡️ Warranty",
-		orders: "📦 Orders",
+		orders: "Orders",
 		login: "Login",
 		logout: "Logout",
 
@@ -407,8 +439,7 @@ export const translations = {
 		shopBadge: "✨ Trusted Play Together Account Shop ✨",
 		heroTitle1: "TienCoTruong",
 		heroTitle2: "Shop 🎮💖",
-		heroDescription:
-			"🌟 Premium Play Together accounts!",
+		heroDescription: "🌟 Premium Play Together accounts!",
 		viewAccounts: "🎮 View Accounts",
 		viewAccNow: "View Accounts",
 		registerFree: "✨ Register Free",
@@ -432,7 +463,7 @@ export const translations = {
 		findByPrice: "Find Accounts by",
 		price: "Price",
 		findByPriceDesc: "Choose a price range that fits your budget! 🎯",
-		
+
 		// Price Filters
 		priceUnder1m: "Under 1 Million VND",
 		price1mTo5m: "1 - 5 Million VND",
@@ -720,7 +751,7 @@ export const translations = {
 		contactLabel: "📞 Contact",
 		madeWith: "Made with",
 		by: "by TienCoTruong Shop",
-		
+
 		// Profile Page
 		profile: "Profile",
 		profileDesc: "View and edit your profile information",
@@ -733,6 +764,40 @@ export const translations = {
 		// Pagination
 		showingResults: "Showing {start}-{end} of {totalItems} results",
 		perPage: "Per page:",
+
+		// Payment Page
+		paymentSuccess: "Payment Successful!",
+
+		// Deposit Page
+		balance: "Balance",
+		deposit: "Deposit",
+		depositDesc: "Add funds to your account to buy game accounts",
+		depositSubtitle: "Choose payment method and amount you want to deposit",
+		currentBalance: "Current Balance",
+		selectPaymentMethod: "Select Payment Method",
+		depositBankTransferDesc: "Pay via bank QR code",
+		depositMomoDesc: "Pay via MoMo wallet",
+		phoneScratchCard: "Phone Scratch Card",
+		phoneScratchCardDesc: "Pay with phone scratch card",
+		comingSoon: "Coming Soon",
+		selectAmount: "Select Amount",
+		orEnterAmount: "Or enter custom amount",
+		minAmount: "Minimum 10,000đ",
+		minAmountError: "Minimum amount is 10,000đ",
+		depositAmount: "Deposit Amount",
+		generateQR: "Generate QR Code",
+		scanQRToPay: "Scan QR Code to Pay",
+		amount: "Amount",
+		transactionCode: "Transaction Code",
+		qrNote: "Please enter the correct transfer content to receive automatic credit",
+		qrExpired: "QR Code Expired",
+		qrExpiredDesc:
+			"This QR code has expired after 5 minutes. Please generate a new one.",
+		generateNewQR: "Generate New QR",
+		createOrderFailed: "Fail to create order",
+		depositSuccessDesc: "Deposit successful!",
+		unknown: "Unknown.",
+		allStatuses: "All statues",
 	},
 };
 
