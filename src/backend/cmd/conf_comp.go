@@ -8,8 +8,10 @@ import (
 )
 
 type config struct {
-	s3Prefix    string
-	sepayApiKey string
+	s3Prefix         string
+	sepayApiKey      string
+	underMaintenance bool
+	appSecretKey     string
 }
 
 func NewConfig() *config {
@@ -34,6 +36,20 @@ func (c *config) InitFlags() {
 		"",
 		"Sepay api key",
 	)
+
+	flag.StringVar(
+		&c.appSecretKey,
+		"app-secret-key",
+		"",
+		"Application secret key",
+	)
+
+	flag.BoolVar(
+		&c.underMaintenance,
+		"under-maintenance",
+		false,
+		"Enable maintenance mode",
+	)
 }
 
 func (c *config) Activate(sctx.ServiceContext) error {
@@ -50,4 +66,12 @@ func (c *config) S3Prefix() string {
 
 func (c *config) SepayAPIKey() string {
 	return c.sepayApiKey
+}
+
+func (c *config) UnderMaintenance() bool {
+	return c.underMaintenance
+}
+
+func (c *config) AppSecretKey() string {
+	return c.appSecretKey
 }

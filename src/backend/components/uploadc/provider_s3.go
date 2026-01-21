@@ -31,7 +31,7 @@ type s3Provider struct {
 	presignClient *s3.PresignClient
 }
 
-func NewS3Provider(bucket, region, domain, accessKey, secretKey string) (*s3Provider, error) {
+func NewS3Provider(bucket, region, endpoint, domain, accessKey, secretKey string) (*s3Provider, error) {
 	cfg, err := config.LoadDefaultConfig(context.Background(),
 		config.WithRegion(region),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
@@ -40,7 +40,12 @@ func NewS3Provider(bucket, region, domain, accessKey, secretKey string) (*s3Prov
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
 	}
 
-	client := s3.NewFromConfig(cfg)
+	client := s3.NewFromConfig(cfg, func(o *s3.Options) {
+		if endpoint != "" {
+			o.BaseEndpoint = aws.String(endpoint)
+		}
+	})
+
 	uploader := manager.NewUploader(client)
 	presignClient := s3.NewPresignClient(client)
 
@@ -70,7 +75,7 @@ func (p *s3Provider) UploadFile(ctx context.Context, data []byte, dst string) (*
 		Body:        bytes.NewReader(data),
 		ContentType: aws.String(contentType),
 
-		CacheControl: aws.String("public, max-age=2592000"),
+		CacheControl: aws.String("public, max-age=31536000, immutable"),
 
 		ACL: types.ObjectCannedACLPrivate,
 	})

@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 	"tradeplay/common"
+	"tradeplay/components/cronc"
 	"tradeplay/components/emailc"
 	upload "tradeplay/components/uploadc"
 	"tradeplay/composer"
@@ -30,6 +31,7 @@ func newServiceCtx() sctx.ServiceContext {
 		sctx.WithComponent(gormc.NewGormDB(common.KeyCompMySQL, "")),
 		sctx.WithComponent(upload.NewUploadComponent(common.KeyCompUpload)),
 		sctx.WithComponent(emailc.NewEmailProvider(common.KeyCompEmail)),
+		sctx.WithComponent(cronc.NewCronComponent()),
 	)
 }
 
@@ -79,6 +81,7 @@ func setupRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	{
 		account.GET("", accountAPI.ListAccountHandler())
 		account.GET("/:id", accountAPI.GetAccountHandler())
+		account.GET("/:id/credentials", requireAuthMdw, accountAPI.GetAccountCredentialsHandler())
 	}
 
 	orders := v1.Group("/orders", requireAuthMdw, csrfValidate)
@@ -156,6 +159,9 @@ func Execute() {
 	router.Use(gin.Recovery(), gin.Logger(), sctxMdw.Recovery(serviceCtx))
 	router.Use(middleware.Cors())
 	router.Use(middleware.SecurityHeaders())
+	router.Use(
+		middleware.MaintenanceSensitiveOnly(serviceCtx),
+	)
 
 	setupRoute(serviceCtx, router)
 	setupAdminRoute(serviceCtx, router)

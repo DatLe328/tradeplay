@@ -9,3 +9,7 @@ type mysqlRepo struct {
 func NewMySQLRepository(db *gorm.DB) *mysqlRepo {
 	return &mysqlRepo{db: db}
 }
+
+func (repo *mysqlRepo) GetDB() *gorm.DB {
+	return repo.db
+}

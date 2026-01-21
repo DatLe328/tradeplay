@@ -3,23 +3,17 @@ package business
 import (
 	"context"
 	"log"
+	"tradeplay/common"
 	"tradeplay/services/account/entity"
 
 	"github.com/DatLe328/service-context/core"
+	"gorm.io/gorm"
 )
 
 func (biz *business) UpdateAccount(ctx context.Context, id int, data *entity.AccountDataUpdate) error {
 	oldAccount, err := biz.accountRepo.GetAccountByID(ctx, id)
 	if err != nil {
 		return core.ErrCannotGetEntity(entity.Account{}.TableName(), err)
-	}
-
-	// if oldAccount.Status == entity.AccountStatusSold || oldAccount.Status == entity.AccountStatusDeleted {
-	// 	return core.ErrInvalidRequest(errors.New("warning: updating a sold or deleted account is restricted"))
-	// }
-
-	if err := biz.accountRepo.UpdateAccount(ctx, id, data); err != nil {
-		return core.ErrInternal(err)
 	}
 
 	if data.Images != nil {
@@ -35,7 +29,47 @@ func (biz *business) UpdateAccount(ctx context.Context, id int, data *entity.Acc
 		}
 	}
 
-	return nil
+	db := biz.accountRepo.GetDB()
+
+	return db.Transaction(func(tx *gorm.DB) error {
+		if err := biz.accountRepo.UpdateAccount(ctx, tx, id, data); err != nil {
+			return err
+		}
+
+		if data.Username != nil || data.Password != nil || data.ExtraData != nil {
+			infoUpdate := &entity.AccountInfo{}
+
+			if data.Username != nil {
+				encUser, err := common.Encrypt(*data.Username, biz.appSecretKey)
+				if err != nil {
+					return core.ErrInternal(err)
+				}
+				infoUpdate.Username = encUser
+			}
+
+			if data.Password != nil {
+				encPass, err := common.Encrypt(*data.Password, biz.appSecretKey)
+				if err != nil {
+					return core.ErrInternal(err)
+				}
+				infoUpdate.Password = encPass
+			}
+
+			if data.ExtraData != nil {
+				encExtra, err := common.Encrypt(*data.ExtraData, biz.appSecretKey)
+				if err != nil {
+					return core.ErrInternal(err)
+				}
+				infoUpdate.ExtraData = encExtra
+			}
+
+			if err := biz.accountRepo.UpdateAccountInfo(ctx, tx, id, infoUpdate); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func findDeletedImages(oldImages, newImages []string) []string {

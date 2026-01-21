@@ -26,7 +26,7 @@ func (a *api) GeneratePresignedURLHandler() gin.HandlerFunc {
 			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
 			return
 		}
-		const MAX_UPLOAD_SIZE = 200 * 1024 * 1024
+		const MAX_UPLOAD_SIZE = 100 * 1024 * 1024
 		if req.Size > MAX_UPLOAD_SIZE {
 			common.WriteErrorResponse(c, core.ErrInvalidRequest(
 				fmt.Errorf("file size %d bytes exceeds limit of %d bytes", req.Size, MAX_UPLOAD_SIZE),

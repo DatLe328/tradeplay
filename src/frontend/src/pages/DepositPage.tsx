@@ -30,7 +30,7 @@ import { OrderStatus } from "@/constants/enums";
 import { useToast } from "@/hooks/use-toast";
 import { orderService } from "@/services/orderService";
 
-const PRESET_AMOUNTS = [10000, 20000, 50000, 100000, 200000, 500000];
+// Đã bỏ PRESET_AMOUNTS theo yêu cầu
 const QR_EXPIRY_SECONDS = 300;
 
 export default function DepositPage() {
@@ -45,8 +45,11 @@ export default function DepositPage() {
 
 	const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
 	const [showQRModal, setShowQRModal] = useState(false);
-	const [amount, setAmount] = useState<number>(10000);
+	
+	// Khởi tạo amount là 0 để người dùng tự nhập
+	const [amount, setAmount] = useState<number>(0);
 	const [customAmount, setCustomAmount] = useState<string>("");
+	
 	const [timeLeft, setTimeLeft] = useState(QR_EXPIRY_SECONDS);
 	const [qrExpired, setQrExpired] = useState(false);
 
@@ -86,55 +89,40 @@ export default function DepositPage() {
 		}
 		return () => clearInterval(timer);
 	}, [showQRModal, timeLeft, qrExpired]);
+
 	useEffect(() => {
 		let intervalId: ReturnType<typeof setInterval>;
 
 		if (showQRModal && transactionCode) {
 			const checkOrderStatus = async () => {
 				try {
-					// Gọi API lấy chi tiết đơn hàng hiện tại
-					const res =
-						await orderService.getOrderDetail(transactionCode);
+					const res = await orderService.getOrderDetail(transactionCode);
 					const order = res.data;
 
-					// Nếu trạng thái đã là Paid hoặc Completed
 					if (
 						order &&
 						(order.status === OrderStatus.Paid ||
 							order.status === OrderStatus.Completed)
 					) {
-						// 1. Thông báo thành công
 						toast({
 							title: t("success"),
-							description:
-								t("depositSuccessDesc") ||
-								"Nạp tiền thành công!",
+							description: t("depositSuccessDesc") || "Nạp tiền thành công!",
 							className: "bg-green-500 text-white border-none",
 						});
 
-						// 2. Đóng Modal
 						setShowQRModal(false);
-
-						// 3. Cập nhật lại số dư mới nhất ngay lập tức
 						fetchBalance();
-
-						// 4. Reset form (nếu cần)
 						setTransactionCode("");
 					}
 				} catch (error) {
-					// Lỗi polling thì bỏ qua, đợi lần sau check tiếp
 					console.log("Polling error", error);
 				}
 			};
 
-			// Chạy ngay lần đầu
 			checkOrderStatus();
-
-			// Set interval chạy mỗi 3 giây (hoặc 2 giây)
 			intervalId = setInterval(checkOrderStatus, 3000);
 		}
 
-		// Cleanup khi component unmount hoặc đóng modal
 		return () => {
 			if (intervalId) clearInterval(intervalId);
 		};
@@ -150,27 +138,25 @@ export default function DepositPage() {
 		setSelectedMethod(method);
 	};
 
-	const handleAmountSelect = (value: number) => {
-		setAmount(value);
-		setCustomAmount("");
-	};
+	const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const rawValue = e.target.value.replace(/\D/g, "");
 
-	const handleCustomAmountChange = (
-		e: React.ChangeEvent<HTMLInputElement>,
-	) => {
-		const value = e.target.value.replace(/\D/g, "");
-		setCustomAmount(value);
-		if (value) {
-			setAmount(parseInt(value, 10));
+		if (rawValue) {
+			setAmount(parseInt(rawValue, 10));
+		} else {
+			setAmount(0);
 		}
+
+		const formattedValue = rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+		
+		setCustomAmount(formattedValue);
 	};
 
 	const handleGenerateQR = async () => {
 		if (import.meta.env.VITE_UNDER_MAINTENANCE === "true") {
 			toast({
 				title: "Hệ thống bảo trì",
-				description:
-					"Vui lòng liên hệ qua zalo/telegram để mua acc game",
+				description: "Vui lòng liên hệ qua zalo/telegram để mua acc game",
 				variant: "destructive",
 			});
 			return;
@@ -231,14 +217,10 @@ export default function DepositPage() {
 	];
 
 	const generateQRUrl = () => {
-		const bankId = "MB";
-		const accountNo = "0368142412";
-		const accountName = "LE VAN DAT";
-		const template = "compact2";
-
-		const content = `${transactionCode}`;
-
-		return `https://img.vietqr.io/image/${bankId}-${accountNo}-${template}.png?amount=${amount}&addInfo=${encodeURIComponent(content)}&accountName=${encodeURIComponent(accountName)}`;
+		const bankId = "BIDV";
+		const accountNo = "96247C7Y40";
+		const content = `DHTCT${transactionCode}`;
+		return `https://qr.sepay.vn/img?acc=${accountNo}&bank=${bankId}&amount=${amount}&des=${encodeURIComponent(content)}`;
 	};
 
 	if (!isAuthenticated) return null;
@@ -251,7 +233,6 @@ export default function DepositPage() {
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.5 }}
 				>
-					{/* ... (Phần UI chọn phương thức và nhập tiền giữ nguyên) ... */}
 					<div className="text-center mb-8">
 						<h1 className="text-3xl font-bold font-gaming text-gradient mb-2">
 							{t("deposit")}
@@ -347,68 +328,45 @@ export default function DepositPage() {
 										</CardTitle>
 									</CardHeader>
 									<CardContent>
-										<div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-											{PRESET_AMOUNTS.map((preset) => (
-												<Button
-													key={preset}
-													variant={
-														amount === preset &&
-														!customAmount
-															? "default"
-															: "outline"
-													}
-													className={`h-12 ${amount === preset && !customAmount ? "btn-gaming" : ""}`}
-													onClick={() =>
-														handleAmountSelect(
-															preset,
-														)
-													}
-												>
-													{formatCurrency(preset)}
-												</Button>
-											))}
-										</div>
-
-										<div className="space-y-2">
-											<Label htmlFor="customAmount">
-												{t("orEnterAmount")}
+										<div className="space-y-4">
+											<Label htmlFor="customAmount" className="text-lg">
+												{t("enterAmount")}
 											</Label>
 											<div className="relative">
 												<Input
 													id="customAmount"
 													type="text"
-													placeholder={t("minAmount")}
+													placeholder="Ví dụ: 50.000"
 													value={customAmount}
-													onChange={
-														handleCustomAmountChange
-													}
-													className="pr-12"
+													onChange={handleCustomAmountChange}
+													className="pr-12 text-lg h-12"
 												/>
-												<span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+												<span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">
 													VNĐ
 												</span>
 											</div>
-											{amount < 10000 && customAmount && (
-												<p className="text-sm text-destructive flex items-center gap-1">
+											
+											{amount > 0 && amount < 10000 && (
+												<p className="text-sm text-destructive flex items-center gap-1 animate-pulse">
 													<AlertCircle className="h-4 w-4" />
-													{t("minAmountError")}
+													{t("minAmountError") || "Số tiền nạp tối thiểu là 10.000đ"}
 												</p>
 											)}
 										</div>
 
-										<div className="mt-6 p-4 bg-secondary/50 rounded-lg">
+										<div className="mt-6 p-4 bg-secondary/50 rounded-lg border border-secondary">
 											<div className="flex justify-between items-center">
 												<span className="text-muted-foreground">
 													{t("depositAmount")}:
 												</span>
-												<span className="text-xl font-bold text-primary">
-													{formatCurrency(amount)}
+												<span className="text-2xl font-bold text-primary">
+													{customAmount || "0"} đ
 												</span>
 											</div>
 										</div>
 
 										<Button
-											className="w-full mt-6 btn-gaming"
+											className="w-full mt-6 btn-gaming h-12 text-lg"
 											onClick={handleGenerateQR}
 											disabled={
 												amount < 10000 ||
@@ -416,9 +374,9 @@ export default function DepositPage() {
 											}
 										>
 											{isCreatingOrder ? (
-												<Loader2 className="h-4 w-4 animate-spin mr-2" />
+												<Loader2 className="h-5 w-5 animate-spin mr-2" />
 											) : (
-												<QrCode className="h-4 w-4 mr-2" />
+												<QrCode className="h-5 w-5 mr-2" />
 											)}
 											{t("generateQR")}
 										</Button>
@@ -430,7 +388,6 @@ export default function DepositPage() {
 				</motion.div>
 			</div>
 
-			{/* QR Code Modal */}
 			<Dialog open={showQRModal} onOpenChange={setShowQRModal}>
 				<DialogContent className="sm:max-w-md">
 					<DialogHeader>
@@ -438,8 +395,6 @@ export default function DepositPage() {
 							<QrCode className="h-5 w-5" />
 							{t("scanQRToPay")}
 						</DialogTitle>
-
-						{/* 2. THÊM COMPONENT DESCRIPTION VÀO ĐÂY */}
 						<DialogDescription>
 							{t("qrExpiredDesc")
 								? t("qrExpiredDesc").replace(
@@ -493,8 +448,8 @@ export default function DepositPage() {
 										</span>
 									</div>
 									<p className="text-xs text-center text-muted-foreground italic">
-										Lưu ý: Chuyển khoản đúng nội dung để
-										được cộng tiền tự động
+										Lưu ý: Không được chỉnh sửa nội dung và số tiền 
+										để được cộng tiền tự động
 									</p>
 								</div>
 							</>

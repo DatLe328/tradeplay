@@ -12,12 +12,27 @@ import (
 
 	"github.com/DatLe328/service-context/core"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 func (biz *business) CreateOrder(ctx context.Context, userId int, data *entity.OrderCreate, ipAddress string) (*entity.Order, error) {
 	if data.Type == entity.OrderTypeDeposit {
 		if data.TotalPrice < 10000 {
 			return nil, core.ErrInvalidRequest(errors.New("số tiền nạp tối thiểu là 10,000 VND"))
+		}
+		var existingOrder entity.Order
+		err := biz.repo.GetDB().Where("user_id = ? AND status = ? AND type = ?",
+			userId, entity.OrderStatusPending, entity.OrderTypeDeposit).
+			First(&existingOrder).Error
+
+		if err == nil {
+			if existingOrder.TotalPrice == data.TotalPrice {
+				existingOrder.Mask()
+				return &existingOrder, nil
+			}
+
+			biz.repo.GetDB().Model(&existingOrder).
+				Update("status", entity.OrderStatusCancelled)
 		}
 
 		newOrder := &entity.Order{
@@ -33,7 +48,7 @@ func (biz *business) CreateOrder(ctx context.Context, userId int, data *entity.O
 		if err := biz.repo.CreateOrder(ctx, newOrder); err != nil {
 			return nil, core.ErrInternal(err)
 		}
-		_ = biz.repo.CreateOrderHistory(ctx, &entity.OrderHistory{
+		_ = biz.repo.CreateOrderHistory(ctx, nil, &entity.OrderHistory{
 			OrderId:   newOrder.Id,
 			NewStatus: entity.OrderStatusPending,
 			Note:      "Tạo đơn nạp tiền",
@@ -59,10 +74,10 @@ func (biz *business) CreateOrder(ctx context.Context, userId int, data *entity.O
 	db := biz.walletRepo.GetDB()
 
 	err = db.Transaction(func(tx *gorm.DB) error {
-		// 1. Kiểm tra Account (Có thể lock row nếu cần thiết, ở đây check status)
-		// Lưu ý: Tốt nhất nên dùng query trực tiếp với tx để đảm bảo consistency
 		var account accountEntity.Account
-		if err := tx.First(&account, accId).Error; err != nil {
+
+		if err := tx.Clauses(clause.Locking{Strength: "UPDATE"}).
+			First(&account, accId).Error; err != nil {
 			return core.ErrInvalidRequest(errors.New("account not found"))
 		}
 
@@ -70,8 +85,6 @@ func (biz *business) CreateOrder(ctx context.Context, userId int, data *entity.O
 			return core.ErrInvalidRequest(errors.New("tài khoản này đã bán hoặc không khả dụng"))
 		}
 
-		// 2. Kiểm tra và Khóa Ví (Pessimistic Locking)
-		// GetWalletForUpdate đã được bạn define trong interface
 		wallet, err := biz.walletRepo.GetWalletForUpdate(ctx, tx, userId, "VND")
 		if err != nil {
 			return core.ErrInternal(errors.New("không thể truy xuất ví người dùng"))
@@ -81,22 +94,20 @@ func (biz *business) CreateOrder(ctx context.Context, userId int, data *entity.O
 			return core.ErrInvalidRequest(errors.New("số dư không đủ để thanh toán"))
 		}
 
-		// 3. Trừ tiền
 		oldBalance := wallet.Balance
 		newBalance := oldBalance - account.Price
 
-		// Update Balance
-		if err := tx.Model(wallet).Update("balance", newBalance).Error; err != nil {
+		wallet.Balance = newBalance
+		if err := tx.Save(wallet).Error; err != nil {
 			return err
 		}
 
-		// 4. Tạo Order (Trạng thái Completed/Paid luôn)
 		newOrder = &entity.Order{
 			SQLModel:      core.NewSQLModel(),
 			UserId:        userId,
 			AccountId:     &accId,
 			TotalPrice:    account.Price,
-			Status:        entity.OrderStatusCompleted, // Đã xong luôn
+			Status:        entity.OrderStatusCompleted,
 			Type:          entity.OrderTypeBuyAcc,
 			PaymentMethod: "WALLET",
 			PaymentRef:    fmt.Sprintf("W_%d_%d", userId, time.Now().Unix()),
@@ -107,19 +118,17 @@ func (biz *business) CreateOrder(ctx context.Context, userId int, data *entity.O
 			return err
 		}
 
-		// 5. Cập nhật trạng thái Account -> Sold
 		if err := tx.Model(&account).Update("status", accountEntity.AccountStatusSold).Error; err != nil {
 			return err
 		}
 
-		// 6. Lưu lịch sử biến động số dư (Wallet Transaction)
 		walletTx := &walletEntity.WalletTransaction{
 			SQLModel:      core.NewSQLModel(),
-			WalletId:      wallet.UserId,  // Lưu ý: check lại field này map với User hay Wallet ID table
-			Amount:        -account.Price, // Số âm
+			WalletId:      wallet.UserId,
+			Amount:        -account.Price,
 			BeforeBalance: oldBalance,
 			AfterBalance:  newBalance,
-			Type:          walletEntity.TxTypePurchase, //
+			Type:          walletEntity.TxTypePurchase,
 			RefType:       "order",
 			RefId:         strconv.Itoa(newOrder.Id),
 			Description:   fmt.Sprintf("Thanh toán mua acc: %s", account.Title),
@@ -129,7 +138,6 @@ func (biz *business) CreateOrder(ctx context.Context, userId int, data *entity.O
 			return err
 		}
 
-		// 7. Lưu Order History (Audit log)
 		history := &entity.OrderHistory{
 			OrderId:   newOrder.Id,
 			NewStatus: entity.OrderStatusCompleted,

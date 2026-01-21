@@ -2,7 +2,9 @@ package api
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"strings"
 	"tradeplay/common"
 	paymentEntity "tradeplay/services/payment/entity"
 
@@ -33,6 +35,29 @@ func (h *api) HandleSepayWebhook(c *gin.Context) {
 		return
 	}
 
+	var finalOrderId string
+	prefix := "DHTCT"
+
+	if payload.Code != "" && strings.HasPrefix(payload.Code, prefix) {
+		finalOrderId = strings.TrimPrefix(payload.Code, prefix)
+	}
+
+	if finalOrderId == "" {
+		extracted, err := extractOrderCode(payload.Content)
+		if err == nil {
+			finalOrderId = extracted
+		} else {
+			fmt.Printf("Fallback extract failed: %v\n", err)
+		}
+	}
+
+	if finalOrderId == "" {
+		c.JSON(http.StatusBadRequest, core.ErrBadRequest(errors.New("cannot extract order code"), "Could not find order code in both Code and Content fields"))
+		return
+	}
+
+	payload.Content = finalOrderId
+
 	err := h.business.ProcessSepayWebhook(c.Request.Context(), &payload)
 
 	if err != nil {
@@ -44,4 +69,23 @@ func (h *api) HandleSepayWebhook(c *gin.Context) {
 		Success: true,
 		Message: "Webhook processed successfully",
 	})
+}
+
+func extractOrderCode(content string) (string, error) {
+	prefix := "DHTCT"
+	codeLength := 14
+
+	idx := strings.Index(content, prefix)
+	if idx == -1 {
+		return "", fmt.Errorf("không tìm thấy prefix %s trong nội dung: %s", prefix, content)
+	}
+
+	start := idx + len(prefix)
+	end := start + codeLength
+
+	if end > len(content) {
+		return "", fmt.Errorf("nội dung không đủ %d ký tự sau prefix %s: %s", codeLength, prefix, content)
+	}
+
+	return content[start:end], nil
 }

@@ -341,13 +341,13 @@ export const translations = {
 			"Hoàn tiền hoặc đổi acc mới trong vòng 1-2 giờ sau khi xác nhận",
 		importantNotice: "⚠️ Lưu ý quan trọng",
 		notice1:
-			"Sau khi nhận acc, vui lòng <strong>đổi mật khẩu ngay</strong> để bảo mật.",
+			"Sau khi nhận acc, vui lòng đổi mật khẩu ngay để bảo mật.",
 		notice2:
-			"<strong>Không chia sẻ</strong> thông tin đăng nhập cho bất kỳ ai.",
+			"Không chia sẻ thông tin đăng nhập cho bất kỳ ai.",
 		notice3:
-			"Lưu lại <strong>mã đơn hàng</strong> để tiện theo dõi và bảo hành.",
+			"Lưu lại mã đơn hàng để tiện theo dõi và bảo hành.",
 		notice4:
-			"Kiểm tra acc <strong>ngay sau khi nhận</strong> để đảm bảo quyền lợi bảo hành.",
+			"Kiểm tra acc ngay sau khi nhận để đảm bảo quyền lợi bảo hành.",
 		requestWarranty: "Yêu cầu bảo hành",
 		requestWarrantyDesc:
 			"Liên hệ ngay với chúng tôi qua Facebook hoặc Zalo kèm mã đơn hàng để được hỗ trợ nhanh nhất. Đội ngũ luôn sẵn sàng giải quyết mọi vấn đề của bạn!",
@@ -412,6 +412,8 @@ export const translations = {
 		depositSuccessDesc: "Nạp tiền thành công!",
 		unknown: "Không tồn tại.",
 		allStatuses: "Tất cả trạng thái",
+		sortBy: "Sắp xếp theo",
+		enterAmount: "Nhập số tiền muốn nạp",
 	},
 	en: {
 		yes: "Yes",
@@ -727,12 +729,12 @@ export const translations = {
 			"Refund or exchange new account within 1-2 hours after confirmation",
 		importantNotice: "⚠️ Important Notice",
 		notice1:
-			"After receiving the account, please <strong>change password immediately</strong> for security.",
-		notice2: "<strong>Do not share</strong> login information with anyone.",
+			"After receiving the account, please change password immediately for security.",
+		notice2: "Do not share login information with anyone.",
 		notice3:
-			"Save your <strong>order ID</strong> for tracking and warranty.",
+			"Save your order ID for tracking and warranty.",
 		notice4:
-			"Check the account <strong>immediately after receiving</strong> to ensure warranty rights.",
+			"Check the account immediately after receiving to ensure warranty rights.",
 		requestWarranty: "Request Warranty",
 		requestWarrantyDesc:
 			"Contact us immediately via Facebook or Zalo with your order ID for the fastest support. Our team is always ready to solve any of your problems!",
@@ -798,6 +800,8 @@ export const translations = {
 		depositSuccessDesc: "Deposit successful!",
 		unknown: "Unknown.",
 		allStatuses: "All statues",
+		sortBy: "Sort by",
+		enterAmount: "Enter amount to deposit",
 	},
 };
 

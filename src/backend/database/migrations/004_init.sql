@@ -182,6 +182,19 @@ CREATE TABLE `accounts` (
 ) ENGINE=InnoDB AUTO_INCREMENT=100000 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
+CREATE TABLE `account_infos` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `account_id` int NOT NULL,
+  `username` varchar(500) DEFAULT NULL,
+  `password` varchar(500) DEFAULT NULL,
+  `email` varchar(500) DEFAULT NULL,
+  `extra_data` text,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `idx_account_infos_account_id` (`account_id`),
+  CONSTRAINT `fk_accounts_info` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON DELETE CASCADE
+);
 -- Account Stats - Cached statistics
 -- DROP TABLE IF EXISTS `account_stats`;
 -- CREATE TABLE `account_stats` (
@@ -254,6 +267,7 @@ CREATE TABLE `orders` (
   `payment_method` VARCHAR(50),  -- bank_transfer, wallet, momo, vnpay
   `payment_ref` VARCHAR(255),     -- Reference từ payment gateway
   `notes` TEXT,
+  `payment_trans_id` VARCHAR(255) NULL DEFAULT NULL AFTER `payment_method`
   
   INDEX `idx_user_id` (`user_id`),
   INDEX `idx_account_id` (`account_id`),

@@ -28,6 +28,7 @@ type uploadComponent struct {
 
 	s3Bucket    string
 	s3Region    string
+	s3Endpoint  string
 	s3Domain    string
 	s3AccessKey string
 	s3SecretKey string
@@ -47,8 +48,9 @@ func (c *uploadComponent) InitFlags() {
 	flag.StringVar(&c.providerType, "upload-provider-type", ProviderS3, "Provider type: s3")
 
 	flag.StringVar(&c.s3Bucket, "s3-bucket", "", "AWS S3 Bucket Name")
-	flag.StringVar(&c.s3Region, "s3-region", "ap-southeast-1", "AWS S3 Region")
-	flag.StringVar(&c.s3Domain, "s3-domain", "", "AWS S3 Domain (CloudFront or S3 URL)")
+	flag.StringVar(&c.s3Region, "s3-region", "auto", "AWS S3 Region (use 'auto' for R2)")
+	flag.StringVar(&c.s3Endpoint, "s3-endpoint", "", "S3 Custom Endpoint (Required for R2)")
+	flag.StringVar(&c.s3Domain, "s3-domain", "", "AWS S3 Domain (Public URL for viewing files)")
 	flag.StringVar(&c.s3AccessKey, "aws-access-key-id", "", "AWS Access Key ID")
 	flag.StringVar(&c.s3SecretKey, "aws-secret-access-key", "", "AWS Secret Access Key")
 }
@@ -68,12 +70,12 @@ func (c *uploadComponent) Activate(s sctx.ServiceContext) error {
 
 	switch c.providerType {
 	case ProviderS3:
-		provider, err := NewS3Provider(c.s3Bucket, c.s3Region, c.s3Domain, c.s3AccessKey, c.s3SecretKey)
+		provider, err := NewS3Provider(c.s3Bucket, c.s3Region, c.s3Endpoint, c.s3Domain, c.s3AccessKey, c.s3SecretKey)
 		if err != nil {
 			return fmt.Errorf("failed to initialize S3 provider: %w", err)
 		}
 		c.provider = provider
-		s.Logger(c.id).Infof("S3 provider initialized successfully. Bucket: %s, Region: %s", c.s3Bucket, c.s3Region)
+		s.Logger(c.id).Infof("S3 provider initialized. Bucket: %s, Region: %s, Endpoint: %s", c.s3Bucket, c.s3Region, c.s3Endpoint)
 	default:
 		return fmt.Errorf("unknown upload provider type: %s", c.providerType)
 	}

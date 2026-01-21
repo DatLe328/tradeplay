@@ -73,7 +73,6 @@ export default function PaymentPage() {
 		);
 	}
 
-	// Xác định trạng thái để hiển thị UI
 	const isSuccess =
 		currentOrder.status === OrderStatus.Paid ||
 		currentOrder.status === OrderStatus.Completed;

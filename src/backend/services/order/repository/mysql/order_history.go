@@ -3,8 +3,15 @@ package mysql
 import (
 	"context"
 	"tradeplay/services/order/entity"
+
+	"gorm.io/gorm"
 )
 
-func (repo *mysqlRepo) CreateOrderHistory(ctx context.Context, history *entity.OrderHistory) error {
-	return repo.db.Create(history).Error
+func (repo *mysqlRepo) CreateOrderHistory(ctx context.Context, tx *gorm.DB, history *entity.OrderHistory) error {
+	db := repo.db
+	if tx != nil {
+		db = tx
+	}
+
+	return db.Create(history).Error
 }

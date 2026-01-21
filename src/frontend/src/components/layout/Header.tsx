@@ -447,7 +447,7 @@ export function Header() {
 												>
 													<div className="pl-6 space-y-1 mt-1">
 														{/* Mobile Balance */}
-														<div className="px-4 py-2.5 rounded-xl bg-primary/5">
+														{/* <div className="px-4 py-2.5 rounded-xl bg-primary/5">
 															<div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
 																<Wallet className="h-3.5 w-3.5 text-primary" />
 																<span>
@@ -473,7 +473,7 @@ export function Header() {
 																	</Button>
 																</Link>
 															</div>
-														</div>
+														</div> */}
 														<Link
 															to="/profile"
 															onClick={() =>

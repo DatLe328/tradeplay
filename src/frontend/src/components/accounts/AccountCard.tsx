@@ -4,8 +4,8 @@ import { type GameAccount } from "@/types";
 import { formatCurrency } from "@/utils/format";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, ShoppingCart, Image as ImageIcon } from "lucide-react"; 
-import { useTranslation } from '@/stores/languageStore';
+import { Eye, ShoppingCart, Image as ImageIcon, Sparkles } from "lucide-react";
+import { useTranslation } from "@/stores/languageStore";
 import { AccountStatus, AccountStatusLabel } from "@/constants/enums";
 import { cn } from "@/lib/utils";
 
@@ -15,112 +15,144 @@ interface AccountCardProps {
 }
 
 export function AccountCard({ account, index = 0 }: AccountCardProps) {
-  const { t } = useTranslation();
-  const isAvailable = account.status === AccountStatus.Available;
+	const { t } = useTranslation();
+	const isAvailable = account.status === AccountStatus.Available;
 
-  const getStatusColor = (status: number) => {
-    switch (status) {
-      case AccountStatus.Available:
-        return "bg-green-500/90 hover:bg-green-500";
-      case AccountStatus.Reserved:
-        return "bg-amber-500/90 hover:bg-amber-500";
-      case AccountStatus.Sold:
-        return "bg-red-500/90 hover:bg-red-500";
-      case AccountStatus.Deleted:
-        return "bg-gray-500/90 hover:bg-gray-500";
-      default:
-        return "bg-primary/90";
-    }
-  };
+	const hasDiscount =
+		account.original_price && account.original_price > account.price;
+	const discountPercent = hasDiscount
+		? Math.round(
+				((account.original_price! - account.price) /
+					account.original_price!) *
+					100,
+			)
+		: 0;
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: index * 0.1 }}
-      className="card-gaming group"
-    >
-      <div className="relative aspect-video overflow-hidden bg-secondary/50">
-        {account.thumbnail ? (
-          <img
-            src={account.thumbnail}
-            alt={account.title}
-            className={cn(
-              "w-full h-full object-cover transition-transform duration-500 group-hover:scale-110",
-              account.status === AccountStatus.Sold && "grayscale-[0.5]"
-            )}
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
-            <ImageIcon className="h-12 w-12" />
-          </div>
-        )}
+	const getStatusColor = (status: number) => {
+		switch (status) {
+			case AccountStatus.Available:
+				return "bg-green-500/90 hover:bg-green-500";
+			case AccountStatus.Reserved:
+				return "bg-amber-500/90 hover:bg-amber-500";
+			case AccountStatus.Sold:
+				return "bg-red-500/90 hover:bg-red-500";
+			case AccountStatus.Deleted:
+				return "bg-gray-500/90 hover:bg-gray-500";
+			default:
+				return "bg-primary/90";
+		}
+	};
 
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        
-        {/* Game Badge (Top Left) */}
-        <div className="absolute top-3 left-3">
-          <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm">
-            {account.game_name}
-          </Badge>
-        </div>
+	return (
+		<motion.div
+			initial={{ opacity: 0, y: 20 }}
+			animate={{ opacity: 1, y: 0 }}
+			transition={{ duration: 0.4, delay: index * 0.1 }}
+			className="card-gaming group"
+		>
+			<div className="relative aspect-video overflow-hidden bg-secondary/50">
+				{account.thumbnail ? (
+					<img
+						src={account.thumbnail}
+						alt={account.title}
+						className={cn(
+							"w-full h-full object-cover transition-transform duration-500 group-hover:scale-110",
+							account.status === AccountStatus.Sold &&
+								"grayscale-[0.5]",
+						)}
+					/>
+				) : (
+					<div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
+						<ImageIcon className="h-12 w-12" />
+					</div>
+				)}
 
-        {/* ID Badge (Top Right) */}
-        <div className="absolute top-3 right-3">
-          <Badge variant="secondary" className="bg-background/80 backdrop-blur-sm font-mono">
-            MS: {account.id}
-          </Badge>
-        </div>
+				<div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-        <div className="absolute bottom-3 right-3">
-           <Badge className={cn("text-white border-none backdrop-blur-sm", getStatusColor(account.status))}>
-              {AccountStatusLabel[account.status]}
-           </Badge>
-        </div>
+				{/* === THAY ĐỔI Ở ĐÂY: Gom nhóm Top Left để hiển thị cả tên game và giảm giá === */}
+				<div className="absolute top-3 left-3 flex flex-col gap-2 items-start">
+					<Badge
+						variant="secondary"
+						className="bg-background/80 backdrop-blur-sm shadow-sm"
+					>
+						{account.game_name}
+					</Badge>
 
-        {/* Overlay on hover */}
-        <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-      </div>
+					{/* Badge Giảm giá */}
+					{hasDiscount && (
+						<Badge className="bg-red-600/90 text-white border-none backdrop-blur-sm shadow-sm animate-pulse font-bold">
+							<Sparkles className="w-3 h-3 mr-1" /> -
+							{discountPercent}%
+						</Badge>
+					)}
+				</div>
 
-      {/* Content - Giữ nguyên phần dưới */}
-      <div className="p-4 space-y-3">
-        <h3 className="font-gaming font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
-          {account.title}
-        </h3>
+				{/* ID Badge (Top Right) */}
+				<div className="absolute top-3 right-3">
+					<Badge
+						variant="secondary"
+						className="bg-background/80 backdrop-blur-sm font-mono shadow-sm"
+					>
+						MS: {account.id}
+					</Badge>
+				</div>
 
-        {/* Price */}
-        <div className="flex items-baseline gap-2">
-          <span className="font-gaming text-xl font-bold text-primary">
-            {formatCurrency(account.price)}
-          </span>
-          {account.original_price && (
-            <span className="text-sm text-muted-foreground line-through">
-              {formatCurrency(account.original_price)}
-            </span>
-          )}
-        </div>
+				<div className="absolute bottom-3 right-3">
+					<Badge
+						className={cn(
+							"text-white border-none backdrop-blur-sm shadow-sm",
+							getStatusColor(account.status),
+						)}
+					>
+						{AccountStatusLabel[account.status]}
+					</Badge>
+				</div>
 
-        {/* Actions */}
-        <div className="flex gap-2 pt-2">
-          <Link to={`/accounts/${account.id}`} className="flex-1">
-            <Button variant="outline" className="w-full gap-2">
-              <Eye className="h-4 w-4" />
-              {t('details')}
-            </Button>
-          </Link>
-          {isAvailable ? (
-            <Link to={`/accounts/${account.id}`}>
-              <Button className="btn-gaming gap-2">
-                <ShoppingCart className="h-4 w-4" />
-              </Button>
-            </Link>
-          ) : (
-            <Button disabled className="gap-2 opacity-50 cursor-not-allowed">
-                <ShoppingCart className="h-4 w-4" />
-            </Button>
-          )}
-        </div>
-      </div>
-    </motion.div>
-  );
+				{/* Overlay on hover */}
+				<div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+			</div>
+
+			<div className="p-4 space-y-3">
+				<h3 className="font-gaming font-semibold text-lg line-clamp-1 group-hover:text-primary transition-colors">
+					{account.title}
+				</h3>
+
+				{/* Price Section */}
+				<div className="flex items-baseline gap-2">
+					<span className="font-gaming text-xl font-bold text-primary">
+						{formatCurrency(account.price)}
+					</span>
+					{hasDiscount && (
+						<span className="text-sm text-muted-foreground line-through decoration-destructive/50">
+							{formatCurrency(account.original_price!)}
+						</span>
+					)}
+				</div>
+
+				{/* Actions */}
+				<div className="flex gap-2 pt-2">
+					<Link to={`/accounts/${account.id}`} className="flex-1">
+						<Button variant="outline" className="w-full gap-2">
+							<Eye className="h-4 w-4" />
+							{t("details")}
+						</Button>
+					</Link>
+					{isAvailable ? (
+						<Link to={`/accounts/${account.id}`}>
+							<Button className="btn-gaming gap-2">
+								<ShoppingCart className="h-4 w-4" />
+							</Button>
+						</Link>
+					) : (
+						<Button
+							disabled
+							className="gap-2 opacity-50 cursor-not-allowed"
+						>
+							<ShoppingCart className="h-4 w-4" />
+						</Button>
+					)}
+				</div>
+			</div>
+		</motion.div>
+	);
 }

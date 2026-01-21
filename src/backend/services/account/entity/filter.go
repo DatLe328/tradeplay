@@ -8,4 +8,5 @@ type Filter struct {
 	MinPrice *float64 `json:"min_price,omitempty" form:"min_price"`
 	MaxPrice *float64 `json:"max_price,omitempty" form:"max_price"`
 	Search   string   `json:"search,omitempty" form:"search"`
+	Sort     string   `json:"sort,omitempty" form:"sort"`
 }

@@ -8,7 +8,7 @@ import {
 	accountService,
 	type GetAccountsParams,
 } from "@/services/accountService";
-import { Gamepad2, Loader2 } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
 import type { GameAccount } from "@/types";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "@/stores/languageStore";
@@ -19,6 +19,7 @@ interface FilterState {
 	game: string;
 	priceRange: string;
 	status: string;
+	sort: string;
 }
 
 export default function AccountsPage() {
@@ -36,8 +37,8 @@ export default function AccountsPage() {
 				searchParams.get("game") ||
 				(language === "vi" ? "Tất cả" : "All Games"),
 			priceRange: hiddenPrice || urlPrice || "all",
-			// 2. GIÁ TRỊ KHỞI TẠO: Lấy từ URL hoặc mặc định là "all"
-			status: searchParams.get("status") || "all", 
+			status: searchParams.get("status") || "all",
+			sort: searchParams.get("sort") || "newest",
 		};
 	});
 
@@ -49,7 +50,7 @@ export default function AccountsPage() {
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalItems, setTotalItems] = useState(0);
 	const [debouncedSearch, setDebouncedSearch] = useState(filters.search);
-	
+
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			setDebouncedSearch(filters.search);
@@ -100,6 +101,7 @@ export default function AccountsPage() {
 					max_price: maxPrice,
 					search: debouncedSearch,
 					status: statusParam,
+					sort: filters.sort,
 				};
 
 				const res = await accountService.getAll(params);
@@ -125,7 +127,8 @@ export default function AccountsPage() {
 		pageSize,
 		filters.game,
 		filters.priceRange,
-		filters.status, // Dependency này giờ là string, hook sẽ chạy lại khi string thay đổi
+		filters.status,
+		filters.sort,
 		debouncedSearch,
 	]);
 
@@ -150,7 +153,7 @@ export default function AccountsPage() {
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ delay: 0.1 }}
-					className="mb-8"
+					className="sticky top-16 z-30 mb-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2 -mx-4 px-4 md:mx-0 md:px-0"
 				>
 					<AccountFilter
 						onFilterChange={setFilters}
@@ -162,15 +165,49 @@ export default function AccountsPage() {
 				<div className="mb-6 text-muted-foreground">
 					{t("found")}{" "}
 					<span className="text-primary font-semibold">
-						{totalItems}
+						{isLoading ? "..." : totalItems}
 					</span>{" "}
 					{t("accGameCount")}
 				</div>
 
 				{/* Content */}
 				{isLoading ? (
-					<div className="flex justify-center py-20">
-						<Loader2 className="h-8 w-8 animate-spin text-primary" />
+					// --- SKELETON LOADING EFFECT ---
+					<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+						{Array.from({ length: pageSize }).map((_, index) => (
+							<div
+								key={index}
+								className="rounded-xl border border-border bg-card overflow-hidden flex flex-col h-full"
+							>
+								{/* Image Skeleton */}
+								<div className="aspect-video w-full bg-secondary/50 animate-pulse" />
+
+								<div className="p-4 flex flex-col flex-1 gap-4">
+									{/* Title & Tags */}
+									<div className="space-y-2">
+										<div className="flex gap-2">
+											<div className="h-5 w-16 bg-secondary/50 rounded animate-pulse" />
+											<div className="h-5 w-20 bg-secondary/50 rounded animate-pulse" />
+										</div>
+										<div className="h-6 w-3/4 bg-secondary/50 rounded animate-pulse" />
+									</div>
+
+									{/* Info Grid Skeleton (giống 4 thuộc tính game) */}
+									<div className="grid grid-cols-2 gap-2 mt-auto">
+										<div className="h-4 w-full bg-secondary/50 rounded animate-pulse" />
+										<div className="h-4 w-full bg-secondary/50 rounded animate-pulse" />
+										<div className="h-4 w-full bg-secondary/50 rounded animate-pulse" />
+										<div className="h-4 w-full bg-secondary/50 rounded animate-pulse" />
+									</div>
+
+									{/* Footer: Price & Button */}
+									<div className="mt-4 pt-3 flex items-center justify-between border-t border-border/50">
+										<div className="h-7 w-28 bg-secondary/50 rounded animate-pulse" />
+										<div className="h-9 w-24 bg-secondary/50 rounded-lg animate-pulse" />
+									</div>
+								</div>
+							</div>
+						))}
 					</div>
 				) : accounts.length > 0 ? (
 					<>

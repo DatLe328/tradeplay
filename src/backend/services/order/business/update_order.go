@@ -18,84 +18,80 @@ func (biz *business) UpdateOrderStatus(
 	requesterId int,
 	ipAddress string,
 ) error {
-	order, err := biz.repo.GetOrder(ctx, orderId)
-	if err != nil {
-		return core.ErrCannotGetEntity(orderEntity.Order{}.TableName(), err)
-	}
+	db := biz.walletRepo.GetDB()
 
-	oldStatus := order.Status
-	if oldStatus == newStatus {
-		return nil
-	}
+	return db.Transaction(func(tx *gorm.DB) error {
+		order, err := biz.repo.GetOrderForUpdate(ctx, tx, orderId)
+		if err != nil {
+			return core.ErrCannotGetEntity(orderEntity.Order{}.TableName(), err)
+		}
 
-	// LOGIC XỬ LÝ KHI ĐƠN HÀNG HOÀN THÀNH (PAID/COMPLETED)
-	if newStatus == orderEntity.OrderStatusCompleted || newStatus == orderEntity.OrderStatusPaid {
+		oldStatus := order.Status
+		if oldStatus == newStatus {
+			return nil
+		}
 
-		// TRƯỜNG HỢP 1: NẠP TIỀN -> CỘNG VÍ
-		if order.Type == orderEntity.OrderTypeDeposit {
-			// Dùng Transaction của WalletRepo để đảm bảo an toàn
-			err := biz.walletRepo.GetDB().Transaction(func(tx *gorm.DB) error {
-				// 1. Lock ví user để tránh race condition
+		if oldStatus == orderEntity.OrderStatusCompleted || oldStatus == orderEntity.OrderStatusPaid {
+			return core.ErrInvalidRequest(fmt.Errorf("đơn hàng đã hoàn thành, không thể thay đổi trạng thái"))
+		}
+
+		if newStatus == orderEntity.OrderStatusCompleted || newStatus == orderEntity.OrderStatusPaid {
+
+			if order.Type == orderEntity.OrderTypeDeposit {
 				wallet, err := biz.walletRepo.GetWalletForUpdate(ctx, tx, order.UserId, "VND")
 				if err != nil {
 					return fmt.Errorf("wallet not found: %v", err)
 				}
 
-				// 2. Cộng tiền
 				newBalance := wallet.Balance + order.TotalPrice
-				if err := tx.Model(wallet).Update("balance", newBalance).Error; err != nil {
+				wallet.Balance = newBalance
+
+				if err := tx.Save(wallet).Error; err != nil {
 					return err
 				}
 
-				// 3. Ghi log transaction ví
 				walletTx := &walletEntity.WalletTransaction{
 					SQLModel:      core.NewSQLModel(),
 					WalletId:      wallet.Id,
 					Amount:        order.TotalPrice,
-					BeforeBalance: wallet.Balance,
+					BeforeBalance: wallet.Balance - order.TotalPrice,
 					AfterBalance:  newBalance,
-					Type:          walletEntity.TxTypeDeposit, // Enum 1
+					Type:          walletEntity.TxTypeDeposit,
 					RefType:       "order",
 					RefId:         fmt.Sprintf("%d", order.Id),
 					Description:   fmt.Sprintf("Nạp tiền qua đơn hàng #%d", order.Id),
 				}
 
-				return biz.walletRepo.CreateWalletTransaction(ctx, tx, walletTx)
-			})
+				if err := biz.walletRepo.CreateWalletTransaction(ctx, tx, walletTx); err != nil {
+					return err
+				}
+			}
 
-			if err != nil {
-				return core.ErrInternal(fmt.Errorf("failed to process deposit: %v", err))
+			if order.Type == orderEntity.OrderTypeBuyAcc && order.AccountId != nil {
+				statusSold := accountEntity.AccountStatusSold
+				data := accountEntity.AccountDataUpdate{Status: &statusSold}
+				if err := biz.accountRepo.UpdateAccount(ctx, tx, *order.AccountId, &data); err != nil {
+					return core.ErrInternal(err)
+				}
 			}
 		}
 
-		// TRƯỜNG HỢP 2: MUA ACC -> UPDATE TRẠNG THÁI ACC
-		if order.Type == orderEntity.OrderTypeBuyAcc && order.AccountId != nil {
-			statusSold := accountEntity.AccountStatusSold
-			data := accountEntity.AccountDataUpdate{
-				Status: &statusSold,
-			}
-			// Lưu ý: Có thể check thêm nếu update thất bại thì rollback
-			if err := biz.accountRepo.UpdateAccount(ctx, *order.AccountId, &data); err != nil {
-				return core.ErrInternal(err)
-			}
+		if err := biz.repo.UpdateOrderStatus(ctx, tx, orderId, newStatus); err != nil {
+			return core.ErrInternal(err)
 		}
-	}
 
-	// Cập nhật trạng thái đơn hàng
-	if err := biz.repo.UpdateOrderStatus(ctx, orderId, newStatus); err != nil {
-		return core.ErrInternal(err)
-	}
+		history := &orderEntity.OrderHistory{
+			OrderId:   orderId,
+			OldStatus: &oldStatus,
+			NewStatus: newStatus,
+			Note:      fmt.Sprintf("Status changed from %v to %v", oldStatus, newStatus),
+			ChangedBy: requesterId,
+			IpAddress: ipAddress,
+		}
+		if err := biz.repo.CreateOrderHistory(ctx, tx, history); err != nil {
+			return core.ErrInternal(err)
+		}
 
-	// Ghi log history
-	history := &orderEntity.OrderHistory{
-		OrderId:   orderId,
-		OldStatus: &oldStatus,
-		NewStatus: newStatus,
-		Note:      fmt.Sprintf("Status changed from %v to %v", oldStatus, newStatus),
-		ChangedBy: requesterId,
-		IpAddress: ipAddress,
-	}
-	_ = biz.repo.CreateOrderHistory(ctx, history)
-
-	return nil
+		return nil
+	})
 }

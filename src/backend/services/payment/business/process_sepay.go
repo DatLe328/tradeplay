@@ -24,26 +24,25 @@ func (biz *business) ProcessSepayWebhook(ctx context.Context, payload *paymentEn
 	if err != nil {
 		return core.ErrInternal(err)
 	}
-
 	orderId := int(uid.GetLocalID())
-
-	order, err := biz.orderRepo.GetOrder(ctx, orderId)
-	if err != nil {
-		return err
-	}
-
-	if order.Status == orderEntity.OrderStatusPaid || order.Status == orderEntity.OrderStatusCompleted {
-		return nil
-	}
-
-	if payload.TransferAmount < order.TotalPrice {
-		return fmt.Errorf("số tiền chuyển (%v) nhỏ hơn giá trị đơn hàng (%v)", payload.TransferAmount, order.TotalPrice)
-	}
 
 	db := biz.walletRepo.GetDB()
 
 	return db.Transaction(func(tx *gorm.DB) error {
-		if err := biz.orderRepo.UpdateOrderStatus(ctx, order.Id, orderEntity.OrderStatusPaid); err != nil {
+		order, err := biz.orderRepo.GetOrderForUpdate(ctx, tx, orderId)
+		if err != nil {
+			return err
+		}
+
+		if order.Status == orderEntity.OrderStatusPaid || order.Status == orderEntity.OrderStatusCompleted {
+			return nil
+		}
+
+		if payload.TransferAmount < order.TotalPrice {
+			return fmt.Errorf("số tiền chuyển (%v) nhỏ hơn giá trị đơn hàng (%v)", payload.TransferAmount, order.TotalPrice)
+		}
+
+		if err := biz.orderRepo.UpdateOrderStatus(ctx, tx, order.Id, orderEntity.OrderStatusPaid); err != nil {
 			return err
 		}
 
@@ -53,7 +52,6 @@ func (biz *business) ProcessSepayWebhook(ctx context.Context, payload *paymentEn
 			"sepay_id":       payload.ID,
 			"content":        payload.Content,
 		}
-		// Marshal sang JSON byte
 		historyBytes, _ := json.Marshal(historyData)
 		historyJSON := core.JSON(historyBytes)
 
@@ -64,7 +62,7 @@ func (biz *business) ProcessSepayWebhook(ctx context.Context, payload *paymentEn
 			Note:      fmt.Sprintf("Thanh toán thành công qua SePay. Ref: %s", payload.ReferenceCode),
 			Metadata:  &historyJSON,
 		}
-		if err := biz.orderRepo.CreateOrderHistory(ctx, history); err != nil {
+		if err := biz.orderRepo.CreateOrderHistory(ctx, tx, history); err != nil {
 			return err
 		}
 
@@ -124,7 +122,7 @@ func (biz *business) handleDepositTransaction(
 		return err
 	}
 
-	if err := biz.orderRepo.UpdateOrderPaid(ctx, order.Id, payload.Gateway, payload.ReferenceCode); err != nil {
+	if err := biz.orderRepo.UpdateOrderPaid(ctx, tx, order.Id, payload.Gateway, payload.ReferenceCode); err != nil {
 		return err
 	}
 
@@ -152,17 +150,16 @@ func (biz *business) handleBuyAccountTransaction(
 			return err
 		}
 
-		oldBalance := wallet.Balance
-		newBalance := oldBalance + payload.TransferAmount
-
-		if err := tx.Model(wallet).Update("balance", newBalance).Error; err != nil {
+		newBalance := wallet.Balance + payload.TransferAmount
+		wallet.Balance = newBalance
+		if err := tx.Save(wallet).Error; err != nil {
 			return err
 		}
 
 		walletTx := &walletEntity.WalletTransaction{
 			WalletId:      wallet.UserId,
 			Amount:        payload.TransferAmount,
-			BeforeBalance: oldBalance,
+			BeforeBalance: wallet.Balance - payload.TransferAmount,
 			AfterBalance:  newBalance,
 			Type:          walletEntity.TxTypeRefund,
 			RefType:       "order",
@@ -173,17 +170,14 @@ func (biz *business) handleBuyAccountTransaction(
 			return err
 		}
 
-		order.Status = orderEntity.OrderStatusRefunded
-		order.Notes = "Account đã được bán cho người khác. Hệ thống tự động hoàn tiền vào ví."
-
-		if err := biz.orderRepo.UpdateOrderStatus(ctx, order.Id, orderEntity.OrderStatusRefunded); err != nil {
+		if err := biz.orderRepo.UpdateOrderStatus(ctx, tx, order.Id, orderEntity.OrderStatusRefunded); err != nil {
 			return err
 		}
 
 		return nil
 	}
 
-	if err := biz.orderRepo.UpdateOrderPaid(ctx, order.Id, payload.Gateway, payload.ReferenceCode); err != nil {
+	if err := biz.orderRepo.UpdateOrderPaid(ctx, tx, order.Id, payload.Gateway, payload.ReferenceCode); err != nil {
 		return err
 	}
 
@@ -191,7 +185,8 @@ func (biz *business) handleBuyAccountTransaction(
 	accountUpdate := &accountEntity.AccountDataUpdate{
 		Status: &status,
 	}
-	if err := biz.accountRepo.UpdateAccount(ctx, *order.AccountId, accountUpdate); err != nil {
+
+	if err := biz.accountRepo.UpdateAccount(ctx, tx, *order.AccountId, accountUpdate); err != nil {
 		return err
 	}
 

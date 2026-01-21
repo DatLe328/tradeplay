@@ -16,7 +16,7 @@ import {
 	CheckCircle2,
 	Image as ImageIcon,
 	Shield,
-	Zap
+	Zap,
 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { AccountGallery } from "@/components/accounts/AccountGallery";
@@ -74,27 +74,43 @@ export default function AccountDetailPage() {
 						{label}
 					</div>
 
-					<div className={cn(
-						"font-bold text-base transition-colors duration-300 w-full",
-						isBoolean && value ? "text-emerald-500" : 
-						isBoolean && !value ? "text-orange-500" : 
-						"text-foreground group-hover:text-primary"
-					)}>
+					<div
+						className={cn(
+							"font-bold text-base transition-colors duration-300 w-full",
+							isBoolean && value
+								? "text-emerald-500"
+								: isBoolean && !value
+									? "text-orange-500"
+									: "text-foreground group-hover:text-primary",
+						)}
+					>
 						{isBoolean ? (
 							<div className="inline-flex items-center gap-1.5 bg-secondary/50 px-3 py-1.5 rounded-full">
-								{value ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
-								<span className="text-sm">{value ? t("yes") : t("no")}</span>
+								{value ? (
+									<Check className="h-4 w-4" />
+								) : (
+									<X className="h-4 w-4" />
+								)}
+								<span className="text-sm">
+									{value ? t("yes") : t("no")}
+								</span>
 							</div>
 						) : isArray ? (
 							<div className="flex flex-wrap gap-1.5 justify-center">
 								{value.map((item: string, idx: number) => (
-									<Badge key={idx} variant="secondary" className="text-xs px-2 py-0.5">
+									<Badge
+										key={idx}
+										variant="secondary"
+										className="text-xs px-2 py-0.5"
+									>
 										{item}
 									</Badge>
 								))}
 							</div>
 						) : (
-							<span className="line-clamp-2 break-words text-sm">{formattedValue}</span>
+							<span className="line-clamp-2 break-words text-sm">
+								{formattedValue}
+							</span>
 						)}
 					</div>
 				</div>
@@ -131,7 +147,9 @@ export default function AccountDetailPage() {
 			<Layout>
 				<div className="flex flex-col justify-center items-center min-h-[60vh] gap-4">
 					<Loader2 className="h-10 w-10 animate-spin text-primary" />
-					<p className="text-sm text-muted-foreground">Đang tải thông tin...</p>
+					<p className="text-sm text-muted-foreground">
+						Đang tải thông tin...
+					</p>
 				</div>
 			</Layout>
 		);
@@ -142,8 +160,12 @@ export default function AccountDetailPage() {
 			<Layout>
 				<div className="container mx-auto px-4 py-20 text-center space-y-4">
 					<AlertCircle className="h-16 w-16 text-muted-foreground mx-auto" />
-					<h1 className="font-gaming text-2xl font-bold">{t("accountNotFound")}</h1>
-					<p className="text-muted-foreground">Tài khoản không tồn tại hoặc đã bị xóa</p>
+					<h1 className="font-gaming text-2xl font-bold">
+						{t("accountNotFound")}
+					</h1>
+					<p className="text-muted-foreground">
+						Tài khoản không tồn tại hoặc đã bị xóa
+					</p>
 					<Link to="/accounts">
 						<Button variant="outline" className="gap-2">
 							<ArrowLeft className="h-4 w-4" />
@@ -160,30 +182,34 @@ export default function AccountDetailPage() {
 			case AccountStatus.Available:
 				return {
 					label: "Còn hàng",
-					className: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20",
+					className:
+						"bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/20",
 					icon: CheckCircle2,
-					canBuy: true
+					canBuy: true,
 				};
 			case AccountStatus.Reserved:
 				return {
 					label: "Đã đặt cọc",
-					className: "bg-orange-500/10 text-orange-600 border-orange-500/20 hover:bg-orange-500/20",
+					className:
+						"bg-orange-500/10 text-orange-600 border-orange-500/20 hover:bg-orange-500/20",
 					icon: Clock,
-					canBuy: false
+					canBuy: false,
 				};
 			case AccountStatus.Sold:
 				return {
 					label: "Đã bán",
-					className: "bg-blue-600/10 text-blue-600 border-blue-600/20 hover:bg-blue-600/20",
+					className:
+						"bg-blue-600/10 text-blue-600 border-blue-600/20 hover:bg-blue-600/20",
 					icon: Banknote,
-					canBuy: false
+					canBuy: false,
 				};
 			default:
 				return {
 					label: "Ngừng bán",
-					className: "bg-gray-500/10 text-gray-500 border-gray-500/20 hover:bg-gray-500/20",
+					className:
+						"bg-gray-500/10 text-gray-500 border-gray-500/20 hover:bg-gray-500/20",
 					icon: AlertCircle,
-					canBuy: false
+					canBuy: false,
 				};
 		}
 	};
@@ -195,7 +221,8 @@ export default function AccountDetailPage() {
 		if (import.meta.env.VITE_UNDER_MAINTENANCE === "true") {
 			toast({
 				title: "Hệ thống bảo trì",
-				description: "Vui lòng liên hệ qua zalo/telegram để mua acc game",
+				description:
+					"Vui lòng liên hệ qua zalo/telegram để mua acc game",
 				variant: "destructive",
 			});
 			return;
@@ -243,7 +270,10 @@ export default function AccountDetailPage() {
 
 	const attributesEntries = account.attributes
 		? Object.entries(account.attributes).filter(
-				([_, v]) => v !== null && v !== "" && (Array.isArray(v) ? v.length > 0 : true),
+				([_, v]) =>
+					v !== null &&
+					v !== "" &&
+					(Array.isArray(v) ? v.length > 0 : true),
 			)
 		: [];
 
@@ -254,15 +284,20 @@ export default function AccountDetailPage() {
 		<Layout>
 			<div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
 				{/* Back Button */}
-				<motion.div 
-					initial={{ opacity: 0, x: -20 }} 
-					animate={{ opacity: 1, x: 0 }} 
+				<motion.div
+					initial={{ opacity: 0, x: -20 }}
+					animate={{ opacity: 1, x: 0 }}
 					className="mb-4 md:mb-6"
 				>
 					<Link to="/accounts">
-						<Button variant="ghost" className="gap-2 pl-0 hover:bg-transparent hover:text-primary transition-colors">
+						<Button
+							variant="ghost"
+							className="gap-2 pl-0 hover:bg-transparent hover:text-primary transition-colors"
+						>
 							<ArrowLeft className="h-4 w-4" />
-							<span className="hidden sm:inline">{t("back")}</span>
+							<span className="hidden sm:inline">
+								{t("back")}
+							</span>
 							<span className="sm:hidden">Quay lại</span>
 						</Button>
 					</Link>
@@ -276,12 +311,15 @@ export default function AccountDetailPage() {
 						transition={{ delay: 0.1 }}
 						className="lg:col-span-7 xl:col-span-8 space-y-6"
 					>
-						<AccountGallery images={account.images} title={account.title} />
-						
+						<AccountGallery
+							images={account.images}
+							title={account.title}
+						/>
+
 						{/* Description Section */}
 						<div className="space-y-4">
 							<h3 className="font-gaming font-semibold text-lg md:text-xl flex items-center gap-2">
-								<Info className="h-5 w-5 text-primary" /> 
+								<Info className="h-5 w-5 text-primary" />
 								<span>{t("description")}</span>
 							</h3>
 							<div className="p-4 md:p-5 rounded-xl bg-secondary/20 border border-border/50 hover:border-border transition-colors">
@@ -300,7 +338,7 @@ export default function AccountDetailPage() {
 								</h3>
 								<ul className="grid sm:grid-cols-2 gap-3">
 									{account.features.map((feature, index) => (
-										<motion.li 
+										<motion.li
 											key={index}
 											initial={{ opacity: 0, x: -10 }}
 											animate={{ opacity: 1, x: 0 }}
@@ -308,7 +346,9 @@ export default function AccountDetailPage() {
 											className="flex items-start gap-2.5 text-sm md:text-base p-3 md:p-4 rounded-lg bg-secondary/30 border border-border/30 hover:border-primary/30 hover:bg-secondary/40 transition-all"
 										>
 											<Check className="h-4 w-4 md:h-5 md:w-5 text-emerald-500 mt-0.5 shrink-0" />
-											<span className="leading-relaxed">{feature}</span>
+											<span className="leading-relaxed">
+												{feature}
+											</span>
 										</motion.li>
 									))}
 								</ul>
@@ -326,13 +366,25 @@ export default function AccountDetailPage() {
 						{/* Header Info */}
 						<div className="space-y-4">
 							<div className="flex items-center gap-2 flex-wrap">
-								<Badge variant="outline" className="text-muted-foreground font-mono bg-background text-xs md:text-sm">
+								<Badge
+									variant="outline"
+									className="text-muted-foreground font-mono bg-background text-xs md:text-sm"
+								>
 									#{account.id}
 								</Badge>
-								<Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 text-xs md:text-sm">
+								<Badge
+									variant="secondary"
+									className="bg-primary/10 text-primary hover:bg-primary/20 text-xs md:text-sm"
+								>
 									{account.game_name}
 								</Badge>
-								<Badge variant="outline" className={cn("gap-1.5 pl-1.5 pr-2.5 text-xs md:text-sm font-medium", statusInfo.className)}>
+								<Badge
+									variant="outline"
+									className={cn(
+										"gap-1.5 pl-1.5 pr-2.5 text-xs md:text-sm font-medium",
+										statusInfo.className,
+									)}
+								>
 									<StatusIcon className="w-3.5 h-3.5" />
 									{statusInfo.label}
 								</Badge>
@@ -341,7 +393,7 @@ export default function AccountDetailPage() {
 								{account.title}
 							</h1>
 						</div>
-{/* Attributes Grid */}
+						{/* Attributes Grid */}
 						{attributesEntries.length > 0 && (
 							<div className="space-y-4 pt-2">
 								<h3 className="font-gaming font-semibold text-lg md:text-xl flex items-center gap-2">
@@ -351,7 +403,11 @@ export default function AccountDetailPage() {
 
 								<div className="grid grid-cols-2 gap-3">
 									{attributesEntries.map(([key, value]) => (
-										<AttributeCard key={key} label={getLabel(key)} value={value} />
+										<AttributeCard
+											key={key}
+											label={getLabel(key)}
+											value={value}
+										/>
 									))}
 								</div>
 							</div>
@@ -360,22 +416,39 @@ export default function AccountDetailPage() {
 						{/* Price & Action Box - Sticky on desktop only */}
 						<div className="p-5 md:p-6 rounded-xl bg-gradient-to-br from-card to-card/50 border border-border shadow-lg space-y-5 lg:sticky lg:top-24">
 							<div className="space-y-2">
-								<p className="text-xs md:text-sm text-muted-foreground font-medium">Giá bán</p>
+								<p className="text-xs md:text-sm text-muted-foreground font-medium">
+									Giá bán
+								</p>
 								<div className="flex items-baseline gap-3 flex-wrap">
 									<span className="font-gaming text-3xl md:text-4xl font-bold text-primary">
 										{formatCurrency(account.price)}
 									</span>
-									{account.original_price && account.original_price > account.price && (
-										<span className="text-base md:text-lg text-muted-foreground line-through decoration-muted-foreground/50">
-											{formatCurrency(account.original_price)}
-										</span>
-									)}
+									{account.original_price &&
+										account.original_price >
+											account.price && (
+											<span className="text-base md:text-lg text-muted-foreground line-through decoration-muted-foreground/50">
+												{formatCurrency(
+													account.original_price,
+												)}
+											</span>
+										)}
 								</div>
-								{account.original_price && account.original_price > account.price && (
-									<Badge variant="destructive" className="text-xs">
-										Giảm {Math.round(((account.original_price - account.price) / account.original_price) * 100)}%
-									</Badge>
-								)}
+								{account.original_price &&
+									account.original_price > account.price && (
+										<Badge
+											variant="destructive"
+											className="text-xs"
+										>
+											Giảm{" "}
+											{Math.round(
+												((account.original_price -
+													account.price) /
+													account.original_price) *
+													100,
+											)}
+											%
+										</Badge>
+									)}
 							</div>
 
 							{/* Action Button */}
@@ -398,9 +471,9 @@ export default function AccountDetailPage() {
 									)}
 								</Button>
 							) : (
-								<Button 
-									disabled 
-									variant="secondary" 
+								<Button
+									disabled
+									variant="secondary"
 									className="w-full text-base md:text-lg h-12 md:h-14 gap-2 opacity-90 cursor-not-allowed"
 								>
 									<StatusIcon className="h-5 w-5" />
@@ -416,12 +489,18 @@ export default function AccountDetailPage() {
 								</div>
 								<div className="flex items-center gap-2 text-xs text-muted-foreground">
 									<Shield className="h-4 w-4 text-blue-500 shrink-0" />
-									<span>Bảo hành uy tín - Hỗ trợ tận tâm</span>
+									<span>
+										Bảo hành uy tín - Hỗ trợ tận tâm
+									</span>
+								</div>
+								<div className="flex items-center gap-2 text-xs text-muted-foreground">
+									<Clock className="h-4 w-4 text-orange-500 shrink-0" />
+									<span>
+										Muốn đặt cọc? Liên hệ Zalo/Telegram
+									</span>
 								</div>
 							</div>
 						</div>
-
-						
 					</motion.div>
 				</div>
 			</div>
@@ -430,7 +509,9 @@ export default function AccountDetailPage() {
 			<Dialog open={showBuyModal} onOpenChange={setShowBuyModal}>
 				<DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
 					<DialogHeader>
-						<DialogTitle className="text-lg md:text-xl">Xác nhận mua tài khoản</DialogTitle>
+						<DialogTitle className="text-lg md:text-xl">
+							Xác nhận mua tài khoản
+						</DialogTitle>
 						<DialogDescription className="text-sm">
 							Vui lòng kiểm tra kỹ thông tin trước khi thanh toán.
 						</DialogDescription>
@@ -446,15 +527,20 @@ export default function AccountDetailPage() {
 										alt={account.title}
 										className="w-full h-full object-cover"
 										onError={(e) => {
-											e.currentTarget.style.display = 'none';
-											e.currentTarget.nextElementSibling?.classList.remove('hidden');
+											e.currentTarget.style.display =
+												"none";
+											e.currentTarget.nextElementSibling?.classList.remove(
+												"hidden",
+											);
 										}}
 									/>
 								) : null}
-								<ImageIcon className={cn(
-									"w-8 h-8 text-muted-foreground/30",
-									account.thumbnail && "hidden"
-								)} />
+								<ImageIcon
+									className={cn(
+										"w-8 h-8 text-muted-foreground/30",
+										account.thumbnail && "hidden",
+									)}
+								/>
 							</div>
 							<div className="flex-1 min-w-0">
 								<h4 className="font-semibold line-clamp-2 text-sm md:text-base mb-1">
@@ -472,20 +558,38 @@ export default function AccountDetailPage() {
 						{/* Wallet Info */}
 						<div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/50">
 							<div className="flex justify-between items-center text-sm">
-								<span className="text-muted-foreground">Số dư hiện tại:</span>
-								<span className="font-semibold">{formatCurrency(balance)}</span>
+								<span className="text-muted-foreground">
+									Số dư hiện tại:
+								</span>
+								<span className="font-semibold">
+									{formatCurrency(balance)}
+								</span>
 							</div>
 							<div className="flex justify-between items-center text-sm">
-								<span className="text-muted-foreground">Giá tài khoản:</span>
-								<span className="font-semibold text-primary">-{formatCurrency(account.price)}</span>
+								<span className="text-muted-foreground">
+									Giá tài khoản:
+								</span>
+								<span className="font-semibold text-primary">
+									-{formatCurrency(account.price)}
+								</span>
 							</div>
 							<div className="border-t border-border/50 pt-3 flex justify-between items-center">
-								<span className="font-medium text-sm md:text-base">Số dư sau khi mua:</span>
-								<span className={cn(
-									"font-bold text-base md:text-lg",
-									isBalanceEnough ? "text-green-500" : "text-red-500"
-								)}>
-									{isBalanceEnough ? formatCurrency(balance - account.price) : "Không đủ tiền"}
+								<span className="font-medium text-sm md:text-base">
+									Số dư sau khi mua:
+								</span>
+								<span
+									className={cn(
+										"font-bold text-base md:text-lg",
+										isBalanceEnough
+											? "text-green-500"
+											: "text-red-500",
+									)}
+								>
+									{isBalanceEnough
+										? formatCurrency(
+												balance - account.price,
+											)
+										: "Không đủ tiền"}
 								</span>
 							</div>
 						</div>
@@ -495,8 +599,11 @@ export default function AccountDetailPage() {
 							<div className="flex items-start gap-2 p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-200 dark:border-red-900/20">
 								<AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
 								<span>
-									Bạn còn thiếu <b className="font-bold">{formatCurrency(missingAmount)}</b>. 
-									Vui lòng nạp thêm tiền để tiếp tục.
+									Bạn còn thiếu{" "}
+									<b className="font-bold">
+										{formatCurrency(missingAmount)}
+									</b>
+									. Vui lòng nạp thêm tiền để tiếp tục.
 								</span>
 							</div>
 						)}
@@ -517,7 +624,9 @@ export default function AccountDetailPage() {
 									onClick={handleConfirmPurchase}
 									disabled={isOrderLoading}
 								>
-									{isOrderLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+									{isOrderLoading && (
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+									)}
 									Xác nhận thanh toán
 								</Button>
 							</>
@@ -530,7 +639,10 @@ export default function AccountDetailPage() {
 								>
 									Đóng
 								</Button>
-								<Link to="/deposit" className="w-full sm:w-auto order-1 sm:order-2">
+								<Link
+									to="/deposit"
+									className="w-full sm:w-auto order-1 sm:order-2"
+								>
 									<Button className="w-full bg-green-600 hover:bg-green-700 text-white gap-2">
 										<Wallet className="h-4 w-4" />
 										Nạp tiền ngay

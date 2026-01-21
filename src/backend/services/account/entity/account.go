@@ -36,6 +36,7 @@ type Account struct {
 
 	Status    AccountStatus `json:"status" gorm:"column:status;default:0;index"`
 	ViewCount int           `json:"view_count" gorm:"column:view_count;default:0"`
+	Info      *AccountInfo  `json:"info,omitempty" gorm:"foreignKey:AccountId"`
 }
 
 func (Account) TableName() string { return "accounts" }

@@ -12,12 +12,14 @@ import {
 } from "@/components/ui/select";
 import { useTranslation } from "@/stores/languageStore";
 import { AccountStatus, AccountStatusLabel } from "@/constants/enums";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface FilterState {
 	search: string;
 	game: string;
 	priceRange: string;
 	status: string;
+	sort: string;
 }
 
 interface AccountFilterProps {
@@ -55,26 +57,56 @@ export function AccountFilter({
 			label: AccountStatusLabel[AccountStatus.Reserved],
 		},
 	];
+	const sortOptions = [
+		{ value: "newest", label: language === "vi" ? "Mới nhất" : "Newest" },
+		{
+			value: "price_asc",
+			label:
+				language === "vi" ? "Giá: Thấp đến Cao" : "Price: Low to High",
+		},
+		{
+			value: "price_desc",
+			label:
+				language === "vi" ? "Giá: Cao đến Thấp" : "Price: High to Low",
+		},
+	];
 	const games = [allGamesValue, "Play Together"];
 
 	const [filters, setFilters] = useState<FilterState>(() => {
+		const defaultSort = "newest";
+
 		if (initialFilters) {
-			return initialFilters;
+			return {
+				...initialFilters,
+				sort: initialFilters.sort || defaultSort, 
+				status: initialFilters.status || "all",
+				priceRange: initialFilters.priceRange || "all",
+				game: initialFilters.game || allGamesValue,
+				search: initialFilters.search || "",
+			};
 		}
 
 		const priceRange = searchParams.get("priceRange") || "all";
 		const search = searchParams.get("search") || "";
 		const game = searchParams.get("game") || allGamesValue;
+		const sort = searchParams.get("sort") || defaultSort;
 
 		return {
 			search,
 			game,
 			priceRange,
 			status: "all",
+			sort: sort,
 		};
 	});
 
 	useEffect(() => {
+		const sort = searchParams.get("sort");
+		if (sort && sort !== filters.sort) {
+			const newFilters = { ...filters, sort };
+			setFilters(newFilters);
+			onFilterChange(newFilters);
+		}
 		const oldAllGames = language === "vi" ? "All Games" : "Tất cả";
 		if (filters.game === oldAllGames) {
 			const newFilters = { ...filters, game: allGamesValue };
@@ -106,6 +138,7 @@ export function AccountFilter({
 			game: allGamesValue,
 			priceRange: "all",
 			status: "all",
+			sort: "newest",
 		};
 		setFilters(defaultFilters);
 		onFilterChange(defaultFilters);
@@ -114,10 +147,12 @@ export function AccountFilter({
 	const hasActiveFilters =
 		filters.search ||
 		filters.game !== allGamesValue ||
-		filters.priceRange !== "all";
+		filters.priceRange !== "all" ||
+		filters.sort !== "newest";
 
 	return (
-		<div className="space-y-4">
+		// Thêm relative và z-index để dropdown nổi lên trên các element khác
+		<div className="space-y-4 relative z-40">
 			{/* Search and mobile filter toggle */}
 			<div className="flex gap-2">
 				<div className="relative flex-1">
@@ -134,7 +169,7 @@ export function AccountFilter({
 					className="md:hidden"
 					onClick={() => setShowMobileFilters(!showMobileFilters)}
 				>
-					<Filter className="h-4 w-4" />
+					{showMobileFilters ? <X className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
 				</Button>
 			</div>
 
@@ -186,6 +221,21 @@ export function AccountFilter({
 						))}
 					</SelectContent>
 				</Select>
+				<Select
+					value={filters.sort}
+					onValueChange={(value) => updateFilter("sort", value)}
+				>
+					<SelectTrigger className="w-[180px]">
+						<SelectValue placeholder={t("sortBy")} />
+					</SelectTrigger>
+					<SelectContent>
+						{sortOptions.map((option) => (
+							<SelectItem key={option.value} value={option.value}>
+								{option.label}
+							</SelectItem>
+						))}
+					</SelectContent>
+				</Select>
 
 				{hasActiveFilters && (
 					<Button
@@ -199,76 +249,102 @@ export function AccountFilter({
 				)}
 			</div>
 
-			{/* Mobile Filters */}
-			{showMobileFilters && (
-				<div className="md:hidden space-y-3 p-4 rounded-lg bg-card border border-border animate-fade-in">
-					<Select
-						value={filters.game}
-						onValueChange={(value) => updateFilter("game", value)}
+			{/* Mobile Filters Dropdown */}
+			<AnimatePresence>
+				{showMobileFilters && (
+					<motion.div
+						initial={{ opacity: 0, y: -10 }}
+						animate={{ opacity: 1, y: 0 }}
+						exit={{ opacity: 0, y: -10 }}
+						transition={{ duration: 0.2, ease: "easeOut" }}
+						className="absolute top-[calc(100%+0.5rem)] left-0 right-0 z-50 md:hidden p-4 rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl space-y-3"
 					>
-						<SelectTrigger>
-							<SelectValue placeholder={t("allGames")} />
-						</SelectTrigger>
-						<SelectContent>
-							{games.map((game) => (
-								<SelectItem key={game} value={game}>
-									{game}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-
-					<Select
-						value={filters.priceRange}
-						onValueChange={(value) =>
-							updateFilter("priceRange", value)
-						}
-					>
-						<SelectTrigger>
-							<SelectValue placeholder={t("allPrices")} />
-						</SelectTrigger>
-						<SelectContent>
-							{priceRanges.map((range) => (
-								<SelectItem
-									key={range.value}
-									value={range.value}
-								>
-									{range.label}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-					<Select
-						value={filters.status}
-						onValueChange={(value) => updateFilter("status", value)}
-					>
-						<SelectTrigger>
-							<SelectValue placeholder="Trạng thái" />
-						</SelectTrigger>
-						<SelectContent>
-							{statusOptions.map((option) => (
-								<SelectItem
-									key={option.value}
-									value={option.value}
-								>
-									{option.label}
-								</SelectItem>
-							))}
-						</SelectContent>
-					</Select>
-
-					{hasActiveFilters && (
-						<Button
-							variant="outline"
-							onClick={clearFilters}
-							className="w-full gap-2"
+						<Select
+							value={filters.game}
+							onValueChange={(value) => updateFilter("game", value)}
 						>
-							<X className="h-4 w-4" />
-							{t("clearFilters")}
-						</Button>
-					)}
-				</div>
-			)}
+							<SelectTrigger>
+								<SelectValue placeholder={t("allGames")} />
+							</SelectTrigger>
+							<SelectContent>
+								{games.map((game) => (
+									<SelectItem key={game} value={game}>
+										{game}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+
+						<Select
+							value={filters.priceRange}
+							onValueChange={(value) =>
+								updateFilter("priceRange", value)
+							}
+						>
+							<SelectTrigger>
+								<SelectValue placeholder={t("allPrices")} />
+							</SelectTrigger>
+							<SelectContent>
+								{priceRanges.map((range) => (
+									<SelectItem
+										key={range.value}
+										value={range.value}
+									>
+										{range.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						<Select
+							value={filters.status}
+							onValueChange={(value) => updateFilter("status", value)}
+						>
+							<SelectTrigger>
+								<SelectValue placeholder="Trạng thái" />
+							</SelectTrigger>
+							<SelectContent>
+								{statusOptions.map((option) => (
+									<SelectItem
+										key={option.value}
+										value={option.value}
+									>
+										{option.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+						<Select
+							value={filters.sort}
+							onValueChange={(value) => updateFilter("sort", value)}
+						>
+							<SelectTrigger>
+								<SelectValue placeholder={t("sortBy")} />
+							</SelectTrigger>
+							<SelectContent>
+								{sortOptions.map((option) => (
+									<SelectItem
+										key={option.value}
+										value={option.value}
+									>
+										{option.label}
+									</SelectItem>
+								))}
+							</SelectContent>
+						</Select>
+
+						{hasActiveFilters && (
+							<Button
+								variant="outline"
+								onClick={clearFilters}
+								className="w-full gap-2"
+							>
+								<X className="h-4 w-4" />
+								{t("clearFilters")}
+							</Button>
+						)}
+					</motion.div>
+				)}
+			</AnimatePresence>
 		</div>
 	);
 }

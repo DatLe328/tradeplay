@@ -10,7 +10,11 @@ import {
 	RotateCcw,
 	Wallet,
 	Gamepad2,
-	Filter,
+	Lock,
+	Copy,
+	Loader2,
+	History,
+	CreditCard,
 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
@@ -18,11 +22,13 @@ import { Badge } from "@/components/ui/badge";
 import { PaginationWrapper } from "@/components/ui/pagination-wrapper";
 import { useAuthStore } from "@/stores/authStore";
 import { orderService } from "@/services/orderService";
+import { accountService } from "@/services/accountService";
 import { formatCurrency, formatDateTime } from "@/utils/format";
 import { useEffect, useState } from "react";
-import type { Order } from "@/types";
+import type { Order, AccountCredentials } from "@/types";
 import { useTranslation } from "@/stores/languageStore";
 import { OrderStatus, OrderType, OrderStatusLabel } from "@/constants/enums";
+import { useToast } from "@/hooks/use-toast";
 import {
 	Select,
 	SelectContent,
@@ -30,6 +36,16 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select";
+import {
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogHeader,
+	DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 type StatusConfig = {
 	icon: React.ElementType;
@@ -62,16 +78,20 @@ const statusConfigMap: Record<number, StatusConfig> = {
 export default function OrdersPage() {
 	const { isAuthenticated } = useAuthStore();
 	const [orders, setOrders] = useState<Order[]>([]);
-	const [_isLoading, setIsLoading] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
 	const { t } = useTranslation();
+	const { toast } = useToast();
 
-	// 2. STATE PHÂN TRANG & BỘ LỌC
 	const [currentPage, setCurrentPage] = useState(1);
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalItems, setTotalItems] = useState(0);
+	const [activeTab, setActiveTab] = useState<"accounts" | "deposits">("accounts");
 	
-	const [filterType, setFilterType] = useState<string>("all"); // "all" | "0" | "1"
-	const [filterStatus, setFilterStatus] = useState<string>("all"); // "all" | "0" | "1"...
+	const [filterStatus, setFilterStatus] = useState<string>("all");
+
+	const [showCredsModal, setShowCredsModal] = useState(false);
+	const [selectedCreds, setSelectedCreds] = useState<AccountCredentials | null>(null);
+	const [isFetchingCreds, setIsFetchingCreds] = useState(false);
 
 	const pageSize = 10;
 
@@ -79,12 +99,12 @@ export default function OrdersPage() {
 		if (isAuthenticated) {
 			loadOrders(currentPage);
 		}
-	}, [isAuthenticated, currentPage, filterType, filterStatus]);
+	}, [isAuthenticated, currentPage, activeTab, filterStatus]); // Thêm activeTab vào dependency
 
 	const loadOrders = async (page: number) => {
 		setIsLoading(true);
 		try {
-			const typeParam = filterType === "all" ? undefined : Number(filterType) as OrderType;
+			const typeParam = activeTab === "accounts" ? OrderType.BuyAcc : OrderType.Deposit;
 			const statusParam = filterStatus === "all" ? undefined : Number(filterStatus) as OrderStatus;
 
 			const res = await orderService.getMyOrders(page, pageSize, typeParam, statusParam);
@@ -104,14 +124,44 @@ export default function OrdersPage() {
 		return OrderStatusLabel[status] || t("unknown");
 	};
 
-	const handleTypeChange = (value: string) => {
-		setFilterType(value);
-		setCurrentPage(1);
+	const handleTabChange = (tab: "accounts" | "deposits") => {
+		if (activeTab !== tab) {
+			setActiveTab(tab);
+			setCurrentPage(1);
+			setFilterStatus("all");
+		}
 	};
 
 	const handleStatusChange = (value: string) => {
 		setFilterStatus(value);
 		setCurrentPage(1);
+	};
+
+	const handleViewCredentials = async (accountId: string) => {
+		setIsFetchingCreds(true);
+		try {
+			const res = await accountService.getCredentials(accountId);
+			if (res.data) {
+				setSelectedCreds(res.data);
+				setShowCredsModal(true);
+			}
+		} catch (error: any) {
+			toast({
+				title: "Lỗi",
+				description: error.message || "Không thể lấy thông tin tài khoản",
+				variant: "destructive",
+			});
+		} finally {
+			setIsFetchingCreds(false);
+		}
+	};
+
+	const copyToClipboard = (text: string) => {
+		navigator.clipboard.writeText(text);
+		toast({
+			title: "Đã sao chép",
+			description: "Đã lưu vào bộ nhớ tạm",
+		});
 	};
 
 	if (!isAuthenticated) {
@@ -150,28 +200,39 @@ export default function OrdersPage() {
 					<p className="text-muted-foreground">{t("trackOrders")}</p>
 				</motion.div>
 
-				{/* FILTER BAR */}
-				<div className="flex flex-col sm:flex-row gap-4 mb-8">
-					<div className="w-full sm:w-[180px]">
-						<Select value={filterType} onValueChange={handleTypeChange}>
-							<SelectTrigger>
-								<div className="flex items-center gap-2">
-									<Filter className="h-4 w-4 text-muted-foreground" />
-									<SelectValue placeholder="Loại đơn hàng" />
-								</div>
-							</SelectTrigger>
-							<SelectContent>
-								<SelectItem value="all">Tất cả loại</SelectItem>
-								<SelectItem value={OrderType.BuyAcc.toString()}>Mua Tài Khoản</SelectItem>
-								<SelectItem value={OrderType.Deposit.toString()}>Nạp Tiền</SelectItem>
-							</SelectContent>
-						</Select>
+				<div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+					{/* Tabs Buttons */}
+					<div className="flex p-1 bg-secondary/50 rounded-lg border border-border">
+						<button
+							onClick={() => handleTabChange("accounts")}
+							className={cn(
+								"flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
+								activeTab === "accounts"
+									? "bg-background text-primary shadow-sm"
+									: "text-muted-foreground hover:text-foreground"
+							)}
+						>
+							<History className="h-4 w-4" />
+							Lịch sử mua Acc
+						</button>
+						<button
+							onClick={() => handleTabChange("deposits")}
+							className={cn(
+								"flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
+								activeTab === "deposits"
+									? "bg-background text-primary shadow-sm"
+									: "text-muted-foreground hover:text-foreground"
+							)}
+						>
+							<CreditCard className="h-4 w-4" />
+							Lịch sử nạp tiền
+						</button>
 					</div>
 
-					<div className="w-full sm:w-[180px]">
+					<div className="w-full sm:w-[200px]">
 						<Select value={filterStatus} onValueChange={handleStatusChange}>
 							<SelectTrigger>
-								<SelectValue placeholder="Trạng thái" />
+								<SelectValue placeholder="Trạng thái đơn" />
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="all">Tất cả trạng thái</SelectItem>
@@ -185,7 +246,13 @@ export default function OrdersPage() {
 					</div>
 				</div>
 
-				{orders.length > 0 ? (
+				{isLoading ? (
+					<div className="space-y-4">
+						{[1, 2, 3].map((i) => (
+							<div key={i} className="h-24 bg-card/50 rounded-xl animate-pulse" />
+						))}
+					</div>
+				) : orders.length > 0 ? (
 					<>
 						<div className="space-y-4">
 							{orders.map((order) => {
@@ -194,17 +261,19 @@ export default function OrdersPage() {
 									statusConfigMap[OrderStatus.Pending];
 								const StatusIcon = config.icon;
 								
-								// 5. Kiểm tra loại đơn để hiển thị icon phù hợp
-								const isDeposit = order.type === OrderType.Deposit;
+								const isDeposit = activeTab === "deposits";
+								const isSuccess = order.status === OrderStatus.Paid || order.status === OrderStatus.Completed;
 
 								return (
 									<motion.div
 										key={order.id}
-										className="p-6 rounded-xl bg-card border border-border"
+										initial={{ opacity: 0 }}
+										animate={{ opacity: 1 }}
+										className="p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-colors"
 									>
 										<div className="flex flex-col md:flex-row md:items-center gap-4">
 											{/* Thumbnail */}
-											<div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-secondary flex items-center justify-center border border-border/50">
+											<div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden flex-shrink-0 bg-secondary flex items-center justify-center border border-border/50">
 												{isDeposit ? (
 													<Wallet className="h-8 w-8 text-primary" />
 												) : order.account?.images?.[0] ? (
@@ -223,55 +292,73 @@ export default function OrdersPage() {
 											{/* Info */}
 											<div className="flex-1 space-y-2">
 												<div className="flex items-center gap-2 flex-wrap">
-													<span className="font-mono text-sm text-muted-foreground">
+													<span className="font-mono text-xs text-muted-foreground">
 														#{order.id}
 													</span>
-													<Badge className={config.className}>
+													<Badge className={cn("text-xs", config.className)} variant="secondary">
 														<StatusIcon className="h-3 w-3 mr-1" />
 														{getStatusLabel(order.status)}
 													</Badge>
-													<Badge variant="outline" className="text-xs">
-														{isDeposit ? "Nạp tiền" : "Mua Acc"}
-													</Badge>
 												</div>
-												<h3 className="font-gaming font-semibold">
+												
+												<h3 className="font-gaming font-semibold line-clamp-1">
 													{isDeposit 
-														? "Nạp tiền vào tài khoản" 
+														? `Nạp tiền qua ${order.payment_method || 'Ngân hàng'}`
 														: (order.account?.title || t("accountNotFound"))
 													}
 												</h3>
-												<div className="text-sm text-muted-foreground">
-													{formatDateTime(order.created_at)}
+												
+												<div className="text-sm text-muted-foreground flex gap-4">
+													<span>{formatDateTime(order.created_at)}</span>
 												</div>
 											</div>
 
 											{/* Price & Actions */}
-											<div className="flex flex-col items-end gap-2">
-												<span className="font-gaming text-xl font-bold text-primary">
+											<div className="flex flex-col items-end gap-2 mt-2 md:mt-0">
+												<span className="font-gaming text-lg md:text-xl font-bold text-primary">
 													{formatCurrency(order.total_price)}
 												</span>
-												<div className="flex gap-2">
-													{/* Chỉ hiện nút thanh toán nếu Pending */}
+												
+												<div className="flex gap-2 flex-wrap justify-end">
 													{order.status === OrderStatus.Pending && (
 														<Link to={`/payment/${order.id}`}>
-															<Button size="sm" className="btn-gaming">
+															<Button size="sm" className="btn-gaming h-8">
 																{t("pay")}
 															</Button>
 														</Link>
 													)}
 													
-													{/* Chỉ hiện nút chi tiết nếu là đơn Mua Acc */}
-													{!isDeposit && order.account && (
-														<Link to={`/accounts/${order.account.id}`}>
-															<Button
-																size="sm"
-																variant="outline"
-																className="gap-1"
-															>
-																<Eye className="h-4 w-4" />
-																{t("details")}
-															</Button>
-														</Link>
+													{!isDeposit && (
+														<>
+															{isSuccess && order.account && (
+																<Button
+																	size="sm"
+																	className="bg-green-600 hover:bg-green-700 text-white gap-1 h-8"
+																	onClick={() => handleViewCredentials(order.account!.id)}
+																	disabled={isFetchingCreds}
+																>
+																	{isFetchingCreds ? (
+																		<Loader2 className="h-3 w-3 animate-spin" />
+																	) : (
+																		<Lock className="h-3 w-3" />
+																	)}
+																	<span className="hidden sm:inline">Xem Thông Tin</span>
+																</Button>
+															)}
+															
+															{order.account && (
+																<Link to={`/accounts/${order.account.id}`}>
+																	<Button
+																		size="sm"
+																		variant="outline"
+																		className="gap-1 h-8"
+																	>
+																		<Eye className="h-3 w-3" />
+																		Chi tiết
+																	</Button>
+																</Link>
+															)}
+														</>
 													)}
 												</div>
 											</div>
@@ -281,7 +368,6 @@ export default function OrdersPage() {
 							})}
 						</div>
 						
-						{/* Component Phân Trang */}
 						<PaginationWrapper
 							currentPage={currentPage}
 							totalPages={totalPages}
@@ -294,41 +380,93 @@ export default function OrdersPage() {
 					<motion.div
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
-						className="text-center py-20"
+						className="text-center py-20 bg-card/30 rounded-xl border border-dashed border-border"
 					>
 						<div className="p-4 rounded-full bg-secondary w-fit mx-auto mb-4">
-							<Package className="h-12 w-12 text-muted-foreground" />
+							{activeTab === 'deposits' ? (
+								<Wallet className="h-10 w-10 text-muted-foreground" />
+							) : (
+								<Package className="h-10 w-10 text-muted-foreground" />
+							)}
 						</div>
 						<h3 className="font-gaming text-xl font-semibold mb-2">
-							{t("noOrders")}
+							{activeTab === 'deposits' ? "Chưa có giao dịch nạp tiền" : "Chưa mua tài khoản nào"}
 						</h3>
-						<p className="text-muted-foreground mb-6">
-							{t("tryChangeFilter")}
+						<p className="text-muted-foreground mb-6 max-w-sm mx-auto">
+							{activeTab === 'deposits' 
+								? "Bạn chưa thực hiện giao dịch nạp tiền nào vào hệ thống."
+								: "Bạn chưa mua tài khoản nào. Hãy khám phá kho game ngay!"
+							}
 						</p>
-						
-						{/* Nút reset filter nếu đang lọc */}
-						{(filterType !== "all" || filterStatus !== "all") && (
-							<Button 
-								variant="outline" 
-								onClick={() => {
-									setFilterType("all");
-									setFilterStatus("all");
-									setCurrentPage(1);
-								}}
-								className="mr-2"
-							>
-								Xóa bộ lọc
-							</Button>
-						)}
 
-						<Link to="/accounts">
-							<Button className="btn-gaming">
-								{t("viewAccGame")}
+						{filterStatus !== "all" ? (
+							<Button variant="outline" onClick={() => setFilterStatus("all")}>
+								Xóa bộ lọc trạng thái
 							</Button>
-						</Link>
+						) : activeTab === "accounts" ? (
+							<Link to="/accounts">
+								<Button className="btn-gaming">
+									{t("viewAccGame")}
+								</Button>
+							</Link>
+						) : (
+							<Link to="/profile"> 
+								<Button variant="outline">Nạp tiền ngay</Button>
+							</Link>
+						)}
 					</motion.div>
 				)}
 			</div>
+
+			<Dialog open={showCredsModal} onOpenChange={setShowCredsModal}>
+				<DialogContent className="sm:max-w-md">
+					<DialogHeader>
+						<DialogTitle className="flex items-center gap-2">
+							<Lock className="h-5 w-5 text-primary" />
+							Thông tin tài khoản
+						</DialogTitle>
+						<DialogDescription>
+							Vui lòng bảo mật thông tin này.
+						</DialogDescription>
+					</DialogHeader>
+					
+					{selectedCreds && (
+						<div className="space-y-4 py-2">
+							<div className="space-y-2">
+								<Label>Tài khoản / Email</Label>
+								<div className="flex gap-2">
+									<Input readOnly value={selectedCreds.username} className="bg-secondary/50 font-mono" />
+									<Button variant="outline" size="icon" onClick={() => copyToClipboard(selectedCreds.username)}>
+										<Copy className="h-4 w-4" />
+									</Button>
+								</div>
+							</div>
+
+							<div className="space-y-2">
+								<Label>Mật khẩu</Label>
+								<div className="flex gap-2">
+									<Input readOnly value={selectedCreds.password} className="bg-secondary/50 font-mono text-primary font-bold" />
+									<Button variant="outline" size="icon" onClick={() => copyToClipboard(selectedCreds.password)}>
+										<Copy className="h-4 w-4" />
+									</Button>
+								</div>
+							</div>
+
+							{selectedCreds.extra_data && (
+								<div className="space-y-2">
+									<Label>Thông tin thêm (2FA/Email backup)</Label>
+									<div className="p-3 rounded-md bg-secondary/50 border border-border text-sm font-mono break-all">
+										{selectedCreds.extra_data}
+									</div>
+									<Button variant="link" size="sm" className="p-0 h-auto" onClick={() => copyToClipboard(selectedCreds.extra_data!)}>
+										Sao chép toàn bộ
+									</Button>
+								</div>
+							)}
+						</div>
+					)}
+				</DialogContent>
+			</Dialog>
 		</Layout>
 	);
 }

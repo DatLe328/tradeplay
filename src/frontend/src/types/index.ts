@@ -21,6 +21,13 @@ export interface GameAccount {
   view_count?: number; 
 }
 
+export interface AccountCredentials {
+    account_id: number;
+    username: string;
+    password: string;
+    extra_data?: string;
+}
+
 export interface ApiResponse<T> {
   data: T;
   paging?: {

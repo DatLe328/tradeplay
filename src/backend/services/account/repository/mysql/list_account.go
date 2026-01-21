@@ -38,6 +38,14 @@ func (repo *mysqlRepo) GetAccountList(
 		if len(filter.Search) > 0 {
 			db = db.Where("title LIKE ? OR description LIKE ? OR CAST(id AS CHAR) LIKE ?", "%"+filter.Search+"%", "%"+filter.Search+"%", "%"+filter.Search+"%")
 		}
+		switch filter.Sort {
+		case "price_asc":
+			db = db.Order("price asc")
+		case "price_desc":
+			db = db.Order("price desc")
+		default:
+			db = db.Order("id desc")
+		}
 	}
 
 	if err := db.Count(&paging.Total).Error; err != nil {

@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, ZoomIn, Play, Image as ImageIcon } from "lucide-react";
+import {
+	X,
+	ChevronLeft,
+	ChevronRight,
+	ZoomIn,
+	Play,
+	Image as ImageIcon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface AccountGalleryProps {
@@ -43,7 +50,7 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 	};
 
 	const handleLoadedMetadata = (
-		e: React.SyntheticEvent<HTMLVideoElement>
+		e: React.SyntheticEvent<HTMLVideoElement>,
 	) => {
 		const video = e.currentTarget;
 		const savedTime = sessionStorage.getItem(`vid_time_${currentItem}`);
@@ -69,10 +76,10 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 			<div className="grid grid-cols-1 lg:grid-cols-[1fr_120px] gap-4">
 				{/* Main Image / Video Display */}
 				<div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-secondary group border border-border/50">
-                    {/* Fallback placeholder (ẩn, chỉ hiện khi onError trigger) */}
-                    <div className="gallery-placeholder hidden absolute inset-0 flex items-center justify-center text-muted-foreground/30">
-                        <ImageIcon className="h-16 w-16" />
-                    </div>
+					{/* Fallback placeholder (ẩn, chỉ hiện khi onError trigger) */}
+					<div className="gallery-placeholder hidden absolute inset-0 flex items-center justify-center text-muted-foreground/30">
+						<ImageIcon className="h-16 w-16" />
+					</div>
 
 					{isCurrentVideo ? (
 						<div className="w-full h-full flex items-center justify-center bg-black">
@@ -82,7 +89,7 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 								src={currentItem}
 								controls
 								className="w-full h-full object-contain"
-								preload="metadata"
+								preload="none"
 								poster={posterImage || undefined}
 								onTimeUpdate={handleTimeUpdate}
 								onLoadedMetadata={handleLoadedMetadata}
@@ -99,17 +106,19 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 							alt={`${title} - ${selectedIndex + 1}`}
 							className="w-full h-full object-contain cursor-zoom-in"
 							onClick={() => setIsModalOpen(true)}
-                            onError={(e) => {
-                                e.currentTarget.style.display = 'none';
-                                e.currentTarget.parentElement?.querySelector('.gallery-placeholder')?.classList.remove('hidden');
-                            }}
+							onError={(e) => {
+								e.currentTarget.style.display = "none";
+								e.currentTarget.parentElement
+									?.querySelector(".gallery-placeholder")
+									?.classList.remove("hidden");
+							}}
 						/>
 					) : (
-                        /* Hiển thị Placeholder nếu currentItem là chuỗi rỗng */
-                        <div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
-                            <ImageIcon className="h-16 w-16" />
-                        </div>
-                    )}
+						/* Hiển thị Placeholder nếu currentItem là chuỗi rỗng */
+						<div className="w-full h-full flex items-center justify-center text-muted-foreground/30">
+							<ImageIcon className="h-16 w-16" />
+						</div>
+					)}
 
 					{/* Zoom indicator & Expand Button */}
 					{(currentItem || isCurrentVideo) && (
@@ -165,13 +174,14 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 											src="/video-placeholder.jpg"
 											alt="Video thumbnail"
 											className="w-full h-full object-cover opacity-60 hover:opacity-80 transition-opacity blur-[1px]"
-                                            onError={(e) => {
-                                                // Fallback nếu không có file video-placeholder.jpg
-                                                e.currentTarget.style.display = 'none'; 
-                                            }}
+											onError={(e) => {
+												// Fallback nếu không có file video-placeholder.jpg
+												e.currentTarget.style.display =
+													"none";
+											}}
 										/>
-                                        {/* Fallback background nếu ảnh lỗi */}
-                                        <div className="absolute inset-0 bg-black/60" />
+										{/* Fallback background nếu ảnh lỗi */}
+										<div className="absolute inset-0 bg-black/60" />
 
 										<div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
 											<div className="rounded-full bg-black/50 p-1.5 backdrop-blur-sm">
@@ -190,11 +200,11 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 										loading="lazy"
 									/>
 								) : (
-                                    /* Thumbnail Placeholder */
-                                    <div className="w-full h-full flex items-center justify-center bg-secondary/50">
-                                        <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
-                                    </div>
-                                )}
+									/* Thumbnail Placeholder */
+									<div className="w-full h-full flex items-center justify-center bg-secondary/50">
+										<ImageIcon className="h-6 w-6 text-muted-foreground/40" />
+									</div>
+								)}
 							</button>
 						);
 					})}
@@ -236,6 +246,7 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 									src={currentItem}
 									controls
 									autoPlay
+									preload="none"
 									className="w-full h-full"
 									onTimeUpdate={handleTimeUpdate}
 									onLoadedMetadata={handleLoadedMetadata}
@@ -254,12 +265,14 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 								onClick={(e) => e.stopPropagation()}
 							/>
 						) : (
-                             /* Modal Placeholder */
-                             <div className="w-full max-w-5xl aspect-video flex items-center justify-center text-muted-foreground">
-                                <ImageIcon className="h-20 w-20" />
-                                <span className="ml-4 text-lg">Hình ảnh không tồn tại</span>
-                             </div>
-                        )}
+							/* Modal Placeholder */
+							<div className="w-full max-w-5xl aspect-video flex items-center justify-center text-muted-foreground">
+								<ImageIcon className="h-20 w-20" />
+								<span className="ml-4 text-lg">
+									Hình ảnh không tồn tại
+								</span>
+							</div>
+						)}
 
 						{images.length > 1 && (
 							<>

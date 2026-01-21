@@ -37,9 +37,10 @@ type Order struct {
 	Status OrderStatus `json:"status" gorm:"column:status"`
 	Type   OrderType   `json:"type" gorm:"column:type;"`
 
-	PaymentMethod string `json:"payment_method" gorm:"column:payment_method;"`
-	PaymentRef    string `json:"payment_ref" gorm:"column:payment_ref;"`
-	Notes         string `json:"notes" gorm:"column:notes;"`
+	PaymentMethod  string `json:"payment_method" gorm:"column:payment_method;"`
+	PaymentRef     string `json:"payment_ref" gorm:"column:payment_ref;"`
+	PaymentTransId string `json:"payment_trans_id" gorm:"column:payment_trans_id"`
+	Notes          string `json:"notes" gorm:"column:notes;"`
 }
 
 func (Order) TableName() string { return "orders" }

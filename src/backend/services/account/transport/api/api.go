@@ -13,6 +13,8 @@ type Business interface {
 	UpdateAccount(ctx context.Context, id int, data *entity.AccountDataUpdate) error
 	DeleteAccount(ctx context.Context, id int) error
 	GetAccount(ctx context.Context, id int) (*entity.Account, error)
+
+	GetAccountCredentials(ctx context.Context, requesterId int, accountId int) (*entity.AccountInfo, error)
 }
 
 type api struct {

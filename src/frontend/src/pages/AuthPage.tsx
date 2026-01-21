@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
@@ -39,6 +39,11 @@ export default function AuthPage() {
 	const navigate = useNavigate();
 	const { login, register } = useAuthStore();
 	const { toast } = useToast();
+	useEffect(() => {
+		localStorage.removeItem("auth-storage");
+		localStorage.removeItem("lastActivity");
+        localStorage.removeItem("csrf_token"); 
+	}, []);
 
 	const handleGoogleLogin = () => {
 		const API_URL = import.meta.env.VITE_API_URL;

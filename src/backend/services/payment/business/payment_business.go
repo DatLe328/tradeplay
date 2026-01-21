@@ -18,17 +18,15 @@ type WalletRepository interface {
 }
 
 type OrderRepository interface {
-	CreateOrder(ctx context.Context, order *orderEntity.Order) error
-	GetOrder(ctx context.Context, id int) (*orderEntity.Order, error)
-	UpdateOrderStatus(ctx context.Context, id int, status orderEntity.OrderStatus) error
-	GetOrderByUserAndAccount(ctx context.Context, userId, accountId int) (*orderEntity.Order, error)
-	CreateOrderHistory(ctx context.Context, history *orderEntity.OrderHistory) error
-	UpdateOrderPaid(ctx context.Context, id int, method string, ref string) error
+	GetOrderForUpdate(ctx context.Context, tx *gorm.DB, id int) (*orderEntity.Order, error)
+	UpdateOrderStatus(ctx context.Context, tx *gorm.DB, id int, status orderEntity.OrderStatus) error
+	UpdateOrderPaid(ctx context.Context, tx *gorm.DB, id int, method string, ref string) error
+	CreateOrderHistory(ctx context.Context, tx *gorm.DB, history *orderEntity.OrderHistory) error
 }
 
 type AccountRepository interface {
-	CreateAccount(ctx context.Context, data *accountEntity.Account) error
-	UpdateAccount(ctx context.Context, id int, data *accountEntity.AccountDataUpdate) error
+	UpdateAccount(ctx context.Context, tx *gorm.DB, id int, data *accountEntity.AccountDataUpdate) error
+
 	GetAccountByID(ctx context.Context, id int) (*accountEntity.Account, error)
 }
 

@@ -7,12 +7,14 @@ import {
 	X,
 	Upload,
 	Loader2,
-	Link as LinkIcon,
 	CheckCircle2,
 	Clock,
 	Banknote,
 	Ban,
 	ImageIcon,
+	Star,
+	MoreVertical,
+	Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +39,7 @@ import {
 import type { GameAccount } from "@/types";
 import type { GameAttributes } from "@/types/gameSchemas";
 import { getGameSchema } from "@/types/gameSchemas";
-import { formatCurrency, formatDate } from "@/utils/format";
+import { formatCurrency } from "@/utils/format";
 import { useToast } from "@/hooks/use-toast";
 import { accountService } from "@/services/accountService";
 import { GameSelector } from "@/components/admin/GameSelector";
@@ -60,6 +62,12 @@ import {
 	rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { AccountStatus } from "@/constants/enums";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
+import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
 
 function CircularProgress({ value }: { value: number }) {
 	const radius = 18;
@@ -145,35 +153,28 @@ export function SortableImage({
 			style={style}
 			{...attributes}
 			{...listeners}
-			className={`relative aspect-square rounded-lg overflow-hidden group cursor-move transition-all ${
+			className={`relative aspect-square rounded-xl overflow-hidden group cursor-move transition-all bg-secondary/50 ${
 				isThumbnail
 					? "ring-2 ring-primary ring-offset-2 ring-offset-background"
-					: "hover:ring-2 hover:ring-muted-foreground/50"
+					: "border border-border"
 			}`}
 		>
-			{/* Logic hiển thị Video hoặc Ảnh */}
 			{mediaType === "video" ? (
 				<video
 					src={url}
-					className={`w-full h-full object-cover select-none bg-black ${
-						isUploading ? "brightness-50 blur-[1px]" : ""
-					}`}
+					className={`w-full h-full object-cover select-none bg-black ${isUploading ? "brightness-50 blur-[1px]" : ""}`}
 					muted
 					loop
-					// autoPlay // Bỏ comment nếu muốn tự chạy
 					playsInline
 				/>
 			) : (
 				<img
 					src={url}
 					alt=""
-					className={`w-full h-full object-cover select-none ${
-						isUploading ? "brightness-50 blur-[1px]" : ""
-					}`}
+					className={`w-full h-full object-cover select-none ${isUploading ? "brightness-50 blur-[1px]" : ""}`}
 				/>
 			)}
 
-			{/* Icon Play cho Video để dễ nhận biết */}
 			{mediaType === "video" && !isUploading && (
 				<div className="absolute inset-0 flex items-center justify-center pointer-events-none">
 					<div className="bg-black/40 rounded-full p-1.5 backdrop-blur-[1px]">
@@ -194,39 +195,47 @@ export function SortableImage({
 				</div>
 			)}
 
-			{isThumbnail && (
-				<div className="absolute top-2 left-2 px-2 py-1 rounded bg-primary text-primary-foreground text-xs font-medium z-10">
-					Thumbnail
-				</div>
-			)}
-
+			{/* Actions - Mobile Friendly: Luôn hiển thị nút xóa nhỏ, nút thumbnail là icon ngôi sao */}
 			{!isUploading && (
-				<button
-					type="button"
-					onPointerDown={(e) => e.stopPropagation()}
-					onClick={(e) => {
-						e.stopPropagation();
-						onRemove();
-					}}
-					className="absolute top-1 right-1 p-1.5 rounded-full bg-destructive/90 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive z-20"
-				>
-					<X className="h-3.5 w-3.5" />
-				</button>
-			)}
-
-			{!isThumbnail && !isUploading && (
-				<div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+				<>
+					{/* Nút Xóa - Top Right */}
 					<button
 						type="button"
+						onPointerDown={(e) => e.stopPropagation()}
+						onClick={(e) => {
+							e.stopPropagation();
+							onRemove();
+						}}
+						className="absolute top-1 right-1 p-1.5 rounded-full bg-black/50 hover:bg-destructive text-white backdrop-blur-sm transition-colors z-20"
+					>
+						<X className="h-3.5 w-3.5" />
+					</button>
+
+					{/* Nút Thumbnail - Top Left hoặc Bottom Right */}
+					<button
+						type="button"
+						onPointerDown={(e) => e.stopPropagation()}
 						onClick={(e) => {
 							e.stopPropagation();
 							onSetThumbnail();
 						}}
-						className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600/90 text-white text-xs font-semibold rounded-md shadow-md hover:bg-emerald-600"
+						className={`absolute bottom-1 right-1 p-1.5 rounded-full backdrop-blur-sm z-20 transition-all ${
+							isThumbnail
+								? "bg-primary text-primary-foreground"
+								: "bg-black/50 text-white hover:bg-primary/80"
+						}`}
 					>
-						Set thumbnail
+						<Star
+							className={`h-3.5 w-3.5 ${isThumbnail ? "fill-current" : ""}`}
+						/>
 					</button>
-				</div>
+
+					{isThumbnail && (
+						<div className="absolute top-1 left-1 px-2 py-0.5 rounded bg-primary text-primary-foreground text-[10px] font-bold z-10 shadow-sm">
+							Bìa
+						</div>
+					)}
+				</>
 			)}
 		</div>
 	);
@@ -242,6 +251,9 @@ interface FormData {
 	status: AccountStatus;
 	attributes: GameAttributes;
 	thumbnailIndex: number;
+	username: string;
+	password: string;
+	extraData: string;
 }
 
 type SortablePhoto = {
@@ -260,6 +272,9 @@ const initialFormData: FormData = {
 	status: AccountStatus.Available,
 	attributes: {},
 	thumbnailIndex: 0,
+	username: "",
+	password: "",
+	extraData: "",
 };
 
 const getMediaType = (url: string): "image" | "video" => {
@@ -294,6 +309,9 @@ export default function AdminAccounts() {
 		Record<string, number>
 	>({});
 	const [deletingId, setDeletingId] = useState<string | null>(null);
+	const [accountToDelete, setAccountToDelete] = useState<GameAccount | null>(
+		null,
+	);
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
@@ -305,6 +323,33 @@ export default function AdminAccounts() {
 			coordinateGetter: sortableKeyboardCoordinates,
 		}),
 	);
+	const confirmDelete = (account: GameAccount) => {
+		setAccountToDelete(account);
+	};
+
+	const executeDelete = async () => {
+		if (!accountToDelete) return;
+
+		setDeletingId(accountToDelete.id);
+
+		try {
+			await accountService.delete(accountToDelete.id);
+			toast({
+				title: "Đã xóa thành công",
+				description: `Đã xóa tài khoản #${accountToDelete.id}`,
+				className: "bg-green-600 text-white border-none",
+			});
+			loadAccounts(currentPage);
+		} catch (error) {
+			toast({
+				title: "Xóa thất bại",
+				variant: "destructive",
+			});
+		} finally {
+			setDeletingId(null);
+			setAccountToDelete(null);
+		}
+	};
 
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
@@ -392,7 +437,7 @@ export default function AdminAccounts() {
 		setIsDialogOpen(true);
 	};
 
-	const openEditDialog = (account: GameAccount) => {
+	const openEditDialog = async (account: GameAccount) => {
 		setEditingAccount(account);
 		const thumbnailIndex = account.images.findIndex(
 			(img) => img === account.thumbnail,
@@ -409,6 +454,9 @@ export default function AdminAccounts() {
 			status: account.status,
 			attributes: account.attributes || {},
 			thumbnailIndex: thumbnailIndex >= 0 ? thumbnailIndex : 0,
+			username: "",
+			password: "",
+			extraData: "",
 		});
 
 		const formattedImages: SortablePhoto[] = (account.images || []).map(
@@ -421,7 +469,22 @@ export default function AdminAccounts() {
 		setPreviewImages(formattedImages);
 		setLocalFiles({});
 		setImageUrlInput("");
+
 		setIsDialogOpen(true);
+
+		try {
+			const res = await accountService.getCredentials(account.id);
+			if (res.data) {
+				setFormData((prev) => ({
+					...prev,
+					username: res.data.username || "",
+					password: res.data.password || "",
+					extraData: res.data.extra_data || "",
+				}));
+			}
+		} catch (error) {
+			console.error("Không lấy được thông tin mật khẩu", error);
+		}
 	};
 
 	const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -527,6 +590,12 @@ export default function AdminAccounts() {
 		setImageProgressMap({});
 
 		try {
+			if (
+				formData.original_price &&
+				Number(formData.original_price) < Number(formData.price)
+			) {
+				throw new Error("Giá gốc phải lớn hơn hoặc bằng Giá bán");
+			}
 			const filesToUpload = previewImages
 				.map((img, index) => ({ ...img, index }))
 				.filter(
@@ -558,6 +627,10 @@ export default function AdminAccounts() {
 					images: [],
 					thumbnail: "",
 					status: AccountStatus.Deleted,
+
+					username: formData.username,
+					password: formData.password,
+					extra_data: formData.extraData,
 				};
 
 				const res = await accountService.create(createPayload);
@@ -570,11 +643,19 @@ export default function AdminAccounts() {
 					const uploadedResults = await uploadFiles(
 						filesToUpload,
 						localFiles,
-						(id, percent) =>
+						(id, percent) => {
 							setImageProgressMap((prev) => ({
 								...prev,
 								[id]: percent,
-							})),
+							}));
+
+							if (percent === 100) {
+								setUploadProgress((prev) => ({
+									...prev,
+									current: prev.current + 1,
+								}));
+							}
+						},
 					);
 
 					uploadedResults.forEach((res) => {
@@ -631,6 +712,10 @@ export default function AdminAccounts() {
 					status: formData.status,
 					images: finalImageUrls.filter(Boolean),
 					thumbnail: thumbnailImage,
+
+					username: formData.username,
+					password: formData.password,
+					extra_data: formData.extraData,
 				});
 
 				toast({ title: "Cập nhật thành công" });
@@ -646,29 +731,10 @@ export default function AdminAccounts() {
 					error.message || "Upload hoặc lưu dữ liệu thất bại",
 				variant: "destructive",
 			});
-			// Lưu ý: Nếu tạo mới thành công nhưng upload thất bại,
-			// account rác (status=deleted) vẫn tồn tại trong DB.
-			// Bạn có thể gọi API delete(newAccountId) ở đây nếu muốn dọn dẹp triệt để.
 		} finally {
 			setIsSubmitting(false);
 			setUploadProgress({ current: 0, total: 0 });
 			setImageProgressMap({});
-		}
-	};
-
-	const handleDelete = async (id: string) => {
-		if (!confirm("Bạn có chắc chắn muốn xóa tài khoản này?")) return;
-
-		setDeletingId(id);
-
-		try {
-			await accountService.delete(id);
-			toast({ title: "Đã xóa thành công" });
-			loadAccounts(currentPage);
-		} catch (error) {
-			toast({ title: "Xóa thất bại", variant: "destructive" });
-		} finally {
-			setDeletingId(null);
 		}
 	};
 
@@ -720,171 +786,223 @@ export default function AdminAccounts() {
 	};
 
 	return (
-		<div className="p-6 space-y-6">
-			<div>
-				<div className="flex items-center justify-between mb-6">
-					<motion.div
-						initial={{ opacity: 0, y: 20 }}
-						animate={{ opacity: 1, y: 0 }}
-					>
-						<h1 className="font-gaming text-3xl font-bold mb-2">
-							Quản Lý Acc Game
-						</h1>
-						<p className="text-muted-foreground">
-							Thêm, sửa, xóa acc game trong shop
-						</p>
-					</motion.div>
+		<div className="p-4 md:p-6 space-y-4 md:space-y-6 max-w-[100vw] overflow-x-hidden">
+			{/* Header */}
+			<div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+				<motion.div
+					initial={{ opacity: 0, y: 10 }}
+					animate={{ opacity: 1, y: 0 }}
+				>
+					<h1 className="font-gaming text-2xl md:text-3xl font-bold">
+						Quản Lý Acc
+					</h1>
+					<p className="text-sm text-muted-foreground hidden md:block">
+						Thêm, sửa, xóa acc game trong shop
+					</p>
+				</motion.div>
+
+				<div className="flex gap-2 w-full md:w-auto">
+					<div className="relative flex-1 md:w-64">
+						<Input
+							type="text"
+							placeholder="Tìm kiếm..."
+							value={searchTerm}
+							onChange={(e) => setSearchTerm(e.target.value)}
+							className="pl-3 md:pl-4 input-gaming w-full"
+						/>
+					</div>
 					<Button
-						className="btn-gaming gap-2"
+						className="btn-gaming gap-2 shrink-0"
 						onClick={openCreateDialog}
 					>
 						<Plus className="h-4 w-4" />
-						Thêm Acc
+						<span className="hidden md:inline">Thêm Acc</span>
 					</Button>
 				</div>
-
-				<motion.div
-					initial={{ opacity: 0, y: 20 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ delay: 0.05 }}
-					className="mb-6"
-				>
-					<div className="relative">
-						<svg
-							className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
-							fill="none"
-							stroke="currentColor"
-							viewBox="0 0 24 24"
-						>
-							<path
-								strokeLinecap="round"
-								strokeLinejoin="round"
-								strokeWidth={2}
-								d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-							/>
-						</svg>
-						<Input
-							type="text"
-							placeholder="Tìm kiếm theo ID hoặc tên acc..."
-							value={searchTerm}
-							onChange={(e) => setSearchTerm(e.target.value)}
-							className="pl-10 input-gaming"
-						/>
-					</div>
-				</motion.div>
 			</div>
 
-			<motion.div
-				initial={{ opacity: 0, y: 20 }}
-				animate={{ opacity: 1, y: 0 }}
-				transition={{ delay: 0.1 }}
-				className="rounded-xl border border-border overflow-hidden"
-			>
-				<div className="overflow-x-auto">
-					<table className="w-full">
-						<thead className="bg-secondary">
-							<tr>
-								<th className="px-4 py-3 text-left text-sm font-medium">
-									Thumbnail
-								</th>
-								<th className="px-4 py-3 text-left text-sm font-medium">
-									ID
-								</th>
-								<th className="px-4 py-3 text-left text-sm font-medium">
-									Game
-								</th>
-								<th className="px-4 py-3 text-left text-sm font-medium">
-									Tiêu đề
-								</th>
-								<th className="px-4 py-3 text-left text-sm font-medium">
-									Giá
-								</th>
-								<th className="px-4 py-3 text-left text-sm font-medium">
-									Trạng thái
-								</th>
-								<th className="px-4 py-3 text-left text-sm font-medium">
-									Ngày tạo
-								</th>
-								<th className="px-4 py-3 text-right text-sm font-medium">
-									Thao tác
-								</th>
-							</tr>
-						</thead>
-						<tbody className="divide-y divide-border">
-							{accounts.map((account) => (
-								<tr
-									key={account.id}
-									className="bg-card hover:bg-secondary/50 transition-colors"
-								>
-									<td className="px-4 py-3">
-										{account.thumbnail ? (
+			{/* --- DANH SÁCH TÀI KHOẢN (Responsive switch) --- */}
+
+			{/* VIEW 1: Cards cho Mobile */}
+			<div className="grid grid-cols-1 gap-4 md:hidden">
+				{accounts.map((account) => (
+					<div
+						key={account.id}
+						className="bg-card rounded-xl p-3 border border-border shadow-sm flex gap-3"
+					>
+						{/* Thumbnail */}
+						<div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden border border-border bg-secondary">
+							{account.thumbnail ? (
+								<img
+									src={account.thumbnail}
+									alt=""
+									className="w-full h-full object-cover"
+								/>
+							) : (
+								<div className="w-full h-full flex items-center justify-center">
+									<ImageIcon className="h-6 w-6 text-muted-foreground/50" />
+								</div>
+							)}
+						</div>
+
+						{/* Info */}
+						<div className="flex-1 min-w-0 flex flex-col justify-between">
+							<div>
+								<div className="flex justify-between items-start">
+									<span className="text-[10px] font-bold uppercase text-primary tracking-wider">
+										{account.game_name}
+									</span>
+									<span className="text-xs text-muted-foreground">
+										#{account.id}
+									</span>
+								</div>
+								<h3 className="font-medium text-sm truncate pr-2 mt-0.5">
+									{account.title}
+								</h3>
+							</div>
+
+							<div className="flex items-end justify-between mt-2">
+								<div className="flex flex-col gap-1">
+									<span className="font-gaming text-emerald-500 font-bold">
+										{formatCurrency(account.price)}
+									</span>
+									{getStatusBadge(account.status)}
+								</div>
+
+								{/* Mobile Actions */}
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-8 w-8"
+										>
+											<MoreVertical className="h-4 w-4" />
+										</Button>
+									</DropdownMenuTrigger>
+									<DropdownMenuContent align="end">
+										<DropdownMenuItem
+											onClick={() =>
+												openEditDialog(account)
+											}
+										>
+											<Pencil className="mr-2 h-4 w-4" />{" "}
+											Sửa
+										</DropdownMenuItem>
+										<DropdownMenuItem
+											className="text-destructive focus:text-destructive cursor-pointer"
+											onClick={() =>
+												confirmDelete(account)
+											}
+										>
+											<Trash2 className="mr-2 h-4 w-4" />{" "}
+											Xóa
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
+
+			{/* VIEW 2: Table cho Desktop */}
+			<div className="hidden md:block rounded-xl border border-border overflow-hidden bg-card">
+				<table className="w-full text-sm">
+					<thead className="bg-secondary/50 border-b border-border">
+						<tr>
+							<th className="px-4 py-3 text-left font-medium">
+								Hình ảnh
+							</th>
+							<th className="px-4 py-3 text-left font-medium">
+								ID / Game
+							</th>
+							<th className="px-4 py-3 text-left font-medium">
+								Tiêu đề
+							</th>
+							<th className="px-4 py-3 text-left font-medium">
+								Giá bán
+							</th>
+							<th className="px-4 py-3 text-left font-medium">
+								Trạng thái
+							</th>
+							<th className="px-4 py-3 text-right font-medium">
+								Thao tác
+							</th>
+						</tr>
+					</thead>
+					<tbody className="divide-y divide-border">
+						{accounts.map((account) => (
+							<tr
+								key={account.id}
+								className="hover:bg-secondary/30 transition-colors"
+							>
+								<td className="px-4 py-3">
+									<div className="w-12 h-12 rounded-lg bg-secondary/50 border border-border overflow-hidden">
+										{account.thumbnail && (
 											<img
 												src={account.thumbnail}
-												alt={account.title}
-												className="w-12 h-12 rounded-lg object-cover border border-border"
+												className="w-full h-full object-cover"
 											/>
-										) : (
-											<div className="w-12 h-12 rounded-lg bg-secondary/50 border border-border flex items-center justify-center">
-												<ImageIcon className="h-5 w-5 text-muted-foreground" />
-											</div>
 										)}
-									</td>
-									<td className="px-4 py-3 text-sm font-medium text-primary">
-										{account.id}
-									</td>
-									<td className="px-4 py-3 font-medium">
+									</div>
+								</td>
+								<td className="px-4 py-3">
+									<div className="font-medium text-primary">
+										#{account.id}
+									</div>
+									<div className="text-xs text-muted-foreground">
 										{account.game_name}
-									</td>
-									<td className="px-4 py-3 text-sm max-w-[200px] truncate">
-										{account.title}
-									</td>
-									<td className="px-4 py-3 font-gaming text-primary">
-										{formatCurrency(account.price)}
-									</td>
-									<td className="px-4 py-3">
-										{getStatusBadge(account.status)}
-									</td>
-									<td className="px-4 py-3 text-sm text-muted-foreground">
-										{formatDate(
-											account.created_at ||
-												account.createdAt,
-										)}
-									</td>
-									<td className="px-4 py-3">
-										<div className="flex justify-end gap-2">
-											<Button
-												variant="ghost"
-												size="icon"
-												onClick={() =>
-													openEditDialog(account)
-												}
-											>
-												<Pencil className="h-4 w-4" />
-											</Button>
-											<Button
-												variant="ghost"
-												size="icon"
-												className="text-destructive hover:text-destructive"
-												disabled={
-													deletingId === account.id
-												}
-												onClick={() =>
-													handleDelete(account.id)
-												}
-											>
-												{deletingId === account.id ? (
-													<Loader2 className="h-4 w-4 animate-spin" />
-												) : (
-													<Trash2 className="h-4 w-4" />
-												)}
-											</Button>
-										</div>
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
+									</div>
+								</td>
+								<td
+									className="px-4 py-3 max-w-[200px] truncate"
+									title={account.title}
+								>
+									{account.title}
+								</td>
+								<td className="px-4 py-3 font-gaming text-emerald-500 font-medium">
+									{formatCurrency(account.price)}
+								</td>
+								<td className="px-4 py-3">
+									{getStatusBadge(account.status)}
+								</td>
+								<td className="px-4 py-3 text-right">
+									<div className="flex justify-end gap-1">
+										<Button
+											variant="ghost"
+											size="icon"
+											onClick={() =>
+												openEditDialog(account)
+											}
+										>
+											<Pencil className="h-4 w-4" />
+										</Button>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+											onClick={() =>
+												confirmDelete(account)
+											}
+											disabled={deletingId === account.id}
+										>
+											{deletingId === account.id ? (
+												<Loader2 className="h-4 w-4 animate-spin" />
+											) : (
+												<Trash2 className="h-4 w-4" />
+											)}
+										</Button>
+									</div>
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+
+			{/* Pagination */}
+			<div className="mt-4">
 				<PaginationWrapper
 					currentPage={currentPage}
 					totalPages={totalPages}
@@ -892,290 +1010,522 @@ export default function AdminAccounts() {
 					onPageChange={handlePageChange}
 					pageSize={pageSize}
 				/>
-			</motion.div>
+			</div>
 
+			{/* --- FORM DIALOG (Responsive: Fullscreen on mobile) --- */}
 			<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-				<DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-					<DialogHeader>
-						<DialogTitle className="font-gaming">
-							{editingAccount
-								? "Chỉnh sửa Acc Game"
-								: "Thêm Acc Game Mới"}
-						</DialogTitle>
-						<DialogDescription>
-							Nhập thông tin chi tiết của tài khoản game bên dưới.
-						</DialogDescription>
+				{/* Thay đổi class DialogContent: w-full h-full trên mobile */}
+				<DialogContent className="w-screen h-[100dvh] max-w-none rounded-none md:h-[90vh] md:max-w-5xl md:rounded-xl p-0 flex flex-col gap-0 bg-background">
+					{/* Header: Sticky */}
+					<DialogHeader className="px-4 py-3 md:p-6 border-b border-border shrink-0 flex flex-row items-center justify-between space-y-0">
+						<div>
+							<DialogTitle className="font-gaming text-lg md:text-2xl">
+								{editingAccount
+									? "Chỉnh sửa Acc"
+									: "Thêm Acc Mới"}
+							</DialogTitle>
+							<DialogDescription className="hidden md:block text-xs md:text-sm">
+								Nhập thông tin chi tiết cho tài khoản
+							</DialogDescription>
+						</div>
 					</DialogHeader>
 
-					<form onSubmit={handleSubmit} className="space-y-6">
-						<div className="space-y-4 p-4 rounded-lg bg-secondary/30 border border-border">
-							<h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-								Thông tin cơ bản
-							</h3>
-							<GameSelector
-								value={formData.gameName}
-								onChange={handleGameChange}
-							/>
-
-							<div className="space-y-2">
-								<Label htmlFor="title">
-									Tiêu đề{" "}
-									<span className="text-destructive">*</span>
-								</Label>
-								<Input
-									id="title"
-									value={formData.title}
-									onChange={(e) =>
-										setFormData({
-											...formData,
-											title: e.target.value,
-										})
-									}
-									required
-								/>
-							</div>
-
-							<div className="grid grid-cols-2 gap-4">
-								<div className="space-y-2">
-									<Label htmlFor="price">
-										Giá (VNĐ){" "}
-										<span className="text-destructive">
-											*
-										</span>
-									</Label>
-									<Input
-										id="price"
-										type="number"
-										value={formData.price}
-										onChange={(e) =>
-											setFormData({
-												...formData,
-												price: e.target.value,
-											})
-										}
-										required
-									/>
-								</div>
-								<div className="space-y-2">
-									<Label htmlFor="originalPrice">
-										Giá gốc (VNĐ)
-									</Label>
-									<Input
-										id="originalPrice"
-										type="number"
-										value={formData.original_price}
-										onChange={(e) =>
-											setFormData({
-												...formData,
-												original_price: e.target.value,
-											})
-										}
-									/>
-								</div>
-							</div>
-
-							<div className="space-y-2">
-								<Label>Trạng thái</Label>
-								<Select
-									value={formData.status.toString()}
-									onValueChange={(value) =>
-										setFormData({
-											...formData,
-											status: Number(
-												value,
-											) as AccountStatus,
-										})
-									}
-								>
-									<SelectTrigger>
-										<SelectValue />
-									</SelectTrigger>
-									<SelectContent>
-										<SelectItem
-											value={AccountStatus.Available.toString()}
-										>
-											Còn hàng
-										</SelectItem>
-										<SelectItem
-											value={AccountStatus.Reserved.toString()}
-										>
-											Đã đặt cọc
-										</SelectItem>
-										<SelectItem
-											value={AccountStatus.Sold.toString()}
-										>
-											Đã bán
-										</SelectItem>
-										<SelectItem
-											value={AccountStatus.Deleted.toString()}
-										>
-											Đã xóa
-										</SelectItem>
-									</SelectContent>
-								</Select>
-							</div>
-						</div>
-
-						<div className="space-y-4 p-4 rounded-lg bg-secondary/30 border border-border">
-							<DynamicAttributesForm
-								schema={currentSchema}
-								attributes={formData.attributes}
-								onChange={handleAttributesChange}
-							/>
-						</div>
-
-						<div className="space-y-4 p-4 rounded-lg bg-secondary/30 border border-border">
-							<h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wide">
-								Mô tả & Hình ảnh/Video
-							</h3>
-							<div className="space-y-2">
-								<Label htmlFor="description">
-									Mô tả{" "}
-									<span className="text-destructive">*</span>
-								</Label>
-								<Textarea
-									id="description"
-									value={formData.description}
-									onChange={(e) =>
-										setFormData({
-											...formData,
-											description: e.target.value,
-										})
-									}
-									required
-								/>
-							</div>
-							<div className="space-y-2">
-								<Label htmlFor="features">
-									Đặc điểm nổi bật (cách nhau dấu phẩy)
-								</Label>
-								<Input
-									id="features"
-									value={formData.features}
-									onChange={(e) =>
-										setFormData({
-											...formData,
-											features: e.target.value,
-										})
-									}
-								/>
-							</div>
-
-							<div className="space-y-2">
-								<Label>Hình ảnh/Video</Label>
-								<p className="text-xs text-muted-foreground">
-									Kéo thả để sắp xếp. Click "Set Thumbnail" để
-									đặt làm ảnh đại diện
-								</p>
-								<div className="flex gap-2">
-									<Input
-										value={imageUrlInput}
-										onChange={(e) =>
-											setImageUrlInput(e.target.value)
-										}
-										placeholder="https://... (hoặc chọn từ máy bên dưới)"
-										onKeyDown={(e) =>
-											e.key === "Enter" &&
-											(e.preventDefault(),
-											handleAddImageUrl())
-										}
-									/>
-									<Button
-										type="button"
-										onClick={handleAddImageUrl}
-										size="icon"
-									>
-										<LinkIcon className="h-4 w-4" />
-									</Button>
-								</div>
-
-								<DndContext
-									sensors={sensors}
-									collisionDetection={closestCenter}
-									onDragEnd={handleDragEnd}
-								>
-									<SortableContext
-										items={previewImages}
-										strategy={rectSortingStrategy}
-									>
-										<div className="grid grid-cols-4 gap-2 mt-2">
-											{previewImages.map((img, index) => (
-												<SortableImage
-													key={img.id}
-													id={img.id}
-													url={img.url}
-													mediaType={img.mediaType}
-													isThumbnail={
-														index ===
-														formData.thumbnailIndex
+					{/* Body: Scrollable */}
+					<div className="flex-1 overflow-y-auto p-4 md:p-6 scrollbar-thin">
+						<form
+							id="account-form"
+							onSubmit={handleSubmit}
+							className="space-y-6 md:space-y-8 pb-20 md:pb-0"
+						>
+							<div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+								<div className="space-y-4 md:space-y-6">
+									<div className="bg-secondary/10 p-4 rounded-lg border border-border/60 h-fit">
+										<h3 className="font-semibold text-primary mb-4 flex items-center gap-2">
+											<div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+												1
+											</div>
+											Thông tin cơ bản
+										</h3>
+										<div className="space-y-4">
+											<GameSelector
+												value={formData.gameName}
+												onChange={handleGameChange}
+											/>
+											<div className="space-y-1.5">
+												<Label>
+													Tiêu đề{" "}
+													<span className="text-destructive">
+														*
+													</span>
+												</Label>
+												<Input
+													value={formData.title}
+													onChange={(e) =>
+														setFormData({
+															...formData,
+															title: e.target
+																.value,
+														})
 													}
-													progress={
-														imageProgressMap[img.id]
-													}
-													onRemove={() =>
-														removeImage(index)
-													}
-													onSetThumbnail={() =>
-														setThumbnail(index)
-													}
+													required
 												/>
-											))}
-
-											<label className="aspect-square rounded-lg border-2 border-dashed border-border hover:border-primary flex flex-col items-center justify-center cursor-pointer transition-colors bg-secondary/20 hover:bg-secondary/40">
-												<input
-													type="file"
-													accept="image/*,video/mp4,video/webm,video/quicktime"
-													multiple
-													onChange={handleImageSelect}
-													className="hidden"
-												/>
-												<Upload className="h-6 w-6 mb-1 text-muted-foreground" />
-												<span className="text-xs text-muted-foreground">
-													Chọn ảnh/video
-												</span>
-											</label>
+											</div>
+											<div className="grid grid-cols-2 gap-4">
+												<div className="space-y-1.5">
+													<Label>Giá bán</Label>
+													<Input
+														value={
+															formData.price
+																? formData.price
+																		.toString()
+																		.replace(
+																			/\B(?=(\d{3})+(?!\d))/g,
+																			".",
+																		)
+																: ""
+														}
+														onChange={(e) => {
+															const raw =
+																e.target.value.replace(
+																	/\./g,
+																	"",
+																);
+															if (
+																!isNaN(
+																	Number(raw),
+																)
+															)
+																setFormData({
+																	...formData,
+																	price: raw,
+																});
+														}}
+														className="text-emerald-500 font-bold"
+														placeholder="0"
+														inputMode="numeric"
+													/>
+												</div>
+												<div className="space-y-1.5">
+													<Label>Giá gốc</Label>
+													<Input
+														value={
+															formData.original_price
+																? formData.original_price
+																		.toString()
+																		.replace(
+																			/\B(?=(\d{3})+(?!\d))/g,
+																			".",
+																		)
+																: ""
+														}
+														onChange={(e) => {
+															const raw =
+																e.target.value.replace(
+																	/\./g,
+																	"",
+																);
+															if (
+																raw === "" ||
+																!isNaN(
+																	Number(raw),
+																)
+															)
+																setFormData({
+																	...formData,
+																	original_price:
+																		raw,
+																});
+														}}
+														placeholder="0"
+														inputMode="numeric"
+													/>
+												</div>
+											</div>
+											<div className="space-y-1.5">
+												<Label>Trạng thái</Label>
+												<Select
+													value={formData.status.toString()}
+													onValueChange={(val) =>
+														setFormData({
+															...formData,
+															status: Number(
+																val,
+															) as AccountStatus,
+														})
+													}
+												>
+													<SelectTrigger>
+														<SelectValue />
+													</SelectTrigger>
+													<SelectContent>
+														<SelectItem
+															value={AccountStatus.Available.toString()}
+														>
+															Còn hàng
+														</SelectItem>
+														<SelectItem
+															value={AccountStatus.Reserved.toString()}
+														>
+															Đã đặt cọc
+														</SelectItem>
+														<SelectItem
+															value={AccountStatus.Sold.toString()}
+														>
+															Đã bán
+														</SelectItem>
+														<SelectItem
+															value={AccountStatus.Deleted.toString()}
+														>
+															Ẩn / Đã xóa
+														</SelectItem>
+													</SelectContent>
+												</Select>
+											</div>
 										</div>
-									</SortableContext>
-								</DndContext>
+									</div>
+
+									<div className="bg-secondary/10 p-4 rounded-lg border border-border/60 h-fit">
+										<h3 className="font-semibold text-primary mb-4 flex items-center gap-2">
+											<div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+												2
+											</div>
+											Thuộc tính Game
+										</h3>
+										<DynamicAttributesForm
+											schema={currentSchema}
+											attributes={formData.attributes}
+											onChange={handleAttributesChange}
+										/>
+									</div>
+								</div>
+
+								<div className="space-y-4 md:space-y-6">
+									<div className="bg-secondary/10 p-4 rounded-lg border border-border/60">
+										<h3 className="font-semibold text-primary mb-4 flex items-center gap-2">
+											<div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+												<Lock className="h-3 w-3" />
+											</div>
+											Thông tin đăng nhập (Ẩn)
+										</h3>
+										<div className="space-y-4">
+											<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+												<div className="space-y-1.5">
+													<Label>
+														Tài khoản / Username
+													</Label>
+													<Input
+														value={
+															formData.username
+														}
+														onChange={(e) =>
+															setFormData({
+																...formData,
+																username:
+																	e.target
+																		.value,
+															})
+														}
+														placeholder="Tên đăng nhập game..."
+														className="font-mono"
+													/>
+												</div>
+												<div className="space-y-1.5 relative">
+													<Label>Mật khẩu</Label>
+													<div className="relative">
+														<Input
+															value={
+																formData.password
+															}
+															onChange={(e) =>
+																setFormData({
+																	...formData,
+																	password:
+																		e.target
+																			.value,
+																})
+															}
+															placeholder="Mật khẩu..."
+															className="font-mono"
+															type="text"
+														/>
+													</div>
+												</div>
+											</div>
+											<div className="space-y-1.5">
+												<Label>
+													Thông tin thêm (2FA, Email,
+													Note)
+												</Label>
+												<Textarea
+													value={formData.extraData}
+													onChange={(e) =>
+														setFormData({
+															...formData,
+															extraData:
+																e.target.value,
+														})
+													}
+													placeholder="Ví dụ: Mã 2FA, Email khôi phục, Câu hỏi bảo mật..."
+													className="font-mono text-xs h-20"
+												/>
+											</div>
+											<div className="flex items-center gap-2 p-3 bg-yellow-500/10 text-yellow-600 rounded text-xs border border-yellow-500/20">
+												<Lock className="h-4 w-4 shrink-0" />
+												<span>
+													Thông tin này được mã hóa và
+													chỉ hiển thị cho người mua
+													sau khi thanh toán thành
+													công.
+												</span>
+											</div>
+										</div>
+									</div>
+
+									<div className="bg-secondary/10 p-4 rounded-lg border border-border/60">
+										<h3 className="font-semibold text-primary mb-4 flex items-center gap-2">
+											<div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+												3
+											</div>
+											Nội dung mô tả
+										</h3>
+										<div className="space-y-4">
+											<div className="space-y-1.5">
+												<Label>Tags / Highlight</Label>
+												<Input
+													value={formData.features}
+													onChange={(e) =>
+														setFormData({
+															...formData,
+															features:
+																e.target.value,
+														})
+													}
+													placeholder="VD: Full Skin, Rank Cao..."
+												/>
+											</div>
+											<div className="space-y-1.5">
+												<Label>Mô tả chi tiết</Label>
+												<Textarea
+													value={formData.description}
+													onChange={(e) =>
+														setFormData({
+															...formData,
+															description:
+																e.target.value,
+														})
+													}
+													required
+													className="min-h-[150px] md:min-h-[220px]"
+												/>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+
+							<div className="bg-secondary/10 p-4 md:p-6 rounded-lg border border-border/60">
+								<div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+									<h3 className="font-semibold text-primary flex items-center gap-2 text-lg">
+										<div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+											4
+										</div>
+										Hình ảnh & Video
+									</h3>
+
+									<div className="flex items-center gap-2 w-full md:w-auto">
+										<Input
+											value={imageUrlInput}
+											onChange={(e) =>
+												setImageUrlInput(e.target.value)
+											}
+											placeholder="Dán link ảnh..."
+											className="text-sm bg-background"
+										/>
+										<Button
+											type="button"
+											onClick={handleAddImageUrl}
+											variant="secondary"
+											className="shrink-0"
+										>
+											<Plus className="h-4 w-4 mr-1" />{" "}
+											Thêm link
+										</Button>
+									</div>
+								</div>
+
+								<div className="min-h-[120px]">
+									<div className="flex items-center justify-between mb-2">
+										<span className="text-xs text-muted-foreground">
+											Kéo thả để sắp xếp vị trí • Ảnh đầu
+											tiên sẽ là ảnh bìa
+										</span>
+										<span className="text-xs font-medium bg-background px-2 py-1 rounded border">
+											{previewImages.length} items
+										</span>
+									</div>
+
+									<DndContext
+										sensors={sensors}
+										collisionDetection={closestCenter}
+										onDragEnd={handleDragEnd}
+									>
+										<SortableContext
+											items={previewImages}
+											strategy={rectSortingStrategy}
+										>
+											<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 gap-3 md:gap-4">
+												{previewImages.map(
+													(img, index) => (
+														<SortableImage
+															key={img.id}
+															id={img.id}
+															url={img.url}
+															mediaType={
+																img.mediaType
+															}
+															isThumbnail={
+																index ===
+																formData.thumbnailIndex
+															}
+															progress={
+																imageProgressMap[
+																	img.id
+																]
+															}
+															onRemove={() =>
+																removeImage(
+																	index,
+																)
+															}
+															onSetThumbnail={() =>
+																setThumbnail(
+																	index,
+																)
+															}
+														/>
+													),
+												)}
+
+												<label className="aspect-square rounded-xl border-2 border-dashed border-border hover:border-primary/50 cursor-pointer flex flex-col items-center justify-center gap-2 hover:bg-primary/5 transition-all bg-background/50 group">
+													<input
+														type="file"
+														accept="image/*,video/*"
+														multiple
+														onChange={
+															handleImageSelect
+														}
+														className="hidden"
+													/>
+													<div className="p-3 rounded-full bg-secondary group-hover:bg-primary/10 transition-colors">
+														<Upload className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+													</div>
+													<span className="text-xs text-muted-foreground font-medium group-hover:text-primary transition-colors">
+														Upload
+													</span>
+												</label>
+											</div>
+										</SortableContext>
+									</DndContext>
+								</div>
+							</div>
+						</form>
+					</div>
+
+					<div className="p-4 border-t border-border bg-background shrink-0 flex justify-end gap-3 safe-area-bottom">
+						<Button
+							type="button"
+							variant="outline"
+							onClick={() => setIsDialogOpen(false)}
+							disabled={isSubmitting}
+							className="hidden md:inline-flex"
+						>
+							Hủy
+						</Button>
+						<Button
+							type="submit"
+							form="account-form"
+							className="btn-gaming w-full md:w-auto min-w-[140px]"
+							disabled={isSubmitting || !formData.gameName}
+						>
+							{isSubmitting && (
+								<Loader2 className="animate-spin mr-2 h-4 w-4" />
+							)}
+							{isSubmitting
+								? uploadProgress.total > 0
+									? `Đang tải ${uploadProgress.current}/${uploadProgress.total}`
+									: "Đang xử lý..."
+								: editingAccount
+									? "Lưu thay đổi"
+									: "Tạo tài khoản"}
+						</Button>
+					</div>
+				</DialogContent>
+			</Dialog>
+			<Dialog
+				open={!!accountToDelete}
+				onOpenChange={(open) => !open && setAccountToDelete(null)}
+			>
+				<DialogContent className="sm:max-w-[400px] p-0 gap-0 overflow-hidden border-0">
+					<div className="bg-destructive/10 p-6 flex flex-col items-center justify-center gap-4 border-b border-destructive/20">
+						<div className="p-3 bg-destructive/20 rounded-full animate-in zoom-in duration-300">
+							<div className="p-2 bg-destructive text-destructive-foreground rounded-full shadow-lg">
+								<Trash2 className="h-6 w-6" />
+							</div>
+						</div>
+						<div className="text-center space-y-1">
+							<DialogTitle className="text-xl font-bold text-destructive">
+								Xác nhận xóa?
+							</DialogTitle>
+							<DialogDescription className="text-center max-w-[280px] mx-auto">
+								Hành động này không thể hoàn tác.
+							</DialogDescription>
+						</div>
+					</div>
+
+					<div className="p-6 bg-background space-y-4">
+						<div className="bg-secondary/50 rounded-lg p-3 text-sm border border-border">
+							<div className="flex justify-between items-center mb-1">
+								<span className="text-muted-foreground">
+									Tài khoản:
+								</span>
+								<span className="font-mono font-bold text-primary">
+									#{accountToDelete?.id}
+								</span>
+							</div>
+							<div className="font-medium text-primary truncate">
+								{accountToDelete?.title}
+							</div>
+							<div className="text-right text-xs text-muted-foreground mt-1">
+								Game: {accountToDelete?.game_name}
 							</div>
 						</div>
 
-						<div className="flex justify-end gap-3">
+						{/* Buttons */}
+						<div className="grid grid-cols-2 gap-3">
 							<Button
-								type="button"
 								variant="outline"
-								onClick={() => setIsDialogOpen(false)}
-								disabled={isSubmitting}
+								onClick={() => setAccountToDelete(null)}
+								className="hover:bg-secondary"
 							>
-								Hủy
+								Hủy bỏ
 							</Button>
 							<Button
-								type="submit"
-								className="btn-gaming gap-2"
-								disabled={isSubmitting || !formData.gameName}
+								variant="destructive"
+								onClick={executeDelete}
+								disabled={!!deletingId}
+								className="font-bold shadow-sm"
 							>
-								{isSubmitting && (
-									<Loader2 className="h-4 w-4 animate-spin" />
-								)}
-
-								{isSubmitting ? (
-									uploadProgress.total > 0 ? (
-										<span>
-											Đang up ảnh/video{" "}
-											{uploadProgress.current}/
-											{uploadProgress.total}...
-										</span>
-									) : (
-										"Đang xử lý..."
-									)
-								) : editingAccount ? (
-									"Cập nhật"
+								{deletingId ? (
+									<>
+										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+										Đang xóa...
+									</>
 								) : (
-									"Thêm mới"
+									"Xác nhận xóa"
 								)}
 							</Button>
 						</div>
-					</form>
+					</div>
 				</DialogContent>
 			</Dialog>
 		</div>

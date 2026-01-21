@@ -11,6 +11,10 @@ type AccountDataCreation struct {
 
 	Attributes map[string]interface{} `json:"attributes" gorm:"column:attributes;serializer:json"`
 	Features   []string               `json:"features" gorm:"column:features;serializer:json"`
+
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	ExtraData string `json:"extra_data"`
 }
 
 type AccountDataUpdate struct {
@@ -24,6 +28,10 @@ type AccountDataUpdate struct {
 	Attributes map[string]interface{} `json:"attributes" gorm:"column:attributes;serializer:json"`
 	Features   []string               `json:"features" gorm:"column:features;serializer:json"`
 	Status     *AccountStatus         `json:"status"`
+
+	Username  *string `json:"username"`
+	Password  *string `json:"password"`
+	ExtraData *string `json:"extra_data"`
 }
 
 func (*AccountDataCreation) TableName() string { return Account{}.TableName() }

@@ -17,6 +17,8 @@ type AccountService interface {
 	UpdateAccountHandler() func(*gin.Context)
 	DeleteAccountHandler() func(*gin.Context)
 	GetAccountHandler() func(*gin.Context)
+
+	GetAccountCredentialsHandler() func(*gin.Context)
 }
 
 func ComposeAccountAPIService(serviceCtx sctx.ServiceContext) AccountService {
@@ -25,8 +27,9 @@ func ComposeAccountAPIService(serviceCtx sctx.ServiceContext) AccountService {
 
 	accRepo := mysql.NewMySQLRepository(db.GetDB())
 	orderRepo := ordermysql.NewMySQLRepository(db.GetDB())
+	configComp := serviceCtx.MustGet(common.KeyCompConf).(common.ConfigComponent)
 
-	biz := business.NewAccountBusiness(accRepo, orderRepo, uploadC)
+	biz := business.NewAccountBusiness(accRepo, orderRepo, uploadC, configComp.AppSecretKey())
 	accService := api.NewAccountAPI(biz)
 
 	return accService

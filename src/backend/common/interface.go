@@ -46,4 +46,6 @@ type UploadComponent interface {
 type ConfigComponent interface {
 	S3Prefix() string
 	SepayAPIKey() string
+	UnderMaintenance() bool
+	AppSecretKey() string
 }

@@ -1,5 +1,5 @@
 import { apiRequest } from "./api";
-import type { GameAccount } from "@/types";
+import type { AccountCredentials, GameAccount } from "@/types";
 import type { ApiResponse } from "@/types";
 import { uploadService } from "./uploadService";
 import type { AccountStatus } from "@/constants/enums";
@@ -12,6 +12,7 @@ export interface GetAccountsParams {
 	max_price?: number;
 	status?: AccountStatus | AccountStatus[];
 	search?: string;
+	sort?: string;
 }
 
 export const accountService = {
@@ -36,6 +37,7 @@ export const accountService = {
 				query.append("status", params.status.toString());
 			}
 		}
+		if (params.sort) query.append("sort", params.sort);
 		
 		if (params.search) query.append("search", params.search);
 
@@ -43,6 +45,10 @@ export const accountService = {
 			`/accounts?${query.toString()}`
 		);
 	},
+
+	getCredentials: async (id: string | number) => {
+        return apiRequest<ApiResponse<AccountCredentials>>(`/accounts/${id}/credentials`);
+    },
 
 	create: async (data: any) => {
 		return apiRequest<ApiResponse<number>>("/accounts", {
