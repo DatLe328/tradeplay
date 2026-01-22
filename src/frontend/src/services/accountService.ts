@@ -51,21 +51,21 @@ export const accountService = {
     },
 
 	create: async (data: any) => {
-		return apiRequest<ApiResponse<number>>("/accounts", {
+		return apiRequest<ApiResponse<number>>("/admin/accounts", {
 			method: "POST",
 			data: data,
 		});
 	},
 
 	update: async (id: string, data: any) => {
-		return apiRequest<ApiResponse<boolean>>(`/accounts/${id}`, {
+		return apiRequest<ApiResponse<boolean>>(`/admin/accounts/${id}`, {
 			method: "PATCH",
 			data: data,
 		});
 	},
 
 	delete: async (id: string) => {
-		return apiRequest<ApiResponse<boolean>>(`/accounts/${id}`, {
+		return apiRequest<ApiResponse<boolean>>(`/admin/accounts/${id}`, {
 			method: "DELETE",
 		});
 	},

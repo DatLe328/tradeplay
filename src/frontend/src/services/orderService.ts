@@ -56,7 +56,7 @@ export const orderService = {
 	},
 
 	updateStatus: async (orderId: string, status: OrderStatus) => {
-		return apiRequest<ApiResponse<boolean>>(`/orders/${orderId}`, {
+		return apiRequest<ApiResponse<boolean>>(`/admin/orders/${orderId}`, {
 			method: "PATCH",
 			data: JSON.stringify({ status }), 
 		});

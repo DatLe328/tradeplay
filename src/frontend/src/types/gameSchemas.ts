@@ -19,7 +19,7 @@ export type GameAttributes = Record<string, string | number | boolean | string[]
 export const gameSchemas: Record<string, GameFieldSchema[]> = {
   "Play Together": [
     { key: "level", label: "Level", type: "number", placeholder: "100" },
-    { key: "server", label: "Server", type: "select", options: ["Asia", "Global", "Korea", "Japan"] },
+    { key: "server", label: "Server", type: "select", options: ["VNG"] },
     { key: "gems", label: "Gems", type: "number", placeholder: "10000" },
     { key: "stars", label: "Stars", type: "number", placeholder: "50000" },
     // { key: "house_type", label: "Loại nhà", type: "select", options: ["Nhà thường", "Nhà lớn", "Biệt thự", "Lâu đài", "Nhà cây", "Nhà dưới nước", "Nhà trên mây"] },

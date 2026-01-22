@@ -13,6 +13,7 @@ import type { GameAccount } from "@/types";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "@/stores/languageStore";
 import { AccountStatus } from "@/constants/enums";
+import { SeoMetadata } from "@/components/seo/SeoMetadata";
 
 interface FilterState {
 	search: string;
@@ -131,9 +132,20 @@ export default function AccountsPage() {
 		filters.sort,
 		debouncedSearch,
 	]);
+	const getPageTitle = () => {
+		const pageSuffix = currentPage > 1 ? ` - Trang ${currentPage}` : "";
+		if (filters.game !== "Tất cả" && filters.game !== "All Games") {
+			return `Mua Nick ${filters.game} Giá Rẻ${pageSuffix} | Tiến Cơ Trưởng`;
+		}
+		return `Kho Nick Play Together VIP - Giá Rẻ${pageSuffix} | Tiến Cơ Trưởng`;
+	};
 
 	return (
 		<Layout>
+			<SeoMetadata
+				title={getPageTitle()}
+				description={`Danh sách ${totalItems} tài khoản Play Together đang bán. Giá từ rẻ đến VIP, bảo hành uy tín. Cập nhật mới nhất.`}
+			/>
 			<div className="container mx-auto px-4 py-8">
 				{/* Header */}
 				<motion.div

@@ -31,6 +31,11 @@ const (
 	MaskTypeWalletTx        = 7
 )
 
+const (
+	MaskTypeOrderDisplay = 1
+	MaskTypeUserDisplay  = 2
+)
+
 type ContextKey string
 
 const (

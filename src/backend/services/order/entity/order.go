@@ -54,3 +54,13 @@ func (o *Order) Mask() {
 		o.Account.Mask()
 	}
 }
+
+func (o *Order) MaskDisplay() {
+	o.SQLModel.Mask(common.MaskTypeOrderDisplay)
+	uid := core.NewUID(uint32(o.UserId), int(common.MaskTypeUserDisplay), 1)
+	o.FakeUserId = &uid
+
+	if o.Account != nil {
+		o.Account.Mask()
+	}
+}

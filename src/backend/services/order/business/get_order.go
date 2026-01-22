@@ -23,7 +23,7 @@ func (biz *business) GetOrder(ctx context.Context, id int) (*entity.Order, error
 			"you have no permission to access this order")
 	}
 
-	order.Mask()
+	order.MaskDisplay()
 
 	return order, nil
 }

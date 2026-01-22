@@ -119,7 +119,7 @@ func setupAdminRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	adminAPI := composer.ComposeAdminAPIService(serviceCtx)
 	uploadAPI := composer.ComposeUploadAPIService(serviceCtx)
 
-	v1Admin := router.Group("/v1", middleware.RateLimitMiddleware(50, 300))
+	v1Admin := router.Group("/v1/admin", middleware.RateLimitMiddleware(50, 300))
 	v1Admin.Use(requireAuthMdw, requireAdminMdw, csrfProtection)
 
 	accountAPI := composer.ComposeAccountAPIService(serviceCtx)
@@ -137,12 +137,11 @@ func setupAdminRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 		orders.PATCH("/:id", orderAPI.UpdateOrderStatusHandler())
 	}
 
-	admin := v1Admin.Group("/admin", csrfValidate)
+	admin := v1Admin.Group("", csrfValidate)
 	{
 		admin.GET("/stats", adminAPI.GetStatsHandler())
 		admin.POST("/upload/presign", uploadAPI.GeneratePresignedURLHandler())
 	}
-
 }
 
 func Execute() {

@@ -11,6 +11,7 @@ import priceFilter4 from '@/assets/price-filter-4.jpg';
 import priceFilter5 from '@/assets/price-filter-5.jpg';
 import { WelcomePopup } from '@/components/layout/WelcomePopup';
 import { useTranslation } from '@/stores/languageStore';
+import { SeoMetadata } from '@/components/seo/SeoMetadata';
 
 export default function HomePage() {
   const { t } = useTranslation();
@@ -25,6 +26,10 @@ export default function HomePage() {
 
   return (
     <Layout>
+      <SeoMetadata 
+        title="Tiến Cơ Trưởng - Shop Acc Play Together Uy Tín"
+        description="Shop Tiến Cơ Trưởng chuyên mua bán nick Play Together giá rẻ, uy tín. Giao dịch tự động, bảo hành, hỗ trợ 24/7."
+      />
       <WelcomePopup/>
       {/* Hero Section */}
       <section className="relative overflow-hidden">

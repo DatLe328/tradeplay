@@ -16,7 +16,7 @@ func (biz *business) ListOrders(ctx context.Context, userId int, filter *entity.
 		}
 
 		for i := range results {
-			results[i].Mask()
+			results[i].MaskDisplay()
 		}
 		return results, nil
 	} else {
@@ -26,7 +26,7 @@ func (biz *business) ListOrders(ctx context.Context, userId int, filter *entity.
 		}
 
 		for i := range result {
-			result[i].Mask()
+			result[i].MaskDisplay()
 		}
 		return result, nil
 	}

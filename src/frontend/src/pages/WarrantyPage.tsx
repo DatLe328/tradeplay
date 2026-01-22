@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTranslation } from "@/stores/languageStore";
+import { SeoMetadata } from "@/components/seo/SeoMetadata";
 
 export default function WarrantyPage() {
 	const { t } = useTranslation();
@@ -73,6 +74,10 @@ export default function WarrantyPage() {
 
 	return (
 		<Layout>
+			<SeoMetadata
+				title="Chính sách bảo hành & Đổi trả - Tiến Cơ Trưởng"
+				description="Cam kết bảo hành tài khoản, hoàn tiền nếu lỗi. Xem chi tiết các trường hợp được hỗ trợ."
+			/>
 			<div className="container mx-auto px-4 py-8">
 				{/* Header */}
 				<motion.div

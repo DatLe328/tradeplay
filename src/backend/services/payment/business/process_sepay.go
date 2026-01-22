@@ -38,8 +38,8 @@ func (biz *business) ProcessSepayWebhook(ctx context.Context, payload *paymentEn
 			return nil
 		}
 
-		if payload.TransferAmount < order.TotalPrice {
-			return fmt.Errorf("số tiền chuyển (%v) nhỏ hơn giá trị đơn hàng (%v)", payload.TransferAmount, order.TotalPrice)
+		if payload.TransferAmount != order.TotalPrice {
+			return fmt.Errorf("số tiền chuyển (%v) không đúng với giá trị đơn hàng (%v)", payload.TransferAmount, order.TotalPrice)
 		}
 
 		if err := biz.orderRepo.UpdateOrderStatus(ctx, tx, order.Id, orderEntity.OrderStatusPaid); err != nil {
