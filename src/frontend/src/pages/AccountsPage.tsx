@@ -12,19 +12,19 @@ import { Gamepad2 } from "lucide-react";
 import type { GameAccount } from "@/types";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "@/stores/languageStore";
-import { AccountStatus } from "@/constants/enums";
+import { AccountStatus, getGameName } from "@/constants/enums";
 import { SeoMetadata } from "@/components/seo/SeoMetadata";
 
 interface FilterState {
 	search: string;
-	game: string;
+	categoryId: string;
 	priceRange: string;
 	status: string;
 	sort: string;
 }
 
 export default function AccountsPage() {
-	const { t, language } = useTranslation();
+	const { t } = useTranslation();
 	const [searchParams] = useSearchParams();
 	const location = useLocation();
 
@@ -34,9 +34,7 @@ export default function AccountsPage() {
 
 		return {
 			search: searchParams.get("search") || "",
-			game:
-				searchParams.get("game") ||
-				(language === "vi" ? "Tất cả" : "All Games"),
+			categoryId: searchParams.get("category_id") || "all",
 			priceRange: hiddenPrice || urlPrice || "all",
 			status: searchParams.get("status") || "all",
 			sort: searchParams.get("sort") || "newest",
@@ -51,6 +49,10 @@ export default function AccountsPage() {
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalItems, setTotalItems] = useState(0);
 	const [debouncedSearch, setDebouncedSearch] = useState(filters.search);
+
+	useEffect(() => {
+		window.scrollTo({ top: 0, behavior: "smooth" });
+	}, [currentPage]);
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -93,11 +95,10 @@ export default function AccountsPage() {
 				const params: GetAccountsParams = {
 					page: currentPage,
 					limit: pageSize,
-					game_name:
-						filters.game === "Tất cả" ||
-						filters.game === "All Games"
+					category_id:
+						filters.categoryId === "all"
 							? undefined
-							: filters.game,
+							: Number(filters.categoryId),
 					min_price: minPrice,
 					max_price: maxPrice,
 					search: debouncedSearch,
@@ -126,7 +127,7 @@ export default function AccountsPage() {
 	}, [
 		currentPage,
 		pageSize,
-		filters.game,
+		filters.categoryId,
 		filters.priceRange,
 		filters.status,
 		filters.sort,
@@ -134,10 +135,11 @@ export default function AccountsPage() {
 	]);
 	const getPageTitle = () => {
 		const pageSuffix = currentPage > 1 ? ` - Trang ${currentPage}` : "";
-		if (filters.game !== "Tất cả" && filters.game !== "All Games") {
-			return `Mua Nick ${filters.game} Giá Rẻ${pageSuffix} | Tiến Cơ Trưởng`;
+		if (filters.categoryId !== "all") {
+			const gameName = getGameName(Number(filters.categoryId));
+			return `Danh sách acc ${gameName} Giá Rẻ${pageSuffix} | Tiến Cơ Trưởng`;
 		}
-		return `Kho Nick Play Together VIP - Giá Rẻ${pageSuffix} | Tiến Cơ Trưởng`;
+		return `Danh sách acc game${pageSuffix} | Tiến Cơ Trưởng`;
 	};
 
 	return (

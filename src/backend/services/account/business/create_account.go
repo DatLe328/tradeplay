@@ -2,21 +2,21 @@ package business
 
 import (
 	"context"
+	"time"
 	"tradeplay/common"
 	"tradeplay/services/account/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"gorm.io/gorm"
 )
 
-func (biz *business) CreateAccount(ctx context.Context, userId int, data *entity.AccountDataCreation) (*int, error) {
+func (biz *business) CreateAccount(ctx context.Context, userID int32, data *entity.AccountDataCreation) (*int32, error) {
 	if data.Price < 0 {
-		return nil, core.ErrInvalidRequest(nil)
+		return nil, common.ErrInvalidRequest(nil)
 	}
 
 	account := &entity.Account{
-		OwnerId:       userId,
-		GameName:      data.GameName,
+		OwnerId:       userID,
+		CategoryId:    data.CategoryID,
 		Title:         data.Title,
 		Description:   data.Description,
 		Price:         data.Price,
@@ -28,36 +28,31 @@ func (biz *business) CreateAccount(ctx context.Context, userId int, data *entity
 
 		Status:    entity.AccountStatusAvailable,
 		ViewCount: 0,
+		Version:   0,
 	}
 
 	db := biz.accountRepo.GetDB()
 
-	err := db.Transaction(func(tx *gorm.DB) error {
-		if err := biz.accountRepo.CreateAccount(ctx, tx, account); err != nil {
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	err := db.WithContext(ctxWithTimeout).Transaction(func(tx *gorm.DB) error {
+		if err := biz.accountRepo.CreateAccount(ctxWithTimeout, tx, account); err != nil {
 			return err
 		}
 
-		encUser, err := common.Encrypt(data.Username, biz.appSecretKey)
-		if err != nil {
-			return core.ErrInternal(err)
-		}
-		encPass, err := common.Encrypt(data.Password, biz.appSecretKey)
-		if err != nil {
-			return core.ErrInternal(err)
-		}
+		encUser, _ := common.Encrypt(data.Username, biz.appSecretKey)
+		encPass, _ := common.Encrypt(data.Password, biz.appSecretKey)
+		encExtra, _ := common.Encrypt(data.ExtraData, biz.appSecretKey)
 
-		encExtra, err := common.Encrypt(data.ExtraData, biz.appSecretKey)
-		if err != nil {
-			return core.ErrInternal(err)
-		}
 		accountInfo := &entity.AccountInfo{
-			AccountId: account.Id,
+			AccountId: account.ID,
 			Username:  encUser,
 			Password:  encPass,
 			ExtraData: encExtra,
 		}
 
-		if err := biz.accountRepo.CreateAccountInfo(ctx, tx, accountInfo); err != nil {
+		if err := biz.accountRepo.CreateAccountInfo(ctxWithTimeout, tx, accountInfo); err != nil {
 			return err
 		}
 
@@ -65,8 +60,8 @@ func (biz *business) CreateAccount(ctx context.Context, userId int, data *entity
 	})
 
 	if err != nil {
-		return nil, core.ErrInternal(err)
+		return nil, common.ErrInternal(err)
 	}
 
-	return &account.Id, nil
+	return &account.ID, nil
 }

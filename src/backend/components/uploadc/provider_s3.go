@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"net/http"
 	"net/url"
 	"path/filepath"
 	"strings"
@@ -29,12 +30,18 @@ type s3Provider struct {
 	client        *s3.Client
 	uploader      *manager.Uploader
 	presignClient *s3.PresignClient
+	httpClient    *http.Client
 }
 
 func NewS3Provider(bucket, region, endpoint, domain, accessKey, secretKey string) (*s3Provider, error) {
+	httpClient := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
 	cfg, err := config.LoadDefaultConfig(context.Background(),
 		config.WithRegion(region),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(accessKey, secretKey, "")),
+		config.WithHTTPClient(httpClient),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load AWS config: %w", err)
@@ -56,7 +63,15 @@ func NewS3Provider(bucket, region, endpoint, domain, accessKey, secretKey string
 		client:        client,
 		uploader:      uploader,
 		presignClient: presignClient,
+		httpClient:    httpClient,
 	}, nil
+}
+
+func (p *s3Provider) Close() error {
+	if p.httpClient != nil {
+		p.httpClient.CloseIdleConnections()
+	}
+	return nil
 }
 
 func (p *s3Provider) UploadFile(ctx context.Context, data []byte, dst string) (*common.Image, error) {

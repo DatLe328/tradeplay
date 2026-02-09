@@ -5,24 +5,28 @@ import (
 	"strconv"
 	"tradeplay/common"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) GetAccountHandler() func(*gin.Context) {
+func (api *api) GetAccountHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
-		data, err := api.business.GetAccount(c.Request.Context(), id)
+		if id < 0 {
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(nil))
+			return
+		}
+
+		data, err := api.business.GetAccount(c.Request.Context(), int32(id))
 		if err != nil {
 			common.WriteErrorResponse(c, err)
 			return
 		}
 
-		c.JSON(http.StatusOK, core.ResponseData(data))
+		c.JSON(http.StatusOK, common.ResponseData(data))
 	}
 }

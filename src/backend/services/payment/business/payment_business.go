@@ -2,44 +2,61 @@ package business
 
 import (
 	"context"
-	accountEntity "tradeplay/services/account/entity"
+	"tradeplay/common"
+	auditEntity "tradeplay/services/audit/entity"
+	notificationRepository "tradeplay/services/notification/repository"
 	orderEntity "tradeplay/services/order/entity"
-	walletEntity "tradeplay/services/wallet/entity"
+	paymentEntity "tradeplay/services/payment/entity"
 
 	"gorm.io/gorm"
 )
 
-type WalletRepository interface {
-	GetDB() *gorm.DB
-	GetWalletByUserID(ctx context.Context, userId int, currency string) (*walletEntity.Wallet, error)
-	GetWalletForUpdate(ctx context.Context, tx *gorm.DB, userId int, currency string) (*walletEntity.Wallet, error)
-	CreateWallet(ctx context.Context, wallet *walletEntity.Wallet) error
-	CreateWalletTransaction(ctx context.Context, tx *gorm.DB, data *walletEntity.WalletTransaction) error
+type orderBusiness interface {
+	GetOrderInternal(ctx context.Context, id int32) (*orderEntity.Order, error)
+	MarkOrderAsPaid(ctx context.Context, tx *gorm.DB, orderId int32, amount int64, gateway string, refCode string) (*orderEntity.Order, error)
+	MarkOrderAsCompleted(ctx context.Context, tx *gorm.DB, orderID int32, note string) error
 }
 
-type OrderRepository interface {
-	GetOrderForUpdate(ctx context.Context, tx *gorm.DB, id int) (*orderEntity.Order, error)
-	UpdateOrderStatus(ctx context.Context, tx *gorm.DB, id int, status orderEntity.OrderStatus) error
-	UpdateOrderPaid(ctx context.Context, tx *gorm.DB, id int, method string, ref string) error
-	CreateOrderHistory(ctx context.Context, tx *gorm.DB, history *orderEntity.OrderHistory) error
+type walletBusiness interface {
+	Deposit(ctx context.Context, tx *gorm.DB, userId int32, amount int64, refId string, description string, metadata *common.JSON) error
 }
 
-type AccountRepository interface {
-	UpdateAccount(ctx context.Context, tx *gorm.DB, id int, data *accountEntity.AccountDataUpdate) error
+type auditRepository interface {
+	PushAuditLog(ctx context.Context, log *auditEntity.AuditLog)
+}
 
-	GetAccountByID(ctx context.Context, id int) (*accountEntity.Account, error)
+type paymentRepository interface {
+	GetPaymentWebhookBySepayID(ctx context.Context, tx *gorm.DB, sepayID string) (*paymentEntity.PaymentWebhook, error)
+	CreatePaymentWebhook(ctx context.Context, tx *gorm.DB, webhook *paymentEntity.PaymentWebhook) error
+	UpdatePaymentWebhookStatus(ctx context.Context, tx *gorm.DB, referenceCode string, status string) error
 }
 
 type business struct {
-	walletRepo  WalletRepository
-	orderRepo   OrderRepository
-	accountRepo AccountRepository
+	db                    *gorm.DB
+	repo                  paymentRepository
+	orderBusiness         orderBusiness
+	walletBusiness        walletBusiness
+	auditRepo             auditRepository
+	notificationRepository notificationRepository.NotificationRepository
+	sepayApiKey           string
 }
 
-func NewBusiness(walletRepo WalletRepository, orderRepo OrderRepository, accountRepo AccountRepository) *business {
+func NewBusiness(
+	db *gorm.DB,
+	repo paymentRepository,
+	orderBiz orderBusiness,
+	walletBiz walletBusiness,
+	auditRepo auditRepository,
+	notifRepo notificationRepository.NotificationRepository,
+	sepayApiKey string,
+) *business {
 	return &business{
-		walletRepo:  walletRepo,
-		orderRepo:   orderRepo,
-		accountRepo: accountRepo,
+		db:                    db,
+		repo:                  repo,
+		orderBusiness:         orderBiz,
+		walletBusiness:        walletBiz,
+		auditRepo:             auditRepo,
+		notificationRepository: notifRepo,
+		sepayApiKey:           sepayApiKey,
 	}
 }

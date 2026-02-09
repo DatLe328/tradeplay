@@ -6,8 +6,9 @@ import (
 	"flag"
 	"fmt"
 	"net/http"
+	"time"
 
-	sctx "github.com/DatLe328/service-context"
+	sctx "tradeplay/components/service-context"
 )
 
 type EmailProvider interface {
@@ -17,8 +18,9 @@ type EmailProvider interface {
 type emailProvider struct {
 	id          string
 	apiKey      string
-	senderEmail string // Email người gửi
-	senderName  string // Tên người gửi
+	senderEmail string
+	senderName  string
+	client      *http.Client
 }
 
 func NewEmailProvider(id string) *emailProvider {
@@ -63,6 +65,15 @@ func (p *emailProvider) Activate(s sctx.ServiceContext) error {
 		p.senderName = "Your App"
 	}
 
+	p.client = &http.Client{
+		Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:       10,
+			IdleConnTimeout:    30 * time.Second,
+			DisableCompression: true,
+		},
+	}
+
 	s.Logger("email-provider").Infof(
 		"email provider initialized with Brevo API, sender=%s <%s>",
 		p.senderName, p.senderEmail,
@@ -71,9 +82,13 @@ func (p *emailProvider) Activate(s sctx.ServiceContext) error {
 	return nil
 }
 
-func (p *emailProvider) Stop() error { return nil }
+func (p *emailProvider) Stop() error {
+	if p.client != nil {
+		p.client.CloseIdleConnections()
+	}
+	return nil
+}
 
-// Brevo API request structure
 type brevoSendRequest struct {
 	Sender      brevoSender    `json:"sender"`
 	To          []brevoContact `json:"to"`
@@ -112,7 +127,6 @@ func (p *emailProvider) SendEmail(to []string, subject string, content string) e
 		return fmt.Errorf("marshal request: %v", err)
 	}
 
-	// Create HTTP request
 	req, err := http.NewRequest(
 		"POST",
 		"https://api.brevo.com/v3/smtp/email",
@@ -122,20 +136,16 @@ func (p *emailProvider) SendEmail(to []string, subject string, content string) e
 		return fmt.Errorf("create request: %v", err)
 	}
 
-	// Set headers
 	req.Header.Set("accept", "application/json")
 	req.Header.Set("api-key", p.apiKey)
 	req.Header.Set("content-type", "application/json")
 
-	// Send request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := p.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("send request: %v", err)
 	}
 	defer resp.Body.Close()
 
-	// Check response
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		var errResp map[string]interface{}
 		json.NewDecoder(resp.Body).Decode(&errResp)

@@ -27,7 +27,12 @@ import { formatCurrency, formatDateTime } from "@/utils/format";
 import { useEffect, useState } from "react";
 import type { Order, AccountCredentials } from "@/types";
 import { useTranslation } from "@/stores/languageStore";
-import { OrderStatus, OrderType, OrderStatusLabel } from "@/constants/enums";
+import {
+	OrderStatus,
+	OrderType,
+	OrderStatusLabel,
+	getGameName,
+} from "@/constants/enums";
 import { useToast } from "@/hooks/use-toast";
 import {
 	Select,
@@ -83,14 +88,21 @@ export default function OrdersPage() {
 	const { toast } = useToast();
 
 	const [currentPage, setCurrentPage] = useState(1);
+	useEffect(() => {
+		window.scrollTo({ top: 0, behavior: "smooth" });
+	}, [currentPage]);
+
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalItems, setTotalItems] = useState(0);
-	const [activeTab, setActiveTab] = useState<"accounts" | "deposits">("accounts");
-	
+	const [activeTab, setActiveTab] = useState<"accounts" | "deposits">(
+		"accounts",
+	);
+
 	const [filterStatus, setFilterStatus] = useState<string>("all");
 
 	const [showCredsModal, setShowCredsModal] = useState(false);
-	const [selectedCreds, setSelectedCreds] = useState<AccountCredentials | null>(null);
+	const [selectedCreds, setSelectedCreds] =
+		useState<AccountCredentials | null>(null);
 	const [isFetchingCreds, setIsFetchingCreds] = useState(false);
 
 	const pageSize = 10;
@@ -104,10 +116,19 @@ export default function OrdersPage() {
 	const loadOrders = async (page: number) => {
 		setIsLoading(true);
 		try {
-			const typeParam = activeTab === "accounts" ? OrderType.BuyAcc : OrderType.Deposit;
-			const statusParam = filterStatus === "all" ? undefined : Number(filterStatus) as OrderStatus;
+			const typeParam =
+				activeTab === "accounts" ? OrderType.BuyAcc : OrderType.Deposit;
+			const statusParam =
+				filterStatus === "all"
+					? undefined
+					: (Number(filterStatus) as OrderStatus);
 
-			const res = await orderService.getMyOrders(page, pageSize, typeParam, statusParam);
+			const res = await orderService.getMyOrders(
+				page,
+				pageSize,
+				typeParam,
+				statusParam,
+			);
 			setOrders(res.data);
 			if (res.paging) {
 				setTotalItems(Number(res.paging.total));
@@ -137,7 +158,7 @@ export default function OrdersPage() {
 		setCurrentPage(1);
 	};
 
-	const handleViewCredentials = async (accountId: string) => {
+	const handleViewCredentials = async (accountId: string | number) => {
 		setIsFetchingCreds(true);
 		try {
 			const res = await accountService.getCredentials(accountId);
@@ -148,7 +169,8 @@ export default function OrdersPage() {
 		} catch (error: any) {
 			toast({
 				title: "Lỗi",
-				description: error.message || "Không thể lấy thông tin tài khoản",
+				description:
+					error.message || "Không thể lấy thông tin tài khoản",
 				variant: "destructive",
 			});
 		} finally {
@@ -209,7 +231,7 @@ export default function OrdersPage() {
 								"flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
 								activeTab === "accounts"
 									? "bg-background text-primary shadow-sm"
-									: "text-muted-foreground hover:text-foreground"
+									: "text-muted-foreground hover:text-foreground",
 							)}
 						>
 							<History className="h-4 w-4" />
@@ -221,7 +243,7 @@ export default function OrdersPage() {
 								"flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all",
 								activeTab === "deposits"
 									? "bg-background text-primary shadow-sm"
-									: "text-muted-foreground hover:text-foreground"
+									: "text-muted-foreground hover:text-foreground",
 							)}
 						>
 							<CreditCard className="h-4 w-4" />
@@ -230,17 +252,24 @@ export default function OrdersPage() {
 					</div>
 
 					<div className="w-full sm:w-[200px]">
-						<Select value={filterStatus} onValueChange={handleStatusChange}>
+						<Select
+							value={filterStatus}
+							onValueChange={handleStatusChange}
+						>
 							<SelectTrigger>
 								<SelectValue placeholder="Trạng thái đơn" />
 							</SelectTrigger>
 							<SelectContent>
-								<SelectItem value="all">Tất cả trạng thái</SelectItem>
-								{Object.entries(OrderStatusLabel).map(([key, label]) => (
-									<SelectItem key={key} value={key}>
-										{label}
-									</SelectItem>
-								))}
+								<SelectItem value="all">
+									Tất cả trạng thái
+								</SelectItem>
+								{Object.entries(OrderStatusLabel).map(
+									([key, label]) => (
+										<SelectItem key={key} value={key}>
+											{label}
+										</SelectItem>
+									),
+								)}
 							</SelectContent>
 						</Select>
 					</div>
@@ -249,7 +278,10 @@ export default function OrdersPage() {
 				{isLoading ? (
 					<div className="space-y-4">
 						{[1, 2, 3].map((i) => (
-							<div key={i} className="h-24 bg-card/50 rounded-xl animate-pulse" />
+							<div
+								key={i}
+								className="h-24 bg-card/50 rounded-xl animate-pulse"
+							/>
 						))}
 					</div>
 				) : orders.length > 0 ? (
@@ -260,9 +292,11 @@ export default function OrdersPage() {
 									statusConfigMap[order.status] ||
 									statusConfigMap[OrderStatus.Pending];
 								const StatusIcon = config.icon;
-								
+
 								const isDeposit = activeTab === "deposits";
-								const isSuccess = order.status === OrderStatus.Paid || order.status === OrderStatus.Completed;
+								const isSuccess =
+									order.status === OrderStatus.Paid ||
+									order.status === OrderStatus.Completed;
 
 								return (
 									<motion.div
@@ -276,10 +310,18 @@ export default function OrdersPage() {
 											<div className="w-16 h-16 md:w-20 md:h-20 rounded-lg overflow-hidden flex-shrink-0 bg-secondary flex items-center justify-center border border-border/50">
 												{isDeposit ? (
 													<Wallet className="h-8 w-8 text-primary" />
-												) : order.account?.images?.[0] ? (
+												) : order.account?.thumbnail ||
+												  order.account?.images?.[0] ? (
 													<img
-														src={order.account.images[0]}
-														alt={order.account?.title}
+														src={
+															order.account
+																.thumbnail ||
+															order.account
+																.images[0]
+														}
+														alt={
+															order.account?.title
+														}
 														className="w-full h-full object-cover"
 													/>
 												) : (
@@ -295,59 +337,113 @@ export default function OrdersPage() {
 													<span className="font-mono text-xs text-muted-foreground">
 														#{order.id}
 													</span>
-													<Badge className={cn("text-xs", config.className)} variant="secondary">
+													{!isDeposit &&
+														order.account && (
+															<Badge
+																variant="outline"
+																className="text-[10px] h-5 bg-background/50"
+															>
+																{order.account
+																	.category
+																	?.name ||
+																	getGameName(
+																		order
+																			.account
+																			.category_id,
+																	)}
+															</Badge>
+														)}
+													<Badge
+														className={cn(
+															"text-xs",
+															config.className,
+														)}
+														variant="secondary"
+													>
 														<StatusIcon className="h-3 w-3 mr-1" />
-														{getStatusLabel(order.status)}
+														{getStatusLabel(
+															order.status,
+														)}
 													</Badge>
 												</div>
-												
+
 												<h3 className="font-gaming font-semibold line-clamp-1">
-													{isDeposit 
-														? `Nạp tiền qua ${order.payment_method || 'Ngân hàng'}`
-														: (order.account?.title || t("accountNotFound"))
-													}
+													{isDeposit
+														? `Nạp tiền qua ${order.payment_method || "Ngân hàng"}`
+														: order.account
+																?.title ||
+															t(
+																"accountNotFound",
+															)}
 												</h3>
-												
+
 												<div className="text-sm text-muted-foreground flex gap-4">
-													<span>{formatDateTime(order.created_at)}</span>
+													<span>
+														{formatDateTime(
+															order.created_at,
+														)}
+													</span>
 												</div>
 											</div>
 
 											{/* Price & Actions */}
 											<div className="flex flex-col items-end gap-2 mt-2 md:mt-0">
 												<span className="font-gaming text-lg md:text-xl font-bold text-primary">
-													{formatCurrency(order.total_price)}
+													{formatCurrency(
+														order.total_price,
+													)}
 												</span>
-												
+
 												<div className="flex gap-2 flex-wrap justify-end">
-													{order.status === OrderStatus.Pending && (
-														<Link to={`/payment/${order.id}`}>
-															<Button size="sm" className="btn-gaming h-8">
+													{order.status ===
+														OrderStatus.Pending && (
+														<Link
+															to={`/payment/${order.id}`}
+														>
+															<Button
+																size="sm"
+																className="btn-gaming h-8"
+															>
 																{t("pay")}
 															</Button>
 														</Link>
 													)}
-													
+
 													{!isDeposit && (
 														<>
-															{isSuccess && order.account && (
-																<Button
-																	size="sm"
-																	className="bg-green-600 hover:bg-green-700 text-white gap-1 h-8"
-																	onClick={() => handleViewCredentials(order.account!.id)}
-																	disabled={isFetchingCreds}
-																>
-																	{isFetchingCreds ? (
-																		<Loader2 className="h-3 w-3 animate-spin" />
-																	) : (
-																		<Lock className="h-3 w-3" />
-																	)}
-																	<span className="hidden sm:inline">Xem Thông Tin</span>
-																</Button>
-															)}
-															
+															{isSuccess &&
+																order.account && (
+																	<Button
+																		size="sm"
+																		className="bg-green-600 hover:bg-green-700 text-white gap-1 h-8"
+																		onClick={() =>
+																			handleViewCredentials(
+																				order
+																					.account!
+																					.id,
+																			)
+																		}
+																		disabled={
+																			isFetchingCreds
+																		}
+																	>
+																		{isFetchingCreds ? (
+																			<Loader2 className="h-3 w-3 animate-spin" />
+																		) : (
+																			<Lock className="h-3 w-3" />
+																		)}
+																		<span className="hidden sm:inline">
+																			Xem
+																			Thông
+																			Tin
+																		</span>
+																	</Button>
+																)}
+
 															{order.account && (
-																<Link to={`/accounts/${order.account.id}`}>
+																<Link
+																	to={`/accounts/${order.account.id}`}
+																>
 																	<Button
 																		size="sm"
 																		variant="outline"
@@ -367,7 +463,7 @@ export default function OrdersPage() {
 								);
 							})}
 						</div>
-						
+
 						<PaginationWrapper
 							currentPage={currentPage}
 							totalPages={totalPages}
@@ -383,24 +479,28 @@ export default function OrdersPage() {
 						className="text-center py-20 bg-card/30 rounded-xl border border-dashed border-border"
 					>
 						<div className="p-4 rounded-full bg-secondary w-fit mx-auto mb-4">
-							{activeTab === 'deposits' ? (
+							{activeTab === "deposits" ? (
 								<Wallet className="h-10 w-10 text-muted-foreground" />
 							) : (
 								<Package className="h-10 w-10 text-muted-foreground" />
 							)}
 						</div>
 						<h3 className="font-gaming text-xl font-semibold mb-2">
-							{activeTab === 'deposits' ? "Chưa có giao dịch nạp tiền" : "Chưa mua tài khoản nào"}
+							{activeTab === "deposits"
+								? "Chưa có giao dịch nạp tiền"
+								: "Chưa mua tài khoản nào"}
 						</h3>
 						<p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-							{activeTab === 'deposits' 
+							{activeTab === "deposits"
 								? "Bạn chưa thực hiện giao dịch nạp tiền nào vào hệ thống."
-								: "Bạn chưa mua tài khoản nào. Hãy khám phá kho game ngay!"
-							}
+								: "Bạn chưa mua tài khoản nào. Hãy khám phá kho game ngay!"}
 						</p>
 
 						{filterStatus !== "all" ? (
-							<Button variant="outline" onClick={() => setFilterStatus("all")}>
+							<Button
+								variant="outline"
+								onClick={() => setFilterStatus("all")}
+							>
 								Xóa bộ lọc trạng thái
 							</Button>
 						) : activeTab === "accounts" ? (
@@ -410,7 +510,7 @@ export default function OrdersPage() {
 								</Button>
 							</Link>
 						) : (
-							<Link to="/profile"> 
+							<Link to="/profile">
 								<Button variant="outline">Nạp tiền ngay</Button>
 							</Link>
 						)}
@@ -429,14 +529,26 @@ export default function OrdersPage() {
 							Vui lòng bảo mật thông tin này.
 						</DialogDescription>
 					</DialogHeader>
-					
+
 					{selectedCreds && (
 						<div className="space-y-4 py-2">
 							<div className="space-y-2">
 								<Label>Tài khoản / Email</Label>
 								<div className="flex gap-2">
-									<Input readOnly value={selectedCreds.username} className="bg-secondary/50 font-mono" />
-									<Button variant="outline" size="icon" onClick={() => copyToClipboard(selectedCreds.username)}>
+									<Input
+										readOnly
+										value={selectedCreds.username}
+										className="bg-secondary/50 font-mono"
+									/>
+									<Button
+										variant="outline"
+										size="icon"
+										onClick={() =>
+											copyToClipboard(
+												selectedCreds.username,
+											)
+										}
+									>
 										<Copy className="h-4 w-4" />
 									</Button>
 								</div>
@@ -445,8 +557,20 @@ export default function OrdersPage() {
 							<div className="space-y-2">
 								<Label>Mật khẩu</Label>
 								<div className="flex gap-2">
-									<Input readOnly value={selectedCreds.password} className="bg-secondary/50 font-mono text-primary font-bold" />
-									<Button variant="outline" size="icon" onClick={() => copyToClipboard(selectedCreds.password)}>
+									<Input
+										readOnly
+										value={selectedCreds.password}
+										className="bg-secondary/50 font-mono text-primary font-bold"
+									/>
+									<Button
+										variant="outline"
+										size="icon"
+										onClick={() =>
+											copyToClipboard(
+												selectedCreds.password,
+											)
+										}
+									>
 										<Copy className="h-4 w-4" />
 									</Button>
 								</div>
@@ -454,11 +578,22 @@ export default function OrdersPage() {
 
 							{selectedCreds.extra_data && (
 								<div className="space-y-2">
-									<Label>Thông tin thêm (2FA/Email backup)</Label>
+									<Label>
+										Thông tin thêm (2FA/Email backup)
+									</Label>
 									<div className="p-3 rounded-md bg-secondary/50 border border-border text-sm font-mono break-all">
 										{selectedCreds.extra_data}
 									</div>
-									<Button variant="link" size="sm" className="p-0 h-auto" onClick={() => copyToClipboard(selectedCreds.extra_data!)}>
+									<Button
+										variant="link"
+										size="sm"
+										className="p-0 h-auto"
+										onClick={() =>
+											copyToClipboard(
+												selectedCreds.extra_data!,
+											)
+										}
+									>
 										Sao chép toàn bộ
 									</Button>
 								</div>

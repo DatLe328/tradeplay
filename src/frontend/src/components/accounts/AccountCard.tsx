@@ -6,7 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye, ShoppingCart, Image as ImageIcon, Sparkles } from "lucide-react";
 import { useTranslation } from "@/stores/languageStore";
-import { AccountStatus, AccountStatusLabel } from "@/constants/enums";
+import {
+	AccountStatus,
+	AccountStatusLabelKey,
+	getGameName,
+} from "@/constants/enums";
 import { cn } from "@/lib/utils";
 
 interface AccountCardProps {
@@ -27,6 +31,7 @@ export function AccountCard({ account, index = 0 }: AccountCardProps) {
 					100,
 			)
 		: 0;
+	const labelKey = AccountStatusLabelKey[account.status];
 
 	const getStatusColor = (status: number) => {
 		switch (status) {
@@ -52,15 +57,23 @@ export function AccountCard({ account, index = 0 }: AccountCardProps) {
 		>
 			<div className="relative aspect-video overflow-hidden bg-secondary/50">
 				{account.thumbnail ? (
-					<img
-						src={account.thumbnail}
-						alt={account.title}
-						className={cn(
-							"w-full h-full object-cover transition-transform duration-500 group-hover:scale-110",
-							account.status === AccountStatus.Sold &&
-								"grayscale-[0.5]",
-						)}
-					/>
+					<>
+						<img
+							src={account.thumbnail}
+							className={cn(
+								"w-full h-full object-cover transition-transform duration-500 group-hover:scale-110",
+								account.status === AccountStatus.Sold &&
+									"grayscale brightness-[0.5]",
+							)}
+						/>
+						{/* {account.status === AccountStatus.Sold && (
+							<div className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-[1px] z-10">
+								<span className="text-white/90 font-gaming font-bold text-xl uppercase tracking-widest border-2 border-white/40 px-4 py-1 rotate-[-15deg] shadow-lg">
+									{t(labelKey)}
+								</span>
+							</div>
+						)} */}
+					</>
 				) : (
 					<div className="flex h-full w-full items-center justify-center text-muted-foreground/30">
 						<ImageIcon className="h-12 w-12" />
@@ -69,16 +82,15 @@ export function AccountCard({ account, index = 0 }: AccountCardProps) {
 
 				<div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
 
-				{/* === THAY ĐỔI Ở ĐÂY: Gom nhóm Top Left để hiển thị cả tên game và giảm giá === */}
 				<div className="absolute top-3 left-3 flex flex-col gap-2 items-start">
 					<Badge
 						variant="secondary"
 						className="bg-background/80 backdrop-blur-sm shadow-sm"
 					>
-						{account.game_name}
+						{account.category?.name ||
+							getGameName(account.category_id)}
 					</Badge>
 
-					{/* Badge Giảm giá */}
 					{hasDiscount && (
 						<Badge className="bg-red-600/90 text-white border-none backdrop-blur-sm shadow-sm animate-pulse font-bold">
 							<Sparkles className="w-3 h-3 mr-1" /> -
@@ -97,14 +109,16 @@ export function AccountCard({ account, index = 0 }: AccountCardProps) {
 					</Badge>
 				</div>
 
-				<div className="absolute bottom-3 right-3">
+				<div className="absolute bottom-3 right-3 z-20">
 					<Badge
 						className={cn(
-							"text-white border-none backdrop-blur-sm shadow-sm",
+							// text-xs cho điện thoại (12px), md:text-sm cho máy tính (14px)
+							"text-xs md:text-sm font-bold px-3 py-1 uppercase tracking-wider",
+							"text-white border-none backdrop-blur-md shadow-lg transition-all",
 							getStatusColor(account.status),
 						)}
 					>
-						{AccountStatusLabel[account.status]}
+						{t(labelKey)}
 					</Badge>
 				</div>
 

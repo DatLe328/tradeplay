@@ -1,32 +1,46 @@
 package api
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"strconv"
 	"tradeplay/common"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) GetAccountCredentialsHandler() func(*gin.Context) {
+func (api *api) GetAccountCredentialsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
-		requester := c.MustGet(core.KeyRequester).(core.Requester)
-		uid, _ := core.FromBase58(requester.GetSubject())
-		requesterId := int(uid.GetLocalID())
+		if id < 0 {
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(nil))
+			return
+		}
 
-		data, err := api.business.GetAccountCredentials(c.Request.Context(), requesterId, id)
+		requester, exists := c.Get(common.KeyRequester)
+		if !exists {
+			common.WriteErrorResponse(c, common.ErrUnauthorized(errors.New("unauthorized"), "unauthorized"))
+			return
+		}
+
+		requesterObj := requester.(common.Requester)
+		uid, _ := common.FromBase58(requesterObj.GetSubject())
+		requesterId := int32(uid.GetLocalID())
+
+		ctx := context.WithValue(c.Request.Context(), common.KeyRequester, requesterObj)
+
+		data, err := api.business.GetAccountCredentials(ctx, requesterId, int32(id))
 		if err != nil {
 			common.WriteErrorResponse(c, err)
 			return
 		}
 
-		c.JSON(http.StatusOK, core.ResponseData(data))
+		c.JSON(http.StatusOK, common.ResponseData(data))
 	}
 }

@@ -1,0 +1,2 @@
+- NewUser for internal create
+- NewUserCreateDTO for data transfer between layers

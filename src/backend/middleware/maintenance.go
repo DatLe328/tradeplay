@@ -5,7 +5,8 @@ import (
 	"slices"
 	"tradeplay/common"
 
-	sctx "github.com/DatLe328/service-context"
+	sctx "tradeplay/components/service-context"
+
 	"github.com/gin-gonic/gin"
 )
 

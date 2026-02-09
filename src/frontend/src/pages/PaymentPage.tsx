@@ -18,7 +18,7 @@ import { formatCurrency, formatDateTime } from "@/utils/format";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
 import { useTranslation } from "@/stores/languageStore";
-import { OrderStatus } from "@/constants/enums";
+import { getGameName, OrderStatus } from "@/constants/enums";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
@@ -76,8 +76,10 @@ export default function PaymentPage() {
 	const isSuccess =
 		currentOrder.status === OrderStatus.Paid ||
 		currentOrder.status === OrderStatus.Completed;
-	
-	const isCancelled = currentOrder.status === OrderStatus.Cancelled || currentOrder.status === OrderStatus.Refunded;
+
+	const isCancelled =
+		currentOrder.status === OrderStatus.Cancelled ||
+		currentOrder.status === OrderStatus.Refunded;
 
 	return (
 		<Layout>
@@ -102,9 +104,13 @@ export default function PaymentPage() {
 					className="space-y-6"
 				>
 					{/* Status Header */}
-					<Card className={`border-2 ${isSuccess ? "border-green-500/20 bg-green-500/5" : isCancelled ? "border-red-500/20 bg-red-500/5" : "border-yellow-500/20 bg-yellow-500/5"}`}>
+					<Card
+						className={`border-2 ${isSuccess ? "border-green-500/20 bg-green-500/5" : isCancelled ? "border-red-500/20 bg-red-500/5" : "border-yellow-500/20 bg-yellow-500/5"}`}
+					>
 						<CardContent className="pt-6 pb-6 text-center space-y-4">
-							<div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${isSuccess ? "bg-green-500/10 text-green-500" : isCancelled ? "bg-red-500/10 text-red-500" : "bg-yellow-500/10 text-yellow-500"}`}>
+							<div
+								className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${isSuccess ? "bg-green-500/10 text-green-500" : isCancelled ? "bg-red-500/10 text-red-500" : "bg-yellow-500/10 text-yellow-500"}`}
+							>
 								{isSuccess ? (
 									<CheckCircle className="h-10 w-10" />
 								) : isCancelled ? (
@@ -113,18 +119,23 @@ export default function PaymentPage() {
 									<Loader2 className="h-10 w-10 animate-spin" />
 								)}
 							</div>
-							
+
 							<div>
-								<h1 className={`font-gaming text-2xl font-bold mb-2 ${isSuccess ? "text-green-500" : isCancelled ? "text-red-500" : "text-yellow-500"}`}>
-									{isSuccess ? t("paymentSuccess") : isCancelled ? "Giao dịch thất bại" : "Đang xử lý"}
+								<h1
+									className={`font-gaming text-2xl font-bold mb-2 ${isSuccess ? "text-green-500" : isCancelled ? "text-red-500" : "text-yellow-500"}`}
+								>
+									{isSuccess
+										? t("paymentSuccess")
+										: isCancelled
+											? "Giao dịch thất bại"
+											: "Đang xử lý"}
 								</h1>
 								<p className="text-muted-foreground">
-									{isSuccess 
+									{isSuccess
 										? "Giao dịch đã được xác nhận. Tiền đã được trừ từ ví của bạn."
-										: isCancelled 
+										: isCancelled
 											? "Đơn hàng đã bị hủy hoặc hoàn tiền."
-											: "Hệ thống đang xử lý đơn hàng của bạn."
-									}
+											: "Hệ thống đang xử lý đơn hàng của bạn."}
 								</p>
 							</div>
 						</CardContent>
@@ -141,10 +152,15 @@ export default function PaymentPage() {
 							{/* Product Info */}
 							<div className="flex gap-4 p-4 rounded-lg bg-secondary/30">
 								<div className="w-16 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0">
-									{currentOrder.account?.thumbnail ? (
-										<img 
-											src={currentOrder.account.thumbnail} 
-											alt="Thumbnail" 
+									{currentOrder.account?.thumbnail ||
+									currentOrder.account?.images?.[0] ? (
+										<img
+											src={
+												currentOrder.account
+													.thumbnail ||
+												currentOrder.account.images[0]
+											}
+											alt="Thumbnail"
 											className="w-full h-full object-cover"
 										/>
 									) : (
@@ -155,11 +171,20 @@ export default function PaymentPage() {
 								</div>
 								<div className="flex-1 min-w-0">
 									<h4 className="font-semibold truncate">
-										{currentOrder.account?.title || "Account Game"}
+										{currentOrder.account?.title ||
+											"Account Game"}
 									</h4>
 									<div className="flex items-center gap-2 mt-1">
-										<Badge variant="outline" className="text-xs">
-											{currentOrder.account?.game_name}
+										<Badge
+											variant="outline"
+											className="text-xs"
+										>
+											{currentOrder.account?.category
+												?.name ||
+												getGameName(
+													currentOrder.account
+														?.category_id,
+												)}
 										</Badge>
 										<span className="text-xs text-muted-foreground">
 											MS: {currentOrder.account_id}
@@ -172,15 +197,22 @@ export default function PaymentPage() {
 							<div className="grid gap-4 py-4 border-t border-b border-border">
 								<div className="flex justify-between items-center">
 									<span className="text-sm text-muted-foreground flex items-center gap-2">
-										<Package className="h-4 w-4" /> Mã đơn hàng
+										<Package className="h-4 w-4" /> Mã đơn
+										hàng
 									</span>
 									<div className="flex items-center gap-2">
-										<span className="font-mono font-medium">{currentOrder.id}</span>
+										<span className="font-mono font-medium">
+											{currentOrder.id}
+										</span>
 										<Button
 											variant="ghost"
 											size="icon"
 											className="h-6 w-6"
-											onClick={() => copyToClipboard(currentOrder.id.toString())}
+											onClick={() =>
+												copyToClipboard(
+													currentOrder.id.toString(),
+												)
+											}
 										>
 											<Copy className="h-3 w-3" />
 										</Button>
@@ -189,16 +221,20 @@ export default function PaymentPage() {
 
 								<div className="flex justify-between items-center">
 									<span className="text-sm text-muted-foreground flex items-center gap-2">
-										<Calendar className="h-4 w-4" /> Thời gian
+										<Calendar className="h-4 w-4" /> Thời
+										gian
 									</span>
 									<span className="text-sm">
-										{formatDateTime(currentOrder.created_at)}
+										{formatDateTime(
+											currentOrder.created_at,
+										)}
 									</span>
 								</div>
 
 								<div className="flex justify-between items-center">
 									<span className="text-sm text-muted-foreground flex items-center gap-2">
-										<Wallet className="h-4 w-4" /> Phương thức
+										<Wallet className="h-4 w-4" /> Phương
+										thức
 									</span>
 									<span className="text-sm font-medium">
 										Ví tài khoản
@@ -208,7 +244,9 @@ export default function PaymentPage() {
 
 							{/* Total */}
 							<div className="flex justify-between items-center">
-								<span className="font-semibold">Tổng thanh toán</span>
+								<span className="font-semibold">
+									Tổng thanh toán
+								</span>
 								<span className="font-gaming text-xl font-bold text-primary">
 									{formatCurrency(currentOrder.total_price)}
 								</span>
@@ -223,18 +261,17 @@ export default function PaymentPage() {
 								{t("viewOrders")}
 							</Button>
 						</Link>
-						
-						{/* Nếu thành công thì hiển thị nút nhận tài khoản */}
+
 						{isSuccess && (
-							<Link to={`/orders`}> {/* Hoặc link đến trang chi tiết đơn hàng để xem pass */}
+							<Link to={`/orders`}>
+								{" "}
 								<Button className="btn-gaming w-full h-12 gap-2">
 									<Package className="h-5 w-5" />
 									Nhận tài khoản ngay
 								</Button>
 							</Link>
 						)}
-						
-						{/* Nếu thất bại/đang xử lý thì hiển thị nút liên hệ */}
+
 						{!isSuccess && (
 							<Button variant="secondary" className="w-full h-12">
 								Liên hệ hỗ trợ

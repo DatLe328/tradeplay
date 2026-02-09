@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/subtle"
-	"encoding/hex"
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -18,15 +18,16 @@ import (
 const (
 	CSRFTokenCookieName = "csrf_token"
 	CSRFTokenHeaderName = "X-CSRF-Token"
+	CSRFTokenLength     = 48
 )
 
 func GenerateCSRFToken() (string, error) {
-	b := make([]byte, 32)
+	b := make([]byte, CSRFTokenLength)
 	_, err := rand.Read(b)
 	if err != nil {
 		return "", err
 	}
-	return hex.EncodeToString(b), nil
+	return base64.RawURLEncoding.EncodeToString(b), nil
 }
 
 func SetCSRFToken(c *gin.Context) (string, error) {
@@ -36,7 +37,8 @@ func SetCSRFToken(c *gin.Context) (string, error) {
 	}
 
 	cookieDomain := common.GetCookieDomainForOrigin(c.GetHeader("Origin"))
-	c.SetSameSite(http.SameSiteLaxMode)
+
+	c.SetSameSite(http.SameSiteNoneMode)
 
 	c.SetCookie(
 		CSRFTokenCookieName,
@@ -113,6 +115,10 @@ func CSRFProtection() gin.HandlerFunc {
 	allowedOrigins := strings.Split(os.Getenv("FRONTEND_ORIGINS"), ",")
 
 	return func(c *gin.Context) {
+		if os.Getenv("APP_ENV") == "dev" {
+			c.Next()
+			return
+		}
 		if c.Request.Method == "POST" || c.Request.Method == "PUT" ||
 			c.Request.Method == "DELETE" || c.Request.Method == "PATCH" {
 

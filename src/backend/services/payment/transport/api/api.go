@@ -2,13 +2,12 @@ package api
 
 import (
 	"context"
+	sctx "tradeplay/components/service-context"
 	paymentEntity "tradeplay/services/payment/entity"
-
-	sctx "github.com/DatLe328/service-context"
 )
 
 type PaymentBusiness interface {
-	ProcessSepayWebhook(ctx context.Context, payload *paymentEntity.SepayWebhookPayload) error
+	ProcessSepayWebhook(ctx context.Context, payload *paymentEntity.SepayWebhookPayload, orderID string, signature string, payloadBytes []byte) error
 }
 
 type api struct {

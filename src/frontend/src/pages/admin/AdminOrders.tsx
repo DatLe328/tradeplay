@@ -50,25 +50,30 @@ const statusConfig: Record<number, any> = {
 
 export default function AdminOrders() {
 	const [orders, setOrders] = useState<Order[]>([]);
-	
-	// State cho phân trang & filter
+
 	const [currentPage, setCurrentPage] = useState(1);
+	useEffect(() => {
+		window.scrollTo({ top: 0, behavior: "smooth" });
+	}, [currentPage]);
+
 	const [totalPages, setTotalPages] = useState(1);
-	const [totalItems, setTotalItems] = useState(0); // Tổng số items thực tế
-	const [filterType, setFilterType] = useState<OrderType | "all">("all"); // State filter
+	const [totalItems, setTotalItems] = useState(0);
+	const [filterType, setFilterType] = useState<OrderType | "all">("all");
 	const pageSize = 10;
 
 	const { toast } = useToast();
 
 	const loadOrders = async (page: number) => {
 		try {
-			// Truyền filterType vào service (nếu khác "all")
 			const typeParam = filterType === "all" ? undefined : filterType;
-			
-			const res = await orderService.getAdminOrders(page, pageSize, typeParam);
+
+			const res = await orderService.getAdminOrders(
+				page,
+				pageSize,
+				typeParam,
+			);
 			setOrders(res.data);
-			
-			// Cập nhật thông tin phân trang từ API response
+
 			if (res.paging) {
 				setTotalItems(Number(res.paging.total));
 				setTotalPages(Math.ceil(Number(res.paging.total) / pageSize));
@@ -78,12 +83,10 @@ export default function AdminOrders() {
 		}
 	};
 
-	// Reload khi page hoặc filter thay đổi
 	useEffect(() => {
 		loadOrders(currentPage);
 	}, [currentPage, filterType]);
 
-	// Reset về trang 1 khi đổi filter
 	const handleFilterChange = (type: OrderType | "all") => {
 		setFilterType(type);
 		setCurrentPage(1);
@@ -107,16 +110,19 @@ export default function AdminOrders() {
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
+					className="mt-6 md:mt-0"
 				>
-					<h1 className="font-gaming text-3xl font-bold mb-2">
-						Quản Lý Order
+					<h1 className="font-gaming text-3xl md:text-4xl font-extrabold tracking-tight">
+						<span className="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+							Quản Lý Order
+						</span>
 					</h1>
-					<p className="text-muted-foreground">
+					<div className="h-1 w-12 bg-primary rounded-full mt-1 hidden md:block" />
+					<p className="text-xs md:text-sm text-muted-foreground mt-2 font-medium opacity-80">
 						Xác nhận thanh toán và gửi acc cho khách hàng
 					</p>
 				</motion.div>
 
-				{/* Bộ lọc loại đơn hàng */}
 				<div className="flex items-center gap-2 bg-secondary/50 p-1 rounded-lg border border-border">
 					<Button
 						variant={filterType === "all" ? "default" : "ghost"}
@@ -127,7 +133,11 @@ export default function AdminOrders() {
 						<Filter className="h-4 w-4" /> Tất cả
 					</Button>
 					<Button
-						variant={filterType === OrderType.BuyAcc ? "default" : "ghost"}
+						variant={
+							filterType === OrderType.BuyAcc
+								? "default"
+								: "ghost"
+						}
 						size="sm"
 						onClick={() => handleFilterChange(OrderType.BuyAcc)}
 						className="gap-2"
@@ -135,7 +145,11 @@ export default function AdminOrders() {
 						<Gamepad2 className="h-4 w-4" /> Mua Acc
 					</Button>
 					<Button
-						variant={filterType === OrderType.Deposit ? "default" : "ghost"}
+						variant={
+							filterType === OrderType.Deposit
+								? "default"
+								: "ghost"
+						}
 						size="sm"
 						onClick={() => handleFilterChange(OrderType.Deposit)}
 						className="gap-2"
@@ -165,12 +179,12 @@ export default function AdminOrders() {
 										{/* Thumbnail */}
 										<div className="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-secondary flex items-center justify-center">
 											{isDeposit ? (
-												// Icon ví cho đơn nạp tiền
 												<Wallet className="h-8 w-8 text-primary" />
 											) : order.account?.thumbnail ? (
-												// Ảnh acc cho đơn mua acc
 												<img
-													src={order.account.thumbnail}
+													src={
+														order.account.thumbnail
+													}
 													alt=""
 													className="w-full h-full object-cover"
 												/>
@@ -185,27 +199,34 @@ export default function AdminOrders() {
 												<span className="font-mono font-bold">
 													#{order.id}
 												</span>
-												<Badge className={status.className}>
+												<Badge
+													className={status.className}
+												>
 													<StatusIcon className="h-3 w-3 mr-1" />
 													{status.label}
 												</Badge>
-												{/* Badge loại đơn hàng */}
-												<Badge variant="outline" className="ml-2">
-													{isDeposit ? "Nạp tiền" : "Mua Acc"}
+												<Badge
+													variant="outline"
+													className="ml-2"
+												>
+													{isDeposit
+														? "Nạp tiền"
+														: "Mua Acc"}
 												</Badge>
 											</div>
-											
-											{/* Tên Acc hoặc Nội dung nạp tiền */}
+
 											<h3 className="font-semibold text-lg">
-												{isDeposit 
-													? "Nạp tiền vào tài khoản" 
-													: (order.account?.title || "Account không tồn tại")}
+												{isDeposit
+													? "Nạp tiền vào tài khoản"
+													: order.account?.title ||
+														"Account không tồn tại"}
 											</h3>
-											
+
 											<div className="text-sm text-muted-foreground">
 												User ID: {order.user_id} •{" "}
-												{formatDateTime(order.created_at)}
-												{/* Hiển thị thêm ghi chú nếu có */}
+												{formatDateTime(
+													order.created_at,
+												)}
 												{order.notes && (
 													<span className="block mt-1 text-xs italic">
 														Note: {order.notes}
@@ -221,12 +242,13 @@ export default function AdminOrders() {
 
 										{/* Actions */}
 										<div className="flex gap-2 justify-end min-w-[180px]">
-											{order.status === OrderStatus.Pending && (
+											{order.status ===
+												OrderStatus.Pending && (
 												<Button
 													onClick={() =>
 														handleUpdateStatus(
 															order.id,
-															OrderStatus.Paid
+															OrderStatus.Paid,
 														)
 													}
 													className="bg-primary text-primary-foreground hover:bg-primary/90 gap-2"
@@ -236,40 +258,43 @@ export default function AdminOrders() {
 												</Button>
 											)}
 
-											{/* Nút gửi acc chỉ hiện khi là đơn Mua Acc và đã thanh toán */}
-											{order.status === OrderStatus.Paid && !isDeposit && (
-												<Button
-													onClick={() =>
-														handleUpdateStatus(
-															order.id,
-															OrderStatus.Completed
-														)
-													}
-													className="btn-gaming gap-2"
-												>
-													<Mail className="h-4 w-4" />{" "}
-													Gửi Acc
-												</Button>
-											)}
-											
-											{/* Đơn nạp tiền Paid thì có thể Complete luôn */}
-											{order.status === OrderStatus.Paid && isDeposit && (
-												<Button
-													onClick={() =>
-														handleUpdateStatus(
-															order.id,
-															OrderStatus.Completed
-														)
-													}
-													variant="outline"
-													className="gap-2"
-												>
-													<CheckCircle className="h-4 w-4" />{" "}
-													Hoàn tất
-												</Button>
-											)}
+											{order.status ===
+												OrderStatus.Paid &&
+												!isDeposit && (
+													<Button
+														onClick={() =>
+															handleUpdateStatus(
+																order.id,
+																OrderStatus.Completed,
+															)
+														}
+														className="btn-gaming gap-2"
+													>
+														<Mail className="h-4 w-4" />{" "}
+														Gửi Acc
+													</Button>
+												)}
 
-											{order.status === OrderStatus.Completed && (
+											{order.status ===
+												OrderStatus.Paid &&
+												isDeposit && (
+													<Button
+														onClick={() =>
+															handleUpdateStatus(
+																order.id,
+																OrderStatus.Completed,
+															)
+														}
+														variant="outline"
+														className="gap-2"
+													>
+														<CheckCircle className="h-4 w-4" />{" "}
+														Hoàn tất
+													</Button>
+												)}
+
+											{order.status ===
+												OrderStatus.Completed && (
 												<div className="flex items-center gap-2 text-success bg-success/10 px-3 py-2 rounded-lg border border-success/20">
 													<CheckCircle className="h-5 w-5" />
 													<span className="font-medium">
@@ -278,7 +303,8 @@ export default function AdminOrders() {
 												</div>
 											)}
 
-											{order.status === OrderStatus.Cancelled && (
+											{order.status ===
+												OrderStatus.Cancelled && (
 												<span className="text-muted-foreground italic px-3 py-2">
 													Đã hủy bỏ
 												</span>
@@ -290,7 +316,6 @@ export default function AdminOrders() {
 						})}
 					</div>
 
-					{/* Pagination Wrapper đầy đủ props */}
 					<PaginationWrapper
 						currentPage={currentPage}
 						totalPages={totalPages}

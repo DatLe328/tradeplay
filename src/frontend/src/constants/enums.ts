@@ -1,3 +1,5 @@
+import type { translations } from "@/stores/languageStore";
+
 export const SystemRole = {
   User: 0,
   Admin: 1,
@@ -41,12 +43,12 @@ export type OrderType =
   typeof OrderType[keyof typeof OrderType];
 
 
-export const AccountStatusLabel: Record<number, string> = {
-  [AccountStatus.Draft]: "Bản nháp",
-  [AccountStatus.Available]: "Còn hàng",
-  [AccountStatus.Reserved]: "Đã đặt cọc",
-  [AccountStatus.Sold]: "Đã bán",
-  [AccountStatus.Deleted]: "Đã xóa",
+export const AccountStatusLabelKey: Record<number, keyof typeof translations.vi> = {
+  [AccountStatus.Draft]: "statusDraft",
+  [AccountStatus.Available]: "statusAvailable",
+  [AccountStatus.Reserved]: "statusReserved",
+  [AccountStatus.Sold]: "statusSold",
+  [AccountStatus.Deleted]: "statusDeleted",
 };
 
 export const OrderStatusLabel: Record<number, string> = {
@@ -60,4 +62,38 @@ export const OrderStatusLabel: Record<number, string> = {
 export const SystemRoleLabel: Record<number, string> = {
   [SystemRole.User]: "Người dùng",
   [SystemRole.Admin]: "Quản trị viên",
+};
+
+export const GameID = {
+  All: 0,
+  PlayTogether: 1,
+  LiênQuân: 2,
+  FreeFire: 3,
+} as const;
+
+export const GameList = [
+  { id: GameID.PlayTogether, name: "Play Together", slug: "play-together" },
+] as const;
+
+export const getGameName = (id: number | undefined): string => {
+  const game = GameList.find(g => g.id === id);
+  return game ? game.name : "Game khác";
+};
+
+export const NotificationType = {
+  OrderStatus: 0,
+  AccountSold: 1,
+  Promotion: 2,
+  System: 3,
+  Message: 4,
+} as const;
+
+export type NotificationType = typeof NotificationType[keyof typeof NotificationType];
+
+export const NotificationTypeLabel: Record<number, string> = {
+  [NotificationType.OrderStatus]: "Trạng thái đơn hàng",
+  [NotificationType.AccountSold]: "Tài khoản đã bán",
+  [NotificationType.Promotion]: "Khuyến mãi",
+  [NotificationType.System]: "Hệ thống",
+  [NotificationType.Message]: "Tin nhắn",
 };

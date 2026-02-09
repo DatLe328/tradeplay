@@ -41,6 +41,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { SeoMetadata } from "@/components/seo/SeoMetadata";
 
 const formatValue = (value: any) => {
 	if (value === true) return "Có";
@@ -60,8 +61,8 @@ export default function AccountDetailPage() {
 	const [showBuyModal, setShowBuyModal] = useState(false);
 	const [account, setAccount] = useState<GameAccount | null>(null);
 	const [isLoading, setIsLoading] = useState(true);
+	const [isSubmitting, setIsSubmitting] = useState(false);
 
-	// Improved AttributeCard với better responsive và overflow handling
 	const AttributeCard = ({ label, value }: { label: string; value: any }) => {
 		const formattedValue = formatValue(value);
 		const isBoolean = typeof value === "boolean";
@@ -222,7 +223,7 @@ export default function AccountDetailPage() {
 			toast({
 				title: "Hệ thống bảo trì",
 				description:
-					"Vui lòng liên hệ qua zalo/telegram để mua acc game",
+					"Vui lòng liên hệ qua zalo/instagram để mua acc game",
 				variant: "destructive",
 			});
 			return;
@@ -244,25 +245,31 @@ export default function AccountDetailPage() {
 
 	const handleConfirmPurchase = async () => {
 		if (!account) return;
+		setIsSubmitting(true);
 
-		const order = await createOrder(account.id);
-		if (order && order.id) {
-			toast({
-				title: t("orderCreated"),
-				description: `${t("orderCreated")}: ${order.id}`,
-			});
-			setShowBuyModal(false);
-			navigate(`/payment/${order.id}`);
-		} else {
-			toast({
-				title: t("error"),
-				description: t("orderFailed"),
-				variant: "destructive",
-			});
+		try {
+			const order = await createOrder(account.id);
+			if (order && order.id) {
+				toast({
+					title: t("orderCreated"),
+					description: `${t("orderCreated")}: ${order.id}`,
+				});
+				setShowBuyModal(false);
+				navigate(`/payment/${order.id}`);
+			} else {
+				setIsSubmitting(false);
+				toast({
+					title: t("error"),
+					description: t("orderFailed"),
+					variant: "destructive",
+				});
+			}
+		} catch (error) {
+			setIsSubmitting(false);
 		}
 	};
 
-	const gameSchema = getGameSchema(account.game_name || "");
+	const gameSchema = getGameSchema(account.category?.slug || "");
 	const getLabel = (key: string) => {
 		const field = gameSchema.find((f) => f.key === key);
 		return field ? field.label : key;
@@ -282,6 +289,13 @@ export default function AccountDetailPage() {
 
 	return (
 		<Layout>
+			<SeoMetadata
+				title={`${account.title} - Mã số #${account.id} | Tiến Cơ Trưởng Shop`}
+				description={
+					account.description ||
+					`Mua ngay tài khoản ${account.category?.name} giá rẻ, uy tín tại Tiến Cơ Trưởng Shop.`
+				}
+			/>
 			<div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
 				{/* Back Button */}
 				<motion.div
@@ -376,7 +390,7 @@ export default function AccountDetailPage() {
 									variant="secondary"
 									className="bg-primary/10 text-primary hover:bg-primary/20 text-xs md:text-sm"
 								>
-									{account.game_name}
+									{account.category?.name || "Game"}
 								</Badge>
 								<Badge
 									variant="outline"
@@ -496,7 +510,7 @@ export default function AccountDetailPage() {
 								<div className="flex items-center gap-2 text-xs text-muted-foreground">
 									<Clock className="h-4 w-4 text-orange-500 shrink-0" />
 									<span>
-										Muốn đặt cọc? Liên hệ Zalo/Telegram
+										Muốn đặt cọc? Liên hệ Zalo/Instagram
 									</span>
 								</div>
 							</div>
@@ -624,7 +638,7 @@ export default function AccountDetailPage() {
 									onClick={handleConfirmPurchase}
 									disabled={isOrderLoading}
 								>
-									{isOrderLoading && (
+									{(isOrderLoading || isSubmitting) && (
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 									)}
 									Xác nhận thanh toán

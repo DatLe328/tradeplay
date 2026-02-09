@@ -1,14 +1,14 @@
 package entity
 
-import "github.com/DatLe328/service-context/core"
+import "tradeplay/common"
 
 type AccountInfo struct {
-	core.SQLModel
-	AccountId int    `json:"account_id" gorm:"column:account_id;unique;not null"`
-	Username  string `json:"username" gorm:"column:username;type:varchar(255)"`
-	Password  string `json:"password" gorm:"column:password;type:varchar(255)"`
-	Email     string `json:"email" gorm:"column:email;type:varchar(255)"`
-	ExtraData string `json:"extra_data" gorm:"column:extra_data;type:text"`
+	common.SQLModel
+	AccountId int32  `gorm:"column:account_id;unique;not null"`
+	Username  string `json:"-" gorm:"column:username;type:varchar(255)"`
+	Password  string `json:"-" gorm:"column:password;type:varchar(255)"`
+	Email     string `json:"-" gorm:"column:email;type:varchar(255)"`
+	ExtraData string `json:"-" gorm:"column:extra_data;type:text"`
 }
 
 func (AccountInfo) TableName() string {

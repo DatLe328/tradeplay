@@ -2,193 +2,224 @@ package business
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
-	accountEntity "tradeplay/services/account/entity"
+	"time"
+	"tradeplay/common"
+	auditEntity "tradeplay/services/audit/entity"
+	notificationHelper "tradeplay/services/notification"
+	notificationEntity "tradeplay/services/notification/entity"
 	orderEntity "tradeplay/services/order/entity"
 	paymentEntity "tradeplay/services/payment/entity"
-	walletEntity "tradeplay/services/wallet/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"gorm.io/gorm"
 )
 
-func (biz *business) ProcessSepayWebhook(ctx context.Context, payload *paymentEntity.SepayWebhookPayload) error {
+func (biz *business) VerifyWebhookSignature(payload []byte, signature string) bool {
+	h := hmac.New(sha256.New, []byte(biz.sepayApiKey))
+	h.Write(payload)
+	expectedSignature := hex.EncodeToString(h.Sum(nil))
+	return hmac.Equal([]byte(signature), []byte(expectedSignature))
+}
+
+func (biz *business) ProcessSepayWebhook(
+	ctx context.Context,
+	payload *paymentEntity.SepayWebhookPayload,
+	orderCode string,
+	signature string,
+	payloadBytes []byte,
+) error {
+	if signature != "" {
+		if !biz.VerifyWebhookSignature(payloadBytes, signature) {
+			biz.auditRepo.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+				UserId:   0,
+				Action:   "WEBHOOK_SIGNATURE_INVALID",
+				ErrorMsg: fmt.Sprintf("Invalid signature for reference code: %s", payload.ReferenceCode),
+			})
+			return common.ErrBadRequest(errors.New("invalid webhook signature"), "Webhook signature verification failed")
+		}
+	} else {
+		biz.auditRepo.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+			UserId:   0,
+			Action:   "WEBHOOK_NO_SIGNATURE",
+			ErrorMsg: fmt.Sprintf("Warning: No webhook signature provided for reference code: %s. Proceeding without verification.", payload.ReferenceCode),
+		})
+	}
+
 	if payload.TransferType != "in" {
 		return nil
 	}
-
-	uid, err := core.FromBase58(payload.Content)
-	if err != nil {
-		return core.ErrInternal(err)
+	sepayIDStr := strconv.Itoa(payload.ID)
+	if sepayIDStr == "0" || sepayIDStr == "" {
+		return errors.New("invalid sepay webhook id")
 	}
-	orderId := int(uid.GetLocalID())
 
-	db := biz.walletRepo.GetDB()
+	uid, err := common.FromBase58(orderCode)
+	if err != nil {
+		return common.ErrBadRequest(err, "Invalid order code")
+	}
+	orderID := int32(uid.GetLocalID())
 
-	return db.Transaction(func(tx *gorm.DB) error {
-		order, err := biz.orderRepo.GetOrderForUpdate(ctx, tx, orderId)
-		if err != nil {
+	// Set transaction timeout to 30 seconds for webhook processing
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	return biz.db.WithContext(ctxWithTimeout).Transaction(func(tx *gorm.DB) error {
+		// Idempotency check: Check if webhook already processed
+		existingWebhook, err := biz.repo.GetPaymentWebhookBySepayID(ctxWithTimeout, tx, sepayIDStr)
+		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		
+		// If webhook already processed, return success to prevent duplicate processing
+		if err == nil && existingWebhook != nil {
+			if existingWebhook.Status == "processed" {
+				biz.auditRepo.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+					UserId:   0,
+					Action:   "WEBHOOK_DUPLICATE",
+					ErrorMsg: fmt.Sprintf("Duplicate webhook received for reference code: %s, skipping", payload.ReferenceCode),
+				})
+				return nil
+			}
+			// If webhook is currently being processed, return error to retry later
+			if existingWebhook.Status == "processing" {
+				return errors.New("webhook is already being processed")
+			}
+		}
+
+		webhookRecord := &paymentEntity.PaymentWebhook{
+			SQLModel:      common.NewSQLModel(),
+			OrderID:       orderID,
+			WebhookID:     sepayIDStr,
+			ReferenceCode: payload.ReferenceCode,
+			Gateway:       payload.Gateway,
+			Status:        "processing",
+		}
+
+		if err := biz.repo.CreatePaymentWebhook(ctxWithTimeout, tx, webhookRecord); err != nil {
+			if errors.Is(err, gorm.ErrDuplicatedKey) {
+				// Another request is processing this webhook, return success for idempotency
+				biz.auditRepo.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+					UserId:   0,
+					Action:   "WEBHOOK_RACE_CONDITION",
+					ErrorMsg: fmt.Sprintf("Race condition detected for webhook %s, another request is handling it", sepayIDStr),
+				})
+				return nil
+			}
 			return err
 		}
 
-		if order.Status == orderEntity.OrderStatusPaid || order.Status == orderEntity.OrderStatusCompleted {
+		order, err := biz.orderBusiness.GetOrderInternal(ctxWithTimeout, orderID)
+		if err != nil {
+			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
+			return err
+		}
+		if order == nil {
+			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
+			return errors.New("order not found in system")
+		}
+		if order.Type != orderEntity.OrderTypeDeposit {
+			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
+			return errors.New("order is not a deposit order")
+		}
+		if order.Status != orderEntity.OrderStatusPending {
+			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
+			return errors.New("order is not in pending status")
+		}
+
+		if order.TotalPrice != payload.TransferAmount {
+			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
+			biz.auditRepo.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+				UserId:   order.UserID,
+				Action:   "WEBHOOK_AMOUNT_MISMATCH",
+				ErrorMsg: fmt.Sprintf("Amount mismatch for order %d: expected %d but got %d", orderID, order.TotalPrice, payload.TransferAmount),
+			})
+			return fmt.Errorf("amount mismatch: expected %d but got %d", order.TotalPrice, payload.TransferAmount)
+		}
+
+		order, err = biz.orderBusiness.MarkOrderAsPaid(ctxWithTimeout, tx, orderID, payload.TransferAmount, payload.Gateway, payload.ReferenceCode)
+		if err != nil {
+			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
+			
+			// Create failure notification
+			_, _ = notificationHelper.CreateNotification(
+				ctxWithTimeout,
+				biz.notificationRepository,
+				order.UserID,
+				notificationEntity.NotificationTypeOrderStatus,
+				"Nạp tiền thất bại",
+				fmt.Sprintf("Nạp tiền thất bại: %s", err.Error()),
+				nil,
+				nil,
+			)
+			
+			biz.auditRepo.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+				UserId:   0,
+				Action:   "PAYMENT_FAILED",
+				ErrorMsg: err.Error(),
+			})
+			return err
+		}
+
+		if order == nil {
+			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
 			return nil
 		}
 
-		if payload.TransferAmount != order.TotalPrice {
-			return fmt.Errorf("số tiền chuyển (%v) không đúng với giá trị đơn hàng (%v)", payload.TransferAmount, order.TotalPrice)
+		txData := map[string]interface{}{
+			"sepay_payload": payload,
 		}
+		txBytes, _ := json.Marshal(txData)
+		metadata := common.JSON(txBytes)
 
-		if err := biz.orderRepo.UpdateOrderStatus(ctx, tx, order.Id, orderEntity.OrderStatusPaid); err != nil {
+		description := fmt.Sprintf("Nạp tiền tự động SePay: %s", payload.ReferenceCode)
+
+		orderID := strconv.Itoa(int(order.ID))
+		if err := biz.walletBusiness.Deposit(
+			ctxWithTimeout, tx, order.UserID, payload.TransferAmount, orderID, description, &metadata); err != nil {
+			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
 			return err
 		}
 
-		historyData := map[string]interface{}{
-			"gateway":        payload.Gateway,
-			"reference_code": payload.ReferenceCode,
-			"sepay_id":       payload.ID,
-			"content":        payload.Content,
-		}
-		historyBytes, _ := json.Marshal(historyData)
-		historyJSON := core.JSON(historyBytes)
-
-		history := &orderEntity.OrderHistory{
-			OrderId:   order.Id,
-			OldStatus: &order.Status,
-			NewStatus: orderEntity.OrderStatusPaid,
-			Note:      fmt.Sprintf("Thanh toán thành công qua SePay. Ref: %s", payload.ReferenceCode),
-			Metadata:  &historyJSON,
-		}
-		if err := biz.orderRepo.CreateOrderHistory(ctx, tx, history); err != nil {
+		if err := biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "processed"); err != nil {
 			return err
 		}
 
-		switch order.Type {
-		case orderEntity.OrderTypeDeposit:
-			return biz.handleDepositTransaction(ctx, tx, order, payload)
-
-		case orderEntity.OrderTypeBuyAcc:
-			return biz.handleBuyAccountTransaction(ctx, tx, order, payload)
+		now := time.Now()
+		if err := tx.WithContext(ctxWithTimeout).Model(&paymentEntity.PaymentWebhook{}).
+			Where("reference_code = ?", payload.ReferenceCode).
+			Update("processed_at", now).Error; err != nil {
+			return err
 		}
+
+		if err := biz.orderBusiness.MarkOrderAsCompleted(ctxWithTimeout, tx, order.ID, "SePay payment processed"); err != nil {
+			return err
+		}
+
+		// Create notification for successful payment
+		notificationMsg := fmt.Sprintf("Nạp tiền thành công: +%d đ từ SePay", payload.TransferAmount)
+		_, _ = notificationHelper.CreateNotification(
+			ctxWithTimeout,
+			biz.notificationRepository,
+			order.UserID,
+			notificationEntity.NotificationTypeOrderStatus,
+			"Nạp tiền thành công",
+			notificationMsg,
+			nil,
+			nil,
+		)
+
+		biz.auditRepo.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+			UserId:     order.UserID,
+			Action:     "DEPOSIT_SUCCESS_SEPAY",
+			StatusCode: 200,
+		})
 
 		return nil
 	})
-}
-
-func (biz *business) handleDepositTransaction(
-	ctx context.Context,
-	tx *gorm.DB,
-	order *orderEntity.Order,
-	payload *paymentEntity.SepayWebhookPayload,
-) error {
-	wallet, err := biz.walletRepo.GetWalletForUpdate(ctx, tx, order.UserId, "VND")
-	if err != nil {
-		return err
-	}
-
-	oldBalance := wallet.Balance
-	newBalance := oldBalance + payload.TransferAmount
-
-	wallet.Balance = newBalance
-	if err := tx.Save(wallet).Error; err != nil {
-		return err
-	}
-	txData := map[string]interface{}{
-		"sepay_payload": payload,
-	}
-	txBytes, err := json.Marshal(txData)
-	if err != nil {
-		return err
-	}
-
-	txJSON := core.JSON(txBytes)
-
-	walletTx := &walletEntity.WalletTransaction{
-		WalletId:      wallet.UserId,
-		Amount:        payload.TransferAmount,
-		BeforeBalance: oldBalance,
-		AfterBalance:  newBalance,
-		Type:          walletEntity.TxTypeDeposit,
-		RefType:       "order",
-		RefId:         strconv.Itoa(order.Id),
-		Description:   fmt.Sprintf("Nạp tiền tự động qua SePay: %s", payload.ReferenceCode),
-		Metadata:      &txJSON,
-	}
-
-	if err := biz.walletRepo.CreateWalletTransaction(ctx, tx, walletTx); err != nil {
-		return err
-	}
-
-	if err := biz.orderRepo.UpdateOrderPaid(ctx, tx, order.Id, payload.Gateway, payload.ReferenceCode); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (biz *business) handleBuyAccountTransaction(
-	ctx context.Context,
-	tx *gorm.DB,
-	order *orderEntity.Order,
-	payload *paymentEntity.SepayWebhookPayload,
-) error {
-	if order.AccountId == nil {
-		return errors.New("đơn hàng mua account nhưng không có AccountId")
-	}
-
-	account, err := biz.accountRepo.GetAccountByID(ctx, *order.AccountId)
-	if err != nil {
-		return err
-	}
-
-	if account.Status != accountEntity.AccountStatusAvailable {
-		wallet, err := biz.walletRepo.GetWalletForUpdate(ctx, tx, order.UserId, "VND")
-		if err != nil {
-			return err
-		}
-
-		newBalance := wallet.Balance + payload.TransferAmount
-		wallet.Balance = newBalance
-		if err := tx.Save(wallet).Error; err != nil {
-			return err
-		}
-
-		walletTx := &walletEntity.WalletTransaction{
-			WalletId:      wallet.UserId,
-			Amount:        payload.TransferAmount,
-			BeforeBalance: wallet.Balance - payload.TransferAmount,
-			AfterBalance:  newBalance,
-			Type:          walletEntity.TxTypeRefund,
-			RefType:       "order",
-			RefId:         strconv.Itoa(order.Id),
-			Description:   fmt.Sprintf("Hoàn tiền đơn hàng %d do Account đã bán. Ref: %s", order.Id, payload.ReferenceCode),
-		}
-		if err := biz.walletRepo.CreateWalletTransaction(ctx, tx, walletTx); err != nil {
-			return err
-		}
-
-		if err := biz.orderRepo.UpdateOrderStatus(ctx, tx, order.Id, orderEntity.OrderStatusRefunded); err != nil {
-			return err
-		}
-
-		return nil
-	}
-
-	if err := biz.orderRepo.UpdateOrderPaid(ctx, tx, order.Id, payload.Gateway, payload.ReferenceCode); err != nil {
-		return err
-	}
-
-	status := accountEntity.AccountStatusSold
-	accountUpdate := &accountEntity.AccountDataUpdate{
-		Status: &status,
-	}
-
-	if err := biz.accountRepo.UpdateAccount(ctx, tx, *order.AccountId, accountUpdate); err != nil {
-		return err
-	}
-
-	return nil
 }

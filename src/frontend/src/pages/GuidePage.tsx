@@ -60,7 +60,7 @@ export default function GuidePage() {
 	return (
 		<Layout>
 			<SeoMetadata
-				title="Hướng dẫn mua nick tự động - Tiến Cơ Trưởng"
+				title="Hướng dẫn mua tài khoản - Tiến Cơ Trưởng"
 				description="Quy trình 4 bước mua nick Play Together an toàn, tự động 100%. Hỗ trợ thanh toán Momo, Ngân hàng."
 			/>
 			<div className="container mx-auto px-4 py-8">

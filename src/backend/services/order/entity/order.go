@@ -3,8 +3,6 @@ package entity
 import (
 	"tradeplay/common"
 	accountEntity "tradeplay/services/account/entity"
-
-	"github.com/DatLe328/service-context/core"
 )
 
 type OrderStatus int
@@ -25,14 +23,14 @@ const (
 )
 
 type Order struct {
-	core.SQLModel
-	UserId     int       `json:"-" gorm:"column:user_id;index"`
-	FakeUserId *core.UID `json:"user_id" gorm:"-"`
-	AccountId  *int      `json:"account_id" gorm:"column:account_id;index"`
+	common.SQLModel
+	UserID     int32       `json:"-" gorm:"column:user_id;index"`
+	FakeUserID *common.UID `json:"user_id" gorm:"-"`
+	AccountID  *int32      `json:"account_id" gorm:"column:account_id;index"`
 
-	Account *accountEntity.Account `json:"account" gorm:"foreignKey:AccountId;preload:false"`
+	Account *accountEntity.Account `json:"account" gorm:"foreignKey:AccountID;preload:false"`
 
-	TotalPrice float64 `json:"total_price" gorm:"column:total_price"`
+	TotalPrice int64 `json:"total_price" gorm:"column:total_price"`
 
 	Status OrderStatus `json:"status" gorm:"column:status"`
 	Type   OrderType   `json:"type" gorm:"column:type;"`
@@ -47,8 +45,8 @@ func (Order) TableName() string { return "orders" }
 
 func (o *Order) Mask() {
 	o.SQLModel.Mask(common.MaskTypeOrder)
-	uid := core.NewUID(uint32(o.UserId), int(common.MaskTypeUser), 1)
-	o.FakeUserId = &uid
+	uid := common.NewUID(uint32(o.UserID), int(common.MaskTypeUser), 1)
+	o.FakeUserID = &uid
 
 	if o.Account != nil {
 		o.Account.Mask()
@@ -57,8 +55,8 @@ func (o *Order) Mask() {
 
 func (o *Order) MaskDisplay() {
 	o.SQLModel.Mask(common.MaskTypeOrderDisplay)
-	uid := core.NewUID(uint32(o.UserId), int(common.MaskTypeUserDisplay), 1)
-	o.FakeUserId = &uid
+	uid := common.NewUID(uint32(o.UserID), int(common.MaskTypeUserDisplay), 1)
+	o.FakeUserID = &uid
 
 	if o.Account != nil {
 		o.Account.Mask()

@@ -4,10 +4,13 @@ import (
 	"fmt"
 	"time"
 	"tradeplay/common"
-	"tradeplay/services/order/entity"
+	auditEntity "tradeplay/services/audit/entity"
+	orderEntity "tradeplay/services/order/entity"
 
-	sctx "github.com/DatLe328/service-context"
-	"github.com/DatLe328/service-context/logger"
+	sctx "tradeplay/components/service-context"
+
+	"tradeplay/components/service-context/logger"
+
 	"github.com/robfig/cron/v3"
 	"gorm.io/gorm"
 )
@@ -60,9 +63,15 @@ func (c *cronComponent) registerJobs() error {
 	_, err := c.scheduler.AddFunc("@every 10m", func() {
 		c.cancelExpiredOrdersJob()
 	})
-
 	if err != nil {
 		return fmt.Errorf("failed to register cancelExpiredOrdersJob: %v", err)
+	}
+
+	_, err = c.scheduler.AddFunc("@every 1h", func() {
+		c.cleanOldAuditLogsJob()
+	})
+	if err != nil {
+		return fmt.Errorf("failed to register cleanOldAuditLogsJob: %v", err)
 	}
 
 	return nil
@@ -73,16 +82,36 @@ func (c *cronComponent) cancelExpiredOrdersJob() {
 
 	threshold := time.Now().Add(-30 * time.Minute)
 
-	result := c.db.Model(&entity.Order{}).
+	result := c.db.Model(&orderEntity.Order{}).
 		Where("status = ? AND type = ? AND created_at < ?",
-			entity.OrderStatusPending, entity.OrderTypeDeposit, threshold).
-		Update("status", entity.OrderStatusCancelled)
+			orderEntity.OrderStatusPending, orderEntity.OrderTypeDeposit, threshold).
+		Update("status", orderEntity.OrderStatusCancelled)
 
 	if result.Error != nil {
 		c.logger.Errorf("Job failed: %v", result.Error)
 	} else {
 		if result.RowsAffected > 0 {
 			c.logger.Infof("Job finished: Cancelled %d expired orders", result.RowsAffected)
+		}
+	}
+}
+
+func (c *cronComponent) cleanOldAuditLogsJob() {
+	c.logger.Info("Starting job: Clean old audit logs (>30 days)...")
+
+	threshold := time.Now().AddDate(0, 0, -30)
+
+	result := c.db.Table(auditEntity.AuditLog{}.TableName()).
+		Where("created_at < ?", threshold).
+		Delete(nil)
+
+	if result.Error != nil {
+		c.logger.Errorf("Clean logs job failed: %v", result.Error)
+	} else {
+		if result.RowsAffected > 0 {
+			c.logger.Infof("Clean logs job finished: Deleted %d old audit logs", result.RowsAffected)
+		} else {
+			c.logger.Info("Clean logs job finished: No old logs to delete")
 		}
 	}
 }

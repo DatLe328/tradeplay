@@ -2,23 +2,35 @@ package business
 
 import (
 	"context"
-	"tradeplay/services/wallet/entity"
+	auditEntity "tradeplay/services/audit/entity"
+	walletEntity "tradeplay/services/wallet/entity"
 
 	"gorm.io/gorm"
 )
 
-type WalletRepository interface {
+type walletRepository interface {
 	GetDB() *gorm.DB
-	GetWalletByUserID(ctx context.Context, userId int, currency string) (*entity.Wallet, error)
-	GetWalletForUpdate(ctx context.Context, tx *gorm.DB, userId int, currency string) (*entity.Wallet, error)
-	CreateWallet(ctx context.Context, wallet *entity.Wallet) error
-	CreateWalletTransaction(ctx context.Context, tx *gorm.DB, data *entity.WalletTransaction) error
+	GetWalletByUserID(ctx context.Context, userID int32) (*walletEntity.Wallet, error)
+	GetWalletForUpdate(ctx context.Context, tx *gorm.DB, userID int32) (*walletEntity.Wallet, error)
+	CreateWallet(ctx context.Context, userID int32) error
+	CreateWalletTransaction(ctx context.Context, tx *gorm.DB, data *walletEntity.WalletTransaction) error
+}
+
+type auditRepository interface {
+	PushAuditLog(ctx context.Context, log *auditEntity.AuditLog)
 }
 
 type business struct {
-	repo WalletRepository
+	walletRepository walletRepository
+	auditRepository  auditRepository
 }
 
-func NewBusiness(repo WalletRepository) *business {
-	return &business{repo: repo}
+func NewWalletBusiness(
+	walletRepository walletRepository,
+	auditRepository auditRepository,
+) *business {
+	return &business{
+		walletRepository: walletRepository,
+		auditRepository:  auditRepository,
+	}
 }

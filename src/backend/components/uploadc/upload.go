@@ -7,7 +7,7 @@ import (
 	"time"
 	"tradeplay/common"
 
-	sctx "github.com/DatLe328/service-context"
+	sctx "tradeplay/components/service-context"
 )
 
 const (
@@ -18,6 +18,7 @@ type UploadProvider interface {
 	UploadFile(ctx context.Context, data []byte, dst string) (*common.Image, error)
 	DeleteFile(ctx context.Context, url string) error
 	GeneratePresignedURL(ctx context.Context, key, contentType string, expiration time.Duration, maxSize int64) (*common.PresignedURLResponse, error)
+	Close() error
 }
 
 type uploadComponent struct {
@@ -84,6 +85,9 @@ func (c *uploadComponent) Activate(s sctx.ServiceContext) error {
 }
 
 func (c *uploadComponent) Stop() error {
+	if c.provider != nil {
+		return c.provider.Close()
+	}
 	return nil
 }
 

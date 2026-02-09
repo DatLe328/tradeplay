@@ -1,11 +1,11 @@
 package entity
 
 type AccountDataCreation struct {
-	GameName      string   `json:"game_name" binding:"required"`
+	CategoryID    int32    `json:"category_id" binding:"required"`
 	Title         string   `json:"title" binding:"required"`
 	Description   string   `json:"description"`
-	Price         float64  `json:"price" binding:"required,min=0"`
-	OriginalPrice *float64 `json:"original_price"`
+	Price         int64    `json:"price" binding:"required,min=0"`
+	OriginalPrice *int64   `json:"original_price"`
 	Thumbnail     string   `json:"thumbnail"`
 	Images        []string `json:"images" gorm:"column:images;serializer:json"`
 
@@ -18,10 +18,12 @@ type AccountDataCreation struct {
 }
 
 type AccountDataUpdate struct {
+	OwnerID       *int32   `json:"-"`
+	CategoryID    *int32   `json:"category_id"`
 	Title         *string  `json:"title"`
 	Description   *string  `json:"description"`
-	Price         *float64 `json:"price"`
-	OriginalPrice *float64 `json:"original_price"`
+	Price         *int64   `json:"price"`
+	OriginalPrice *int64   `json:"original_price"`
 	Thumbnail     *string  `json:"thumbnail"`
 	Images        []string `json:"images" gorm:"column:images;serializer:json"`
 
@@ -32,6 +34,7 @@ type AccountDataUpdate struct {
 	Username  *string `json:"username"`
 	Password  *string `json:"password"`
 	ExtraData *string `json:"extra_data"`
+	Version   int     `json:"version" gorm:"column:version;default:0"`
 }
 
 func (*AccountDataCreation) TableName() string { return Account{}.TableName() }

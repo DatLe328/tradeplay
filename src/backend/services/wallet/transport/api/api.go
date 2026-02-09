@@ -6,7 +6,7 @@ import (
 )
 
 type business interface {
-	GetUserWallet(ctx context.Context, userId int) (*entity.Wallet, error)
+	GetUserWallet(ctx context.Context, userID int32) (*entity.Wallet, error)
 }
 
 type api struct {

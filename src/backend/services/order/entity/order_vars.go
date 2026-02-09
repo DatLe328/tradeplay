@@ -2,7 +2,7 @@ package entity
 
 type OrderCreate struct {
 	AccountId  *string   `json:"account_id" form:"account_id"`
-	TotalPrice float64   `json:"total_price" form:"total_price"`
+	TotalPrice int64     `json:"total_price" form:"total_price"`
 	Type       OrderType `json:"type" form:"type"`
 }
 

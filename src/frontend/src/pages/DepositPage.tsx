@@ -5,7 +5,7 @@ import { useTranslation } from "@/stores/languageStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useWalletStore } from "@/stores/walletStore";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
 	Dialog,
 	DialogContent,
@@ -30,7 +30,6 @@ import { OrderStatus } from "@/constants/enums";
 import { useToast } from "@/hooks/use-toast";
 import { orderService } from "@/services/orderService";
 
-// Đã bỏ PRESET_AMOUNTS theo yêu cầu
 const QR_EXPIRY_SECONDS = 300;
 
 export default function DepositPage() {
@@ -45,11 +44,10 @@ export default function DepositPage() {
 
 	const [selectedMethod, setSelectedMethod] = useState<string | null>(null);
 	const [showQRModal, setShowQRModal] = useState(false);
-	
-	// Khởi tạo amount là 0 để người dùng tự nhập
+
 	const [amount, setAmount] = useState<number>(0);
 	const [customAmount, setCustomAmount] = useState<string>("");
-	
+
 	const [timeLeft, setTimeLeft] = useState(QR_EXPIRY_SECONDS);
 	const [qrExpired, setQrExpired] = useState(false);
 
@@ -85,7 +83,7 @@ export default function DepositPage() {
 					}
 					return prev - 1;
 				});
-			}, 1000);
+			}, 3000);
 		}
 		return () => clearInterval(timer);
 	}, [showQRModal, timeLeft, qrExpired]);
@@ -96,7 +94,8 @@ export default function DepositPage() {
 		if (showQRModal && transactionCode) {
 			const checkOrderStatus = async () => {
 				try {
-					const res = await orderService.getOrderDetail(transactionCode);
+					const res =
+						await orderService.getOrderDetail(transactionCode);
 					const order = res.data;
 
 					if (
@@ -106,7 +105,9 @@ export default function DepositPage() {
 					) {
 						toast({
 							title: t("success"),
-							description: t("depositSuccessDesc") || "Nạp tiền thành công!",
+							description:
+								t("depositSuccessDesc") ||
+								"Nạp tiền thành công!",
 							className: "bg-green-500 text-white border-none",
 						});
 
@@ -115,7 +116,7 @@ export default function DepositPage() {
 						setTransactionCode("");
 					}
 				} catch (error) {
-					console.log("Polling error", error);
+					// console.log("Polling error", error);
 				}
 			};
 
@@ -138,7 +139,9 @@ export default function DepositPage() {
 		setSelectedMethod(method);
 	};
 
-	const handleCustomAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleCustomAmountChange = (
+		e: React.ChangeEvent<HTMLInputElement>,
+	) => {
 		const rawValue = e.target.value.replace(/\D/g, "");
 
 		if (rawValue) {
@@ -148,7 +151,7 @@ export default function DepositPage() {
 		}
 
 		const formattedValue = rawValue.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-		
+
 		setCustomAmount(formattedValue);
 	};
 
@@ -156,7 +159,8 @@ export default function DepositPage() {
 		if (import.meta.env.VITE_UNDER_MAINTENANCE === "true") {
 			toast({
 				title: "Hệ thống bảo trì",
-				description: "Vui lòng liên hệ qua zalo/telegram để mua acc game",
+				description:
+					"Vui lòng liên hệ qua zalo/instagram để mua acc game",
 				variant: "destructive",
 			});
 			return;
@@ -219,7 +223,7 @@ export default function DepositPage() {
 	const generateQRUrl = () => {
 		const bankId = "BIDV";
 		const accountNo = "96247C7Y40";
-		const content = `DHTCT${transactionCode}`;
+		const content = `DH${transactionCode}`;
 		return `https://qr.sepay.vn/img?acc=${accountNo}&bank=${bankId}&amount=${amount}&des=${encodeURIComponent(content)}`;
 	};
 
@@ -233,6 +237,7 @@ export default function DepositPage() {
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ duration: 0.5 }}
 				>
+					{/* --- HEADER --- */}
 					<div className="text-center mb-8">
 						<h1 className="text-3xl font-bold font-gaming text-gradient mb-2">
 							{t("deposit")}
@@ -242,6 +247,7 @@ export default function DepositPage() {
 						</p>
 					</div>
 
+					{/* --- BALANCE CARD --- */}
 					<Card className="mb-8 border-2 border-primary/20">
 						<CardContent className="py-6">
 							<div className="flex items-center justify-between">
@@ -267,124 +273,185 @@ export default function DepositPage() {
 						</CardContent>
 					</Card>
 
+					{/* --- PAYMENT METHODS GRID (EXPANDABLE) --- */}
 					<div className="mb-8">
 						<h2 className="text-xl font-semibold mb-4">
 							{t("selectPaymentMethod")}
 						</h2>
+
+						{/* Grid Container */}
 						<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-							{paymentMethods.map((method) => (
-								<Card
-									key={method.id}
-									className={`cursor-pointer transition-all duration-200 ${
-										method.disabled
-											? "opacity-50 cursor-not-allowed"
-											: selectedMethod === method.id
-												? "border-2 border-primary ring-2 ring-primary/20"
-												: "hover:border-primary/50"
-									}`}
-									onClick={() =>
-										!method.disabled &&
-										handleMethodSelect(method.id)
-									}
-								>
-									<CardContent className="p-6">
-										<div className="flex items-center gap-4">
-											<div className="p-3 rounded-full bg-primary/10">
-												<method.icon className="h-6 w-6 text-primary" />
+							{paymentMethods.map((method) => {
+								const isSelected = selectedMethod === method.id;
+
+								return (
+									<Card
+										key={method.id}
+										className={`cursor-pointer transition-all duration-300 ease-in-out ${
+											method.disabled
+												? "opacity-50 cursor-not-allowed"
+												: isSelected
+													? "border-2 border-primary ring-2 ring-primary/20 md:col-span-3 bg-card shadow-lg"
+													: "hover:border-primary/50"
+										}`}
+										onClick={() =>
+											!method.disabled &&
+											handleMethodSelect(method.id)
+										}
+									>
+										<CardContent className="p-6">
+											<div className="flex items-center gap-4">
+												<div
+													className={`p-3 rounded-full transition-colors shrink-0 ${isSelected ? "bg-primary text-primary-foreground" : "bg-primary/10"}`}
+												>
+													<method.icon
+														className={`h-6 w-6 ${isSelected ? "text-white" : "text-primary"}`}
+													/>
+												</div>
+												<div>
+													<h3 className="font-semibold text-lg">
+														{method.name}
+													</h3>
+													{!isSelected && (
+														<p className="text-sm text-muted-foreground line-clamp-1">
+															{method.description}
+														</p>
+													)}
+													{method.disabled && (
+														<span className="text-xs text-orange-500 font-bold bg-orange-100 px-2 py-0.5 rounded-full mt-1 inline-block">
+															{t("comingSoon")}
+														</span>
+													)}
+												</div>
 											</div>
-											<div>
-												<h3 className="font-semibold">
-													{method.name}
-												</h3>
-												<p className="text-sm text-muted-foreground">
-													{method.description}
-												</p>
-												{method.disabled && (
-													<span className="text-xs text-orange-500">
-														{t("comingSoon")}
-													</span>
+
+											<AnimatePresence>
+												{isSelected && (
+													<motion.div
+														initial={{
+															opacity: 0,
+															height: 0,
+														}}
+														animate={{
+															opacity: 1,
+															height: "auto",
+														}}
+														exit={{
+															opacity: 0,
+															height: 0,
+														}}
+														transition={{
+															duration: 0.3,
+														}}
+														className="overflow-hidden"
+														onClick={(e) =>
+															e.stopPropagation()
+														}
+													>
+														<div className="pt-6 mt-4 border-t border-border px-1">
+															<div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+																<div className="space-y-4">
+																	<Label
+																		htmlFor="customAmount"
+																		className="text-base font-medium"
+																	>
+																		{t(
+																			"enterAmount",
+																		)}
+																	</Label>
+																	<div className="relative">
+																		<Input
+																			id="customAmount"
+																			type="text"
+																			placeholder="Ví dụ: 50.000"
+																			value={
+																				customAmount
+																			}
+																			onChange={
+																				handleCustomAmountChange
+																			}
+																			className="pr-12 text-lg h-12 border-primary/30 focus-visible:ring-primary"
+																			autoFocus
+																			autoComplete="off"
+																		/>
+																		<span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">
+																			VNĐ
+																		</span>
+																	</div>
+
+																	{amount >
+																		0 &&
+																		amount <
+																			10000 && (
+																			<p className="text-sm text-destructive flex items-center gap-1 animate-pulse">
+																				<AlertCircle className="h-4 w-4" />
+																				{t(
+																					"minAmountError",
+																				) ||
+																					"Số tiền nạp tối thiểu là 10.000đ"}
+																			</p>
+																		)}
+
+																	<p className="text-xs text-muted-foreground italic">
+																		* Nội
+																		dung
+																		chuyển
+																		khoản sẽ
+																		được tạo
+																		tự động
+																		ở bước
+																		tiếp
+																		theo.
+																	</p>
+																</div>
+
+																<div className="flex flex-col justify-end space-y-4">
+																	<div className="p-4 bg-secondary/50 rounded-lg border border-secondary flex justify-between items-center">
+																		<span className="text-muted-foreground font-medium">
+																			{t(
+																				"depositAmount",
+																			)}
+																			:
+																		</span>
+																		<span className="text-2xl font-bold text-primary">
+																			{customAmount ||
+																				"0"}{" "}
+																			đ
+																		</span>
+																	</div>
+
+																	<Button
+																		className="w-full btn-gaming h-12 text-lg shadow-md"
+																		onClick={
+																			handleGenerateQR
+																		}
+																		disabled={
+																			amount <
+																				10000 ||
+																			isCreatingOrder
+																		}
+																	>
+																		{isCreatingOrder ? (
+																			<Loader2 className="h-5 w-5 animate-spin mr-2" />
+																		) : (
+																			<QrCode className="h-5 w-5 mr-2" />
+																		)}
+																		{t(
+																			"generateQR",
+																		)}
+																	</Button>
+																</div>
+															</div>
+														</div>
+													</motion.div>
 												)}
-											</div>
-										</div>
-									</CardContent>
-								</Card>
-							))}
+											</AnimatePresence>
+										</CardContent>
+									</Card>
+								);
+							})}
 						</div>
 					</div>
-
-					<AnimatePresence>
-						{selectedMethod === "bank_transfer" && (
-							<motion.div
-								initial={{ opacity: 0, height: 0 }}
-								animate={{ opacity: 1, height: "auto" }}
-								exit={{ opacity: 0, height: 0 }}
-								transition={{ duration: 0.3 }}
-							>
-								<Card className="mb-8">
-									<CardHeader>
-										<CardTitle className="flex items-center gap-2">
-											<Wallet className="h-5 w-5" />
-											{t("selectAmount")}
-										</CardTitle>
-									</CardHeader>
-									<CardContent>
-										<div className="space-y-4">
-											<Label htmlFor="customAmount" className="text-lg">
-												{t("enterAmount")}
-											</Label>
-											<div className="relative">
-												<Input
-													id="customAmount"
-													type="text"
-													placeholder="Ví dụ: 50.000"
-													value={customAmount}
-													onChange={handleCustomAmountChange}
-													className="pr-12 text-lg h-12"
-												/>
-												<span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground font-semibold">
-													VNĐ
-												</span>
-											</div>
-											
-											{amount > 0 && amount < 10000 && (
-												<p className="text-sm text-destructive flex items-center gap-1 animate-pulse">
-													<AlertCircle className="h-4 w-4" />
-													{t("minAmountError") || "Số tiền nạp tối thiểu là 10.000đ"}
-												</p>
-											)}
-										</div>
-
-										<div className="mt-6 p-4 bg-secondary/50 rounded-lg border border-secondary">
-											<div className="flex justify-between items-center">
-												<span className="text-muted-foreground">
-													{t("depositAmount")}:
-												</span>
-												<span className="text-2xl font-bold text-primary">
-													{customAmount || "0"} đ
-												</span>
-											</div>
-										</div>
-
-										<Button
-											className="w-full mt-6 btn-gaming h-12 text-lg"
-											onClick={handleGenerateQR}
-											disabled={
-												amount < 10000 ||
-												isCreatingOrder
-											}
-										>
-											{isCreatingOrder ? (
-												<Loader2 className="h-5 w-5 animate-spin mr-2" />
-											) : (
-												<QrCode className="h-5 w-5 mr-2" />
-											)}
-											{t("generateQR")}
-										</Button>
-									</CardContent>
-								</Card>
-							</motion.div>
-						)}
-					</AnimatePresence>
 				</motion.div>
 			</div>
 
@@ -421,7 +488,7 @@ export default function DepositPage() {
 									</span>
 								</div>
 
-								<div className="p-4 bg-white rounded-xl border">
+								<div className="p-4 bg-white rounded-xl border shadow-sm">
 									<img
 										key={transactionCode}
 										src={generateQRUrl()}
@@ -443,13 +510,13 @@ export default function DepositPage() {
 										<span className="text-muted-foreground">
 											{t("transactionCode")}:
 										</span>
-										<span className="font-mono font-bold text-lg text-primary">
+										<span className="font-mono font-bold text-lg text-primary select-all">
 											{transactionCode}
 										</span>
 									</div>
-									<p className="text-xs text-center text-muted-foreground italic">
-										Lưu ý: Không được chỉnh sửa nội dung và số tiền 
-										để được cộng tiền tự động
+									<p className="text-xs text-center text-muted-foreground italic mt-2">
+										Lưu ý: Không được chỉnh sửa nội dung
+										chuyển khoản để được cộng tiền tự động.
 									</p>
 								</div>
 							</>

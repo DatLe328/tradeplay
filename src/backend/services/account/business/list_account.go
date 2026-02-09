@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"html"
 	"strings"
+	"tradeplay/common"
 	"tradeplay/services/account/entity"
-
-	"github.com/DatLe328/service-context/core"
 )
 
-func (biz *business) ListAccount(
+func (biz *business) FindAccounts(
 	ctx context.Context,
 	filter *entity.Filter,
-	paging *core.Paging,
+	paging *common.Paging,
 ) ([]entity.Account, error) {
 	if filter.Search != "" {
 		filter.Search = strings.TrimSpace(filter.Search)
@@ -27,7 +26,7 @@ func (biz *business) ListAccount(
 		filter.Search = strings.ReplaceAll(filter.Search, "%", "")
 		filter.Search = strings.ReplaceAll(filter.Search, "_", "")
 	}
-	result, err := biz.accountRepo.GetAccountList(ctx, filter, paging)
+	result, err := biz.accountRepo.FindAccounts(ctx, filter, paging)
 	if err != nil {
 		return nil, err
 	}

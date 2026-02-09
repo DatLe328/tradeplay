@@ -21,8 +21,8 @@ export const useLanguageStore = create<LanguageState>()(
 		}),
 		{
 			name: "language-storage",
-		}
-	)
+		},
+	),
 );
 
 // Translations
@@ -278,7 +278,7 @@ export const translations = {
 		step2Tips: [],
 		step3Title: "Đặt hàng & Thanh toán",
 		step3Desc:
-			"Vì trang web đang trong quá trình phát triển, vui lòng liên hệ qua zalo hoặc telegram để được hỗ trợ mua acc.",
+			"Vì trang web đang trong quá trình phát triển, vui lòng liên hệ qua zalo hoặc instagram để được hỗ trợ mua acc.",
 		step3Tips: [],
 		step4Title: "Nhận acc & Kiểm tra",
 		step4Desc:
@@ -300,7 +300,7 @@ export const translations = {
 		phoneCardDesc: "Viettel, Mobifone, Vinaphone",
 		needSupport: "Cần hỗ trợ?",
 		supportDesc:
-			"Nếu bạn gặp bất kỳ vấn đề nào trong quá trình mua hàng, đừng ngần ngại liên hệ với chúng tôi qua Zalo hoặc Telegram. Đội ngũ hỗ trợ luôn sẵn sàng giúp đỡ bạn 24/7!",
+			"Nếu bạn gặp bất kỳ vấn đề nào trong quá trình mua hàng, đừng ngần ngại liên hệ với chúng tôi qua Zalo hoặc Instagram. Đội ngũ hỗ trợ luôn sẵn sàng giúp đỡ bạn 24/7!",
 		support247: "24/7",
 		reliable: "Uy tín",
 
@@ -340,12 +340,9 @@ export const translations = {
 		processStep3Desc:
 			"Hoàn tiền hoặc đổi acc mới trong vòng 1-2 giờ sau khi xác nhận",
 		importantNotice: "⚠️ Lưu ý quan trọng",
-		notice1:
-			"Sau khi nhận acc, vui lòng đổi mật khẩu ngay để bảo mật.",
-		notice2:
-			"Không chia sẻ thông tin đăng nhập cho bất kỳ ai.",
-		notice3:
-			"Lưu lại mã đơn hàng để tiện theo dõi và bảo hành.",
+		notice1: "Sau khi nhận acc, vui lòng đổi mật khẩu ngay để bảo mật.",
+		notice2: "Không chia sẻ thông tin đăng nhập cho bất kỳ ai.",
+		notice3: "Lưu lại mã đơn hàng để tiện theo dõi và bảo hành.",
 		notice4:
 			"Kiểm tra acc ngay sau khi nhận để đảm bảo quyền lợi bảo hành.",
 		requestWarranty: "Yêu cầu bảo hành",
@@ -414,6 +411,39 @@ export const translations = {
 		allStatuses: "Tất cả trạng thái",
 		sortBy: "Sắp xếp theo",
 		enterAmount: "Nhập số tiền muốn nạp",
+
+		// Notifications
+		notifications: "Thông báo",
+		loading: "Đang tải",
+		notifOrder: "Đơn hàng",
+		notifSold: "Mua hàng",
+		notifPromo: "Khuyến mãi",
+		notifSystem: "Hệ thống",
+		notifMsg: "Thông báo",
+		notifSubtitle: "Quản lý thông báo",
+		markAllRead: "Đánh dấu toàn bộ đã đọc",
+		noNotifications: "Không có thông báo",
+		viewDetails: "Xem chi tiết",
+		viewAll: "Xem tất cả",
+		viewAllNotifications: "Xem tất cả thông báo",
+		unreadNotifications: "Các thông báo chưa xem",
+		notificationEmptyDesc: "Bạn không có thông báo nào mới",
+		markAsRead: "Đánh dấu đã đọc",
+		delete: "Xóa",
+		searchNotifications: "Tìm thông báo...",
+		filters: "Lọc",
+		filterByType: "Lọc theo loại",
+		noMatchingNotifications: "Không có thông báo nào phù hợp",
+		tryAdjustingFilters: "Hãy thử điều chỉnh tìm kiếm hoặc bộ lọc của bạn.",
+		unreadOnly: "Chưa đọc",
+		activeFilters: "Active filters",
+		filterByStatus: "Lọc theo trạng thái",
+
+		statusAvailable: "Còn hàng",
+		statusReserved: "Đã đặt cọc",
+		statusSold: "Đã bán",
+		statusDraft: "Bản nháp",
+		statusDeleted: "Đã xóa",
 	},
 	en: {
 		yes: "Yes",
@@ -665,7 +695,7 @@ export const translations = {
 		step2Tips: [],
 		step3Title: "Order & Payment",
 		step3Desc:
-			"Since the website is currently under development, please contact us via Zalo or Telegram for support in purchasing accounts.",
+			"Since the website is currently under development, please contact us via Zalo or Instagram for support in purchasing accounts.",
 		step3Tips: [],
 		step4Title: "Receive & Check",
 		step4Desc:
@@ -687,7 +717,7 @@ export const translations = {
 		phoneCardDesc: "Viettel, Mobifone, Vinaphone",
 		needSupport: "Need help?",
 		supportDesc:
-			"If you encounter any issues during the purchase process, do not hesitate to contact us via Zalo or Telegram. Our support team is always ready to help you 24/7!",
+			"If you encounter any issues during the purchase process, do not hesitate to contact us via Zalo or Instagram. Our support team is always ready to help you 24/7!",
 		support247: "24/7",
 		reliable: "Trusted",
 
@@ -731,8 +761,7 @@ export const translations = {
 		notice1:
 			"After receiving the account, please change password immediately for security.",
 		notice2: "Do not share login information with anyone.",
-		notice3:
-			"Save your order ID for tracking and warranty.",
+		notice3: "Save your order ID for tracking and warranty.",
 		notice4:
 			"Check the account immediately after receiving to ensure warranty rights.",
 		requestWarranty: "Request Warranty",
@@ -802,6 +831,40 @@ export const translations = {
 		allStatuses: "All statues",
 		sortBy: "Sort by",
 		enterAmount: "Enter amount to deposit",
+
+		// Notifications
+		notifications: "Notifications",
+		loading: "Loading",
+		notifOrder: "Order",
+		notifSold: "Sold",
+		notifPromo: "Promo",
+		notifSystem: "System",
+		notifMsg: "Message",
+		notifSubtitle: "Manage your notifications and stay updated",
+		markAllRead: "Mark all as read",
+		noNotifications: "No notifications yet",
+		viewDetails: "View details",
+		viewAll: "View All",
+		viewAllNotifications: "See all notifications",
+		unreadNotifications: "unread notifications",
+		notificationEmptyDesc:
+			"You're all caught up! Check back later for updates.",
+		markAsRead: "Mark as read",
+		delete: "Delete",
+		searchNotifications: "Search notifications...",
+		filters: "Filters",
+		filterByType: "Filter by type",
+		noMatchingNotifications: "No matching notifications",
+		tryAdjustingFilters: "Try adjusting your search or filters",
+		unreadOnly: "Unread only",
+		activeFilters: "Active filters",
+		filterByStatus: "Filter by status",
+
+		statusDraft: "Draft",
+		statusAvailable: "Available",
+		statusReserved: "Reserved",
+		statusSold: "Sold",
+		statusDeleted: "Deleted",
 	},
 };
 
@@ -810,7 +873,7 @@ export const useTranslation = () => {
 
 	const t = (
 		key: keyof typeof translations.vi,
-		params?: Record<string, string | number>
+		params?: Record<string, string | number>,
 	): string => {
 		const value = translations[language][key];
 		if (Array.isArray(value)) {

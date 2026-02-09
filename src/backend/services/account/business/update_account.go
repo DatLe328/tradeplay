@@ -3,17 +3,17 @@ package business
 import (
 	"context"
 	"log"
+	"time"
 	"tradeplay/common"
 	"tradeplay/services/account/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"gorm.io/gorm"
 )
 
-func (biz *business) UpdateAccount(ctx context.Context, id int, data *entity.AccountDataUpdate) error {
+func (biz *business) UpdateAccount(ctx context.Context, id int32, data *entity.AccountDataUpdate) error {
 	oldAccount, err := biz.accountRepo.GetAccountByID(ctx, id)
 	if err != nil {
-		return core.ErrCannotGetEntity(entity.Account{}.TableName(), err)
+		return common.ErrCannotGetEntity(entity.Account{}.TableName(), err)
 	}
 
 	if data.Images != nil {
@@ -31,8 +31,12 @@ func (biz *business) UpdateAccount(ctx context.Context, id int, data *entity.Acc
 
 	db := biz.accountRepo.GetDB()
 
-	return db.Transaction(func(tx *gorm.DB) error {
-		if err := biz.accountRepo.UpdateAccount(ctx, tx, id, data); err != nil {
+	// Set transaction timeout to 30 seconds for account update
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	return db.WithContext(ctxWithTimeout).Transaction(func(tx *gorm.DB) error {
+		if err := biz.accountRepo.UpdateAccount(ctxWithTimeout, tx, id, data, data.Version); err != nil {
 			return err
 		}
 
@@ -42,7 +46,7 @@ func (biz *business) UpdateAccount(ctx context.Context, id int, data *entity.Acc
 			if data.Username != nil {
 				encUser, err := common.Encrypt(*data.Username, biz.appSecretKey)
 				if err != nil {
-					return core.ErrInternal(err)
+					return common.ErrInternal(err)
 				}
 				infoUpdate.Username = encUser
 			}
@@ -50,7 +54,7 @@ func (biz *business) UpdateAccount(ctx context.Context, id int, data *entity.Acc
 			if data.Password != nil {
 				encPass, err := common.Encrypt(*data.Password, biz.appSecretKey)
 				if err != nil {
-					return core.ErrInternal(err)
+					return common.ErrInternal(err)
 				}
 				infoUpdate.Password = encPass
 			}
@@ -58,12 +62,12 @@ func (biz *business) UpdateAccount(ctx context.Context, id int, data *entity.Acc
 			if data.ExtraData != nil {
 				encExtra, err := common.Encrypt(*data.ExtraData, biz.appSecretKey)
 				if err != nil {
-					return core.ErrInternal(err)
+					return common.ErrInternal(err)
 				}
 				infoUpdate.ExtraData = encExtra
 			}
 
-			if err := biz.accountRepo.UpdateAccountInfo(ctx, tx, id, infoUpdate); err != nil {
+			if err := biz.accountRepo.UpdateAccountInfo(ctxWithTimeout, tx, id, infoUpdate); err != nil {
 				return err
 			}
 		}

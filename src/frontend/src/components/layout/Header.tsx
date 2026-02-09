@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { formatCurrency } from "@/utils/format";
+import { NotificationCenter } from "./NotificationCenter";
 import { useWalletStore } from "@/stores/walletStore";
 import { SystemRole } from "@/constants/enums";
 
@@ -101,7 +102,10 @@ export function Header() {
 					<div className="flex items-center gap-2">
 						{/* Language Toggle */}
 						<LanguageToggle />
-						
+
+						{/* Notifications */}
+						{isAuthenticated && <NotificationCenter />}
+
 						{/* Theme Toggle */}
 						<Button
 							variant="ghost"
@@ -134,58 +138,71 @@ export function Header() {
 							</AnimatePresence>
 						</Button>
 
-						{/* Auth Section - Desktop Only (md and up) */}
+						{/* Auth Section - Desktop Only */}
 						{isAuthenticated ? (
 							<div className="hidden md:flex items-center gap-2">
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild>
 										<Button
 											variant="ghost"
-											className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-secondary"
+											className="flex items-center gap-3 px-2 py-1.5 h-10 rounded-xl hover:bg-secondary border border-border/40 transition-all"
 										>
-											<div className="p-1.5 rounded-full bg-primary/10">
-												<User className="h-4 w-4 text-primary" />
+											<div className="flex flex-col items-end pl-2 border-r border-border/50 pr-3 leading-tight">
+												<span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+													{t("balance")}
+												</span>
+												<span className="text-sm font-bold text-primary">
+													{formatCurrency(balance)}
+												</span>
 											</div>
-											<span className="text-sm font-medium">
-												{user?.first_name} {user?.last_name}
-											</span>
+
+											<div className="flex items-center gap-2">
+												<div className="p-1.5 rounded-full bg-primary/10">
+													<User className="h-4 w-4 text-primary" />
+												</div>
+												<span className="text-sm font-semibold">
+													{user?.first_name}{" "}
+													{user?.last_name}
+												</span>
+												<ChevronDown className="h-3 w-3 text-muted-foreground" />
+											</div>
 										</Button>
 									</DropdownMenuTrigger>
+
 									<DropdownMenuContent
 										align="end"
-										className="w-56 bg-background border border-border"
+										className="w-60 bg-background border border-border shadow-xl rounded-xl p-1"
 									>
-										<div className="px-3 py-2">
-											<p className="text-sm font-medium">
-												{user?.first_name} {user?.last_name}
+										<div className="px-3 py-3 mb-1 bg-muted/30 rounded-t-lg">
+											<p className="text-sm font-bold leading-none mb-1">
+												{user?.first_name}{" "}
+												{user?.last_name}
 											</p>
-											<p className="text-xs text-muted-foreground">
+											<p className="text-xs text-muted-foreground truncate">
 												{user?.email}
 											</p>
 										</div>
+
 										<DropdownMenuSeparator />
-										{/* Balance Section */}
-										<div className="px-3 py-2">
-											<div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-												<Wallet className="h-3.5 w-3.5 text-primary" />
-												<span>{t("balance")}</span>
-											</div>
-											<div className="flex items-center justify-between">
-												<span className="text-base font-bold text-primary">
-													{formatCurrency(balance)}
-												</span>
-												<Link to="/deposit">
-													<Button
-														size="icon"
-														variant="ghost"
-														className="h-6 w-6 rounded-full bg-primary/10 hover:bg-primary/20"
-													>
-														<Plus className="h-3 w-3 text-primary" />
-													</Button>
-												</Link>
-											</div>
-										</div>
-										<DropdownMenuSeparator />
+
+										<DropdownMenuItem
+											asChild
+											className="focus:bg-primary/5"
+										>
+											<Link
+												to="/deposit"
+												className="flex items-center justify-between w-full cursor-pointer"
+											>
+												<div className="flex items-center gap-2">
+													<Wallet className="h-4 w-4 text-primary" />
+													<span>
+														{t("deposit")}
+													</span>
+												</div>
+												<Plus className="h-3 w-3 text-primary" />
+											</Link>
+										</DropdownMenuItem>
+
 										<DropdownMenuItem asChild>
 											<Link
 												to="/profile"
@@ -195,6 +212,7 @@ export function Header() {
 												{t("profile")}
 											</Link>
 										</DropdownMenuItem>
+
 										<DropdownMenuItem asChild>
 											<Link
 												to="/orders"
@@ -204,10 +222,12 @@ export function Header() {
 												{t("orders")}
 											</Link>
 										</DropdownMenuItem>
+
 										<DropdownMenuSeparator />
+
 										<DropdownMenuItem
 											onClick={logout}
-											className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
+											className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/5"
 										>
 											<LogOut className="h-4 w-4" />
 											{t("logout")}
@@ -262,26 +282,23 @@ export function Header() {
 										</div>
 										<DropdownMenuSeparator />
 										{/* Balance Section */}
-										<div className="px-3 py-2">
-											<div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-												<Wallet className="h-3.5 w-3.5 text-primary" />
-												<span>{t("balance")}</span>
-											</div>
-											<div className="flex items-center justify-between">
-												<span className="text-base font-bold text-primary">
-													{formatCurrency(balance)}
-												</span>
-												<Link to="/deposit">
-													<Button
-														size="icon"
-														variant="ghost"
-														className="h-6 w-6 rounded-full bg-primary/10 hover:bg-primary/20"
-													>
-														<Plus className="h-3 w-3 text-primary" />
-													</Button>
-												</Link>
-											</div>
-										</div>
+										<DropdownMenuItem
+											asChild
+											className="focus:bg-primary/5"
+										>
+											<Link
+												to="/deposit"
+												className="flex items-center justify-between w-full cursor-pointer"
+											>
+												<div className="flex items-center gap-2">
+													<Wallet className="h-4 w-4 text-primary" />
+													<span>
+														{t("deposit")}
+													</span>
+												</div>
+												<Plus className="h-3 w-3 text-primary" />
+											</Link>
+										</DropdownMenuItem>
 										<DropdownMenuSeparator />
 										<DropdownMenuItem asChild>
 											<Link
@@ -376,13 +393,15 @@ export function Header() {
 										{t("navAdmin")}
 									</Link>
 								)}
-								
+
 								{/* Login Button - Only show in mobile menu if NOT authenticated */}
 								{!isAuthenticated && (
 									<div className="pt-2">
 										<Link
 											to="/auth"
-											onClick={() => setMobileMenuOpen(false)}
+											onClick={() =>
+												setMobileMenuOpen(false)
+											}
 										>
 											<Button className="btn-gaming w-full">
 												{t("login")}
@@ -477,7 +496,9 @@ export function Header() {
 														<Link
 															to="/profile"
 															onClick={() =>
-																setMobileMenuOpen(false)
+																setMobileMenuOpen(
+																	false,
+																)
 															}
 															className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/50"
 														>
@@ -487,7 +508,9 @@ export function Header() {
 														<Link
 															to="/orders"
 															onClick={() =>
-																setMobileMenuOpen(false)
+																setMobileMenuOpen(
+																	false,
+																)
 															}
 															className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/50"
 														>
@@ -497,7 +520,9 @@ export function Header() {
 														<button
 															onClick={() => {
 																logout();
-																setMobileMenuOpen(false);
+																setMobileMenuOpen(
+																	false,
+																);
 															}}
 															className="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl text-destructive hover:bg-destructive/10"
 														>

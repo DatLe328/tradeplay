@@ -5,15 +5,14 @@ import (
 	"tradeplay/common"
 	"tradeplay/middleware"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) RefreshTokenHandler() func(*gin.Context) {
+func (api *api) RefreshTokenHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		refreshToken, err := c.Cookie("refreshToken")
 		if err != nil || refreshToken == "" {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 

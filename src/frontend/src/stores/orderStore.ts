@@ -8,7 +8,7 @@ interface OrderStore {
   isLoading: boolean;
   error: string | null;
 
-  createOrder: (accountId: string) => Promise<Order | null>;
+  createOrder: (accountId: number) => Promise<Order | null>;
   fetchMyOrders: (page?: number) => Promise<void>;
   fetchOrderDetail: (id: string) => Promise<void>;
 }
@@ -19,7 +19,7 @@ export const useOrderStore = create<OrderStore>((set) => ({
   isLoading: false,
   error: null,
 
-  createOrder: async (accountId: string) => {
+  createOrder: async (accountId: number) => {
     set({ isLoading: true, error: null });
     try {
       const res = await orderService.createOrder(accountId);
@@ -32,7 +32,7 @@ export const useOrderStore = create<OrderStore>((set) => ({
       
       return newOrder;
     } catch (err: any) {
-      // console.error(err);
+      console.error(err);
       set({ error: err.message || 'Failed to create order' });
       return null;
     } finally {

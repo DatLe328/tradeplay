@@ -21,9 +21,9 @@ const isUserIdle = (): boolean => {
 };
 
 const API_URL = import.meta.env.VITE_API_URL;
-if (import.meta.env.PROD && !API_URL.startsWith("https://")) {
-	throw new Error("API_URL must use HTTPS in production");
-}
+// if (import.meta.env.PROD && !API_URL.startsWith("https://")) {
+// 	throw new Error("API_URL must use HTTPS in production");
+// }
 
 export const api: AxiosInstance = axios.create({
 	baseURL: API_URL,
@@ -32,11 +32,10 @@ export const api: AxiosInstance = axios.create({
 
 api.interceptors.request.use(
 	(config: InternalAxiosRequestConfig) => {
-		const csrfToken = localStorage.getItem("csrf_token");
+		const csrfToken = useAuthStore.getState().csrfToken;
 		if (csrfToken && config.headers) {
 			config.headers["X-CSRF-Token"] = csrfToken;
 		}
-
 		return config;
 	},
 	(error) => Promise.reject(error),
@@ -75,10 +74,9 @@ const calculateFibonacciDelay = (retryCount: number): number => {
 api.interceptors.response.use(
 	(response) => {
 		if (response.data?.data?.csrf_token) {
-			localStorage.setItem("csrf_token", response.data.data.csrf_token);
-		}
-
-		return response;
+            useAuthStore.getState().setCSRFToken(response.data.data.csrf_token);
+        }
+        return response;
 	},
 	async (error: AxiosError) => {
 		const originalRequest = error.config as InternalAxiosRequestConfig & {
@@ -151,7 +149,7 @@ api.interceptors.response.use(
 
 				return api(originalRequest);
 			} catch (refreshError) {
-				console.log(refreshError);
+				// console.log(refreshError);
 				processQueue(refreshError, null);
 
 				localStorage.removeItem("csrf_token");

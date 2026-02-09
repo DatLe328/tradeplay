@@ -6,9 +6,8 @@ import (
 )
 
 type Business interface {
-	CreateUser(ctx context.Context, data *entity.UserDataCreation) (int, error)
-	GetUserProfile(ctx context.Context) (*entity.User, error)
-	PatchUserProfile(ctx context.Context, data *entity.UserDataPatch) error
+	GetUserByID(ctx context.Context, userID int32) (*entity.User, error)
+	PatchUserProfile(ctx context.Context, data *entity.UserUpdateDTO) error
 }
 
 type api struct {

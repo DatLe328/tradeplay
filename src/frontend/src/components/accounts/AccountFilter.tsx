@@ -11,12 +11,16 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "@/stores/languageStore";
-import { AccountStatus, AccountStatusLabel } from "@/constants/enums";
+import {
+	AccountStatus,
+	AccountStatusLabelKey,
+	GameList,
+} from "@/constants/enums";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface FilterState {
 	search: string;
-	game: string;
+	categoryId: string;
 	priceRange: string;
 	status: string;
 	sort: string;
@@ -33,7 +37,8 @@ export function AccountFilter({
 }: AccountFilterProps) {
 	const { t, language } = useTranslation();
 	const [searchParams] = useSearchParams();
-	const allGamesValue = language === "vi" ? "Tất cả" : "All Games";
+	const allGamesValue = "all";
+
 	const priceRanges = [
 		{ value: "all", label: t("allPrices") },
 		{ value: "0-1000000", label: t("priceUnder1m") },
@@ -42,21 +47,23 @@ export function AccountFilter({
 		{ value: "10000000-20000000", label: t("price10mTo20m") },
 		{ value: "20000000-999999999", label: t("priceAbove20m") },
 	];
+
 	const statusOptions = [
 		{ value: "all", label: t("allStatuses") },
 		{
 			value: AccountStatus.Available.toString(),
-			label: AccountStatusLabel[AccountStatus.Available],
+			label: t(AccountStatusLabelKey[AccountStatus.Available]),
 		},
 		{
 			value: AccountStatus.Sold.toString(),
-			label: AccountStatusLabel[AccountStatus.Sold],
+			label: t(AccountStatusLabelKey[AccountStatus.Sold]),
 		},
 		{
 			value: AccountStatus.Reserved.toString(),
-			label: AccountStatusLabel[AccountStatus.Reserved],
+			label: t(AccountStatusLabelKey[AccountStatus.Reserved]),
 		},
 	];
+
 	const sortOptions = [
 		{ value: "newest", label: language === "vi" ? "Mới nhất" : "Newest" },
 		{
@@ -70,7 +77,14 @@ export function AccountFilter({
 				language === "vi" ? "Giá: Cao đến Thấp" : "Price: High to Low",
 		},
 	];
-	const games = [allGamesValue, "Play Together"];
+
+	const gameOptions = [
+		{ value: "all", label: t("allGames") },
+		...GameList.map((game) => ({
+			value: game.id.toString(),
+			label: game.name,
+		})),
+	];
 
 	const [filters, setFilters] = useState<FilterState>(() => {
 		const defaultSort = "newest";
@@ -78,52 +92,30 @@ export function AccountFilter({
 		if (initialFilters) {
 			return {
 				...initialFilters,
-				sort: initialFilters.sort || defaultSort, 
+				sort: initialFilters.sort || defaultSort,
 				status: initialFilters.status || "all",
 				priceRange: initialFilters.priceRange || "all",
-				game: initialFilters.game || allGamesValue,
+				categoryId: initialFilters.categoryId || allGamesValue,
 				search: initialFilters.search || "",
 			};
 		}
 
-		const priceRange = searchParams.get("priceRange") || "all";
-		const search = searchParams.get("search") || "";
-		const game = searchParams.get("game") || allGamesValue;
-		const sort = searchParams.get("sort") || defaultSort;
-
 		return {
-			search,
-			game,
-			priceRange,
+			search: searchParams.get("search") || "",
+			categoryId: searchParams.get("category_id") || allGamesValue,
+			priceRange: searchParams.get("priceRange") || "all",
 			status: "all",
-			sort: sort,
+			sort: searchParams.get("sort") || defaultSort,
 		};
 	});
 
 	useEffect(() => {
 		const sort = searchParams.get("sort");
 		if (sort && sort !== filters.sort) {
-			const newFilters = { ...filters, sort };
-			setFilters(newFilters);
-			onFilterChange(newFilters);
+			updateFilter("sort", sort);
 		}
-		const oldAllGames = language === "vi" ? "All Games" : "Tất cả";
-		if (filters.game === oldAllGames) {
-			const newFilters = { ...filters, game: allGamesValue };
-			setFilters(newFilters);
-			onFilterChange(newFilters);
-		}
-	}, [language]);
+	}, [searchParams.get("sort")]);
 
-	// Sync filter when URL changes
-	useEffect(() => {
-		const priceRange = searchParams.get("priceRange");
-		if (priceRange && priceRange !== filters.priceRange) {
-			const newFilters = { ...filters, priceRange };
-			setFilters(newFilters);
-			onFilterChange(newFilters);
-		}
-	}, [searchParams]);
 	const [showMobileFilters, setShowMobileFilters] = useState(false);
 
 	const updateFilter = (key: keyof FilterState, value: string) => {
@@ -135,7 +127,7 @@ export function AccountFilter({
 	const clearFilters = () => {
 		const defaultFilters = {
 			search: "",
-			game: allGamesValue,
+			categoryId: allGamesValue,
 			priceRange: "all",
 			status: "all",
 			sort: "newest",
@@ -146,14 +138,12 @@ export function AccountFilter({
 
 	const hasActiveFilters =
 		filters.search ||
-		filters.game !== allGamesValue ||
+		filters.categoryId !== allGamesValue ||
 		filters.priceRange !== "all" ||
 		filters.sort !== "newest";
 
 	return (
-		// Thêm relative và z-index để dropdown nổi lên trên các element khác
 		<div className="space-y-4 relative z-40">
-			{/* Search and mobile filter toggle */}
 			<div className="flex gap-2">
 				<div className="relative flex-1">
 					<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -169,23 +159,27 @@ export function AccountFilter({
 					className="md:hidden"
 					onClick={() => setShowMobileFilters(!showMobileFilters)}
 				>
-					{showMobileFilters ? <X className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
+					{showMobileFilters ? (
+						<X className="h-4 w-4" />
+					) : (
+						<Filter className="h-4 w-4" />
+					)}
 				</Button>
 			</div>
 
 			{/* Desktop Filters */}
 			<div className="hidden md:flex flex-wrap gap-3 items-center">
 				<Select
-					value={filters.game}
-					onValueChange={(value) => updateFilter("game", value)}
+					value={filters.categoryId}
+					onValueChange={(value) => updateFilter("categoryId", value)}
 				>
 					<SelectTrigger className="w-[180px]">
 						<SelectValue placeholder={t("allGames")} />
 					</SelectTrigger>
 					<SelectContent>
-						{games.map((game) => (
-							<SelectItem key={game} value={game}>
-								{game}
+						{gameOptions.map((opt) => (
+							<SelectItem key={opt.value} value={opt.value}>
+								{opt.label}
 							</SelectItem>
 						))}
 					</SelectContent>
@@ -206,6 +200,7 @@ export function AccountFilter({
 						))}
 					</SelectContent>
 				</Select>
+
 				<Select
 					value={filters.status}
 					onValueChange={(value) => updateFilter("status", value)}
@@ -221,6 +216,7 @@ export function AccountFilter({
 						))}
 					</SelectContent>
 				</Select>
+
 				<Select
 					value={filters.sort}
 					onValueChange={(value) => updateFilter("sort", value)}
@@ -249,27 +245,31 @@ export function AccountFilter({
 				)}
 			</div>
 
-			{/* Mobile Filters Dropdown */}
+			{/* Mobile Filters */}
 			<AnimatePresence>
 				{showMobileFilters && (
 					<motion.div
 						initial={{ opacity: 0, y: -10 }}
 						animate={{ opacity: 1, y: 0 }}
 						exit={{ opacity: 0, y: -10 }}
-						transition={{ duration: 0.2, ease: "easeOut" }}
 						className="absolute top-[calc(100%+0.5rem)] left-0 right-0 z-50 md:hidden p-4 rounded-xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl space-y-3"
 					>
 						<Select
-							value={filters.game}
-							onValueChange={(value) => updateFilter("game", value)}
+							value={filters.categoryId}
+							onValueChange={(value) =>
+								updateFilter("categoryId", value)
+							}
 						>
 							<SelectTrigger>
 								<SelectValue placeholder={t("allGames")} />
 							</SelectTrigger>
 							<SelectContent>
-								{games.map((game) => (
-									<SelectItem key={game} value={game}>
-										{game}
+								{gameOptions.map((opt) => (
+									<SelectItem
+										key={opt.value}
+										value={opt.value}
+									>
+										{opt.label}
 									</SelectItem>
 								))}
 							</SelectContent>
@@ -297,7 +297,9 @@ export function AccountFilter({
 						</Select>
 						<Select
 							value={filters.status}
-							onValueChange={(value) => updateFilter("status", value)}
+							onValueChange={(value) =>
+								updateFilter("status", value)
+							}
 						>
 							<SelectTrigger>
 								<SelectValue placeholder="Trạng thái" />
@@ -315,7 +317,9 @@ export function AccountFilter({
 						</Select>
 						<Select
 							value={filters.sort}
-							onValueChange={(value) => updateFilter("sort", value)}
+							onValueChange={(value) =>
+								updateFilter("sort", value)
+							}
 						>
 							<SelectTrigger>
 								<SelectValue placeholder={t("sortBy")} />

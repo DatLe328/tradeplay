@@ -3,27 +3,31 @@ package business
 import (
 	"context"
 	"fmt"
-	accountEntity "tradeplay/services/account/entity"
+	"time"
+	"tradeplay/common"
+	auditEntity "tradeplay/services/audit/entity"
 	orderEntity "tradeplay/services/order/entity"
-	walletEntity "tradeplay/services/wallet/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"gorm.io/gorm"
 )
 
 func (biz *business) UpdateOrderStatus(
 	ctx context.Context,
-	orderId int,
+	orderID int32,
 	newStatus orderEntity.OrderStatus,
-	requesterId int,
+	requesterID int32,
 	ipAddress string,
 ) error {
-	db := biz.walletRepo.GetDB()
+	db := biz.orderRepository.GetDB()
 
-	return db.Transaction(func(tx *gorm.DB) error {
-		order, err := biz.repo.GetOrderForUpdate(ctx, tx, orderId)
+	// Set transaction timeout to 30 seconds for order update
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	return db.WithContext(ctxWithTimeout).Transaction(func(tx *gorm.DB) error {
+		order, err := biz.orderRepository.GetOrderForUpdate(ctxWithTimeout, tx, orderID)
 		if err != nil {
-			return core.ErrCannotGetEntity(orderEntity.Order{}.TableName(), err)
+			return common.ErrCannotGetEntity(orderEntity.Order{}.TableName(), err)
 		}
 
 		oldStatus := order.Status
@@ -32,65 +36,54 @@ func (biz *business) UpdateOrderStatus(
 		}
 
 		if oldStatus == orderEntity.OrderStatusCompleted || oldStatus == orderEntity.OrderStatusPaid {
-			return core.ErrInvalidRequest(fmt.Errorf("đơn hàng đã hoàn thành, không thể thay đổi trạng thái"))
+			return common.ErrInvalidRequest(fmt.Errorf("đơn hàng đã hoàn thành, không thể thay đổi trạng thái"))
 		}
 
 		if newStatus == orderEntity.OrderStatusCompleted || newStatus == orderEntity.OrderStatusPaid {
 
 			if order.Type == orderEntity.OrderTypeDeposit {
-				wallet, err := biz.walletRepo.GetWalletForUpdate(ctx, tx, order.UserId, "VND")
-				if err != nil {
-					return fmt.Errorf("wallet not found: %v", err)
-				}
-
-				newBalance := wallet.Balance + order.TotalPrice
-				wallet.Balance = newBalance
-
-				if err := tx.Save(wallet).Error; err != nil {
-					return err
-				}
-
-				walletTx := &walletEntity.WalletTransaction{
-					SQLModel:      core.NewSQLModel(),
-					WalletId:      wallet.Id,
-					Amount:        order.TotalPrice,
-					BeforeBalance: wallet.Balance - order.TotalPrice,
-					AfterBalance:  newBalance,
-					Type:          walletEntity.TxTypeDeposit,
-					RefType:       "order",
-					RefId:         fmt.Sprintf("%d", order.Id),
-					Description:   fmt.Sprintf("Nạp tiền qua đơn hàng #%d", order.Id),
-				}
-
-				if err := biz.walletRepo.CreateWalletTransaction(ctx, tx, walletTx); err != nil {
-					return err
+				description := fmt.Sprintf("Nạp tiền qua đơn hàng #%d", order.ID)
+				if err := biz.walletBusiness.Deposit(ctxWithTimeout, tx, order.UserID, order.TotalPrice, fmt.Sprintf("%d", order.ID), description, nil); err != nil {
+					return fmt.Errorf("không thể cộng tiền vào ví: %w", err)
 				}
 			}
 
-			if order.Type == orderEntity.OrderTypeBuyAcc && order.AccountId != nil {
-				statusSold := accountEntity.AccountStatusSold
-				data := accountEntity.AccountDataUpdate{Status: &statusSold}
-				if err := biz.accountRepo.UpdateAccount(ctx, tx, *order.AccountId, &data); err != nil {
-					return core.ErrInternal(err)
+			if order.Type == orderEntity.OrderTypeBuyAcc && order.AccountID != nil {
+				if err := biz.accountBusiness.MarkAsSold(ctxWithTimeout, tx, *order.AccountID, order.UserID); err != nil {
+					return fmt.Errorf("không thể cập nhật trạng thái tài khoản: %w", err)
 				}
 			}
 		}
 
-		if err := biz.repo.UpdateOrderStatus(ctx, tx, orderId, newStatus); err != nil {
-			return core.ErrInternal(err)
+		if err := biz.orderRepository.UpdateOrderStatus(ctxWithTimeout, tx, orderID, newStatus); err != nil {
+			return common.ErrInternal(err)
 		}
 
 		history := &orderEntity.OrderHistory{
-			OrderId:   orderId,
+			OrderId:   orderID,
 			OldStatus: &oldStatus,
 			NewStatus: newStatus,
 			Note:      fmt.Sprintf("Status changed from %v to %v", oldStatus, newStatus),
-			ChangedBy: requesterId,
+			ChangedBy: requesterID,
 			IpAddress: ipAddress,
 		}
-		if err := biz.repo.CreateOrderHistory(ctx, tx, history); err != nil {
-			return core.ErrInternal(err)
+		if err := biz.orderRepository.CreateOrderHistory(ctxWithTimeout, tx, history); err != nil {
+			return common.ErrInternal(err)
 		}
+
+		biz.auditRepository.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+			UserId: requesterID,
+			Action: "UPDATE_ORDER_STATUS",
+			Payload: auditEntity.JSONMap{
+				"order_id":   orderID,
+				"old_status": oldStatus,
+				"new_status": newStatus,
+			},
+			StatusCode: 200,
+			Method:     "PATCH",
+			Path:       "/orders/:id/status",
+			IpAddress:  ipAddress,
+		})
 
 		return nil
 	})

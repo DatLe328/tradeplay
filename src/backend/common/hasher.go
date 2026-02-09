@@ -10,6 +10,8 @@ import (
 
 type Hasher struct{}
 
+const PasswordCost = 12
+
 func (r *Hasher) RandomStr(length int) (string, error) {
 	var b = make([]byte, length)
 
@@ -25,7 +27,7 @@ func (r *Hasher) RandomStr(length int) (string, error) {
 func (r *Hasher) HashPassword(salt, password string) (string, error) {
 	spStr := fmt.Sprintf("%s.%s", salt, password)
 
-	h, err := bcrypt.GenerateFromPassword([]byte(spStr), bcrypt.DefaultCost)
+	h, err := bcrypt.GenerateFromPassword([]byte(spStr), PasswordCost)
 
 	if err != nil {
 		return "", err

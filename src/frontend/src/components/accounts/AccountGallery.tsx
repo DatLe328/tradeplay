@@ -135,13 +135,13 @@ export function AccountGallery({ images, title }: AccountGalleryProps) {
 						<>
 							<button
 								onClick={handlePrevious}
-								className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background transition-colors z-10"
+								className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background transition-colors"
 							>
 								<ChevronLeft className="h-5 w-5" />
 							</button>
 							<button
 								onClick={handleNext}
-								className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background transition-colors z-10"
+								className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-lg bg-background/80 backdrop-blur-sm hover:bg-background transition-colors"
 							>
 								<ChevronRight className="h-5 w-5" />
 							</button>

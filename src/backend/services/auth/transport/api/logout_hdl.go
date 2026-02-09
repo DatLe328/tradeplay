@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) LogoutHdl() func(*gin.Context) {
+func (api *api) LogoutHdl() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		refreshToken, err := c.Cookie("refreshToken")
 
@@ -17,36 +17,44 @@ func (api *api) LogoutHdl() func(*gin.Context) {
 
 		origin := c.GetHeader("Origin")
 		cookieDomain := common.GetCookieDomainForOrigin(origin)
-		c.SetSameSite(http.SameSiteNoneMode)
 
+		var sameSite http.SameSite
+		var secure bool
+
+		sameSite = http.SameSiteNoneMode
+		secure = true
+
+		c.SetSameSite(sameSite)
 		c.SetCookie(
 			"accessToken",
 			"",
 			-1,
 			"/",
 			cookieDomain,
-			true,
+			secure,
 			true,
 		)
 
+		c.SetSameSite(sameSite)
 		c.SetCookie(
 			"refreshToken",
 			"",
 			-1,
 			"/",
 			cookieDomain,
-			true,
+			secure,
 			true,
 		)
 
+		c.SetSameSite(sameSite)
 		c.SetCookie(
 			"csrf_token",
 			"",
 			-1,
 			"/",
 			cookieDomain,
-			true,
-			true,
+			secure,
+			false,
 		)
 
 		c.JSON(http.StatusOK, gin.H{

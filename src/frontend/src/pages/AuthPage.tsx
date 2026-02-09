@@ -58,11 +58,12 @@ export default function AuthPage() {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		const isDev = import.meta.env.DEV;
 
-		if (!captchaToken) {
+		if (!isDev && !captchaToken) {
 			toast({
 				title: "Xác thực thất bại",
-				description: "Vui lòng hoàn thành xác thực bảo mật (Captcha).",
+				description: t("captchaError"),
 				variant: "destructive",
 			});
 			return;

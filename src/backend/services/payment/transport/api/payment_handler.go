@@ -1,14 +1,15 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"tradeplay/common"
 	paymentEntity "tradeplay/services/payment/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
@@ -18,25 +19,43 @@ type SepayResponse struct {
 }
 
 func (h *api) HandleSepayWebhook(c *gin.Context) {
-	authHeader := c.GetHeader("Authorization")
-
 	configComp := h.serviceCtx.MustGet(common.KeyCompConf).(common.ConfigComponent)
 	myApiKey := configComp.SepayAPIKey()
+
+	if myApiKey == "" {
+		fmt.Println("[CRITICAL ERROR] Sepay API Key is missing in server configuration!")
+
+		c.JSON(http.StatusInternalServerError, common.ErrInternal(errors.New("Server misconfiguration: Payment API Key is missing")))
+		return
+	}
+
+	authHeader := c.GetHeader("Authorization")
 	expectedHeader := "Apikey " + myApiKey
 
-	if myApiKey != "" && authHeader != expectedHeader {
-		c.JSON(http.StatusUnauthorized, core.ErrInvalidCredentials(errors.New("Invalid SePay API Key")))
+	if authHeader != expectedHeader {
+		c.JSON(http.StatusUnauthorized, common.ErrInvalidCredentials(errors.New("Invalid SePay API Key")))
+		return
+	}
+
+	signature := c.GetHeader("X-Webhook-Signature")
+	if signature == "" {
+		signature = c.GetHeader("X-Signature")
+	}
+
+	bodyBytes, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusOK, SepayResponse{Success: false, Message: "Failed to read request body"})
 		return
 	}
 
 	var payload paymentEntity.SepayWebhookPayload
-	if err := c.ShouldBindJSON(&payload); err != nil {
-		c.JSON(http.StatusBadRequest, core.ErrBadRequest(err, err.Error()))
+	if err := json.Unmarshal(bodyBytes, &payload); err != nil {
+		c.JSON(http.StatusOK, SepayResponse{Success: false, Message: "Invalid JSON format"})
 		return
 	}
 
 	var finalOrderId string
-	prefix := "DHTCT"
+	prefix := "DH"
 
 	if payload.Code != "" && strings.HasPrefix(payload.Code, prefix) {
 		finalOrderId = strings.TrimPrefix(payload.Code, prefix)
@@ -52,16 +71,14 @@ func (h *api) HandleSepayWebhook(c *gin.Context) {
 	}
 
 	if finalOrderId == "" {
-		c.JSON(http.StatusBadRequest, core.ErrBadRequest(errors.New("cannot extract order code"), "Could not find order code in both Code and Content fields"))
+		c.JSON(http.StatusOK, SepayResponse{Success: false, Message: "Order code not found"})
 		return
 	}
 
-	payload.Content = finalOrderId
-
-	err := h.business.ProcessSepayWebhook(c.Request.Context(), &payload)
+	err = h.business.ProcessSepayWebhook(c.Request.Context(), &payload, finalOrderId, signature, bodyBytes)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, core.ErrInternal(err))
+		c.JSON(http.StatusInternalServerError, common.ErrInternal(err))
 		return
 	}
 
@@ -72,8 +89,7 @@ func (h *api) HandleSepayWebhook(c *gin.Context) {
 }
 
 func extractOrderCode(content string) (string, error) {
-	prefix := "DHTCT"
-	codeLength := 14
+	prefix := "DH"
 
 	idx := strings.Index(content, prefix)
 	if idx == -1 {
@@ -81,11 +97,6 @@ func extractOrderCode(content string) (string, error) {
 	}
 
 	start := idx + len(prefix)
-	end := start + codeLength
 
-	if end > len(content) {
-		return "", fmt.Errorf("nội dung không đủ %d ký tự sau prefix %s: %s", codeLength, prefix, content)
-	}
-
-	return content[start:end], nil
+	return content[start:], nil
 }

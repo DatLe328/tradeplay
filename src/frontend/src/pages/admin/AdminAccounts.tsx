@@ -61,13 +61,14 @@ import {
 	sortableKeyboardCoordinates,
 	rectSortingStrategy,
 } from "@dnd-kit/sortable";
-import { AccountStatus } from "@/constants/enums";
+import { AccountStatus, GameList, getGameName } from "@/constants/enums";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 
 function CircularProgress({ value }: { value: number }) {
 	const radius = 18;
@@ -195,10 +196,8 @@ export function SortableImage({
 				</div>
 			)}
 
-			{/* Actions - Mobile Friendly: Luôn hiển thị nút xóa nhỏ, nút thumbnail là icon ngôi sao */}
 			{!isUploading && (
 				<>
-					{/* Nút Xóa - Top Right */}
 					<button
 						type="button"
 						onPointerDown={(e) => e.stopPropagation()}
@@ -211,7 +210,6 @@ export function SortableImage({
 						<X className="h-3.5 w-3.5" />
 					</button>
 
-					{/* Nút Thumbnail - Top Left hoặc Bottom Right */}
 					<button
 						type="button"
 						onPointerDown={(e) => e.stopPropagation()}
@@ -242,7 +240,7 @@ export function SortableImage({
 }
 
 interface FormData {
-	gameName: string;
+	category_id: string;
 	title: string;
 	price: string;
 	original_price: string;
@@ -263,7 +261,7 @@ type SortablePhoto = {
 };
 
 const initialFormData: FormData = {
-	gameName: "",
+	category_id: "",
 	title: "",
 	price: "",
 	original_price: "",
@@ -282,14 +280,116 @@ const getMediaType = (url: string): "image" | "video" => {
 	return "image";
 };
 
+const AccountsSkeleton = () => {
+	return (
+		<>
+			<div className="grid grid-cols-1 gap-4 md:hidden">
+				{Array.from({ length: 5 }).map((_, i) => (
+					<div
+						key={i}
+						className="bg-card rounded-xl p-3 border border-border shadow-sm flex gap-3"
+					>
+						{/* Thumbnail Skeleton */}
+						<Skeleton className="w-20 h-20 shrink-0 rounded-lg" />
+
+						<div className="flex-1 min-w-0 flex flex-col justify-between">
+							<div className="space-y-2">
+								<div className="flex justify-between items-start">
+									<Skeleton className="h-3 w-16" />{" "}
+									{/* Game Name */}
+									<Skeleton className="h-3 w-8" /> {/* ID */}
+								</div>
+								<Skeleton className="h-4 w-3/4" /> {/* Title */}
+							</div>
+
+							<div className="flex items-end justify-between mt-2">
+								<div className="flex flex-col gap-1">
+									<Skeleton className="h-4 w-24" />{" "}
+									{/* Price */}
+									<Skeleton className="h-5 w-16 rounded-full" />{" "}
+									{/* Badge */}
+								</div>
+								<Skeleton className="h-8 w-8 rounded-md" />{" "}
+								{/* Action Button */}
+							</div>
+						</div>
+					</div>
+				))}
+			</div>
+
+			<div className="hidden md:block rounded-xl border border-border overflow-hidden bg-card">
+				<table className="w-full text-sm">
+					<thead className="bg-secondary/50 border-b border-border">
+						<tr>
+							<th className="px-4 py-3 text-left font-medium">
+								Hình ảnh
+							</th>
+							<th className="px-4 py-3 text-left font-medium">
+								ID / Game
+							</th>
+							<th className="px-4 py-3 text-left font-medium">
+								Tiêu đề
+							</th>
+							<th className="px-4 py-3 text-left font-medium">
+								Giá bán
+							</th>
+							<th className="px-4 py-3 text-left font-medium">
+								Trạng thái
+							</th>
+							<th className="px-4 py-3 text-right font-medium">
+								Thao tác
+							</th>
+						</tr>
+					</thead>
+					<tbody className="divide-y divide-border">
+						{Array.from({ length: 5 }).map((_, i) => (
+							<tr key={i}>
+								<td className="px-4 py-3">
+									<Skeleton className="w-12 h-12 rounded-lg" />
+								</td>
+								<td className="px-4 py-3">
+									<div className="space-y-1">
+										<Skeleton className="h-4 w-8" />
+										<Skeleton className="h-3 w-16" />
+									</div>
+								</td>
+								<td className="px-4 py-3">
+									<Skeleton className="h-4 w-48" />
+								</td>
+								<td className="px-4 py-3">
+									<Skeleton className="h-4 w-24" />
+								</td>
+								<td className="px-4 py-3">
+									<Skeleton className="h-6 w-20 rounded-full" />
+								</td>
+								<td className="px-4 py-3 text-right">
+									<div className="flex justify-end gap-1">
+										<Skeleton className="h-8 w-8 rounded-md" />
+										<Skeleton className="h-8 w-8 rounded-md" />
+									</div>
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			</div>
+		</>
+	);
+};
+
 export default function AdminAccounts() {
 	const [accounts, setAccounts] = useState<GameAccount[]>([]);
 	const [currentPage, setCurrentPage] = useState(1);
+	useEffect(() => {
+		window.scrollTo({ top: 0, behavior: "smooth" });
+	}, [currentPage]);
+
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalItems, setTotalItems] = useState(0);
 	const [searchTerm, setSearchTerm] = useState("");
 	const [debouncedSearch, setDebouncedSearch] = useState("");
 	const pageSize = 10;
+	const [isLoading, setIsLoading] = useState(true);
 
 	const [isDialogOpen, setIsDialogOpen] = useState(false);
 	const [editingAccount, setEditingAccount] = useState<GameAccount | null>(
@@ -312,6 +412,14 @@ export default function AdminAccounts() {
 	const [accountToDelete, setAccountToDelete] = useState<GameAccount | null>(
 		null,
 	);
+	const currentCategory = GameList.find(
+		(g) => g.id.toString() === formData.category_id,
+	);
+	const currentSchema = getGameSchema(currentCategory?.slug || "");
+
+	const handleGameChange = (categoryId: string) => {
+		setFormData({ ...formData, category_id: categoryId, attributes: {} });
+	};
 
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
@@ -330,10 +438,11 @@ export default function AdminAccounts() {
 	const executeDelete = async () => {
 		if (!accountToDelete) return;
 
-		setDeletingId(accountToDelete.id);
+		setDeletingId(String(accountToDelete.id));
 
 		try {
-			await accountService.delete(accountToDelete.id);
+			await accountService.delete(String(accountToDelete.id));
+
 			toast({
 				title: "Đã xóa thành công",
 				description: `Đã xóa tài khoản #${accountToDelete.id}`,
@@ -385,6 +494,7 @@ export default function AdminAccounts() {
 
 	const loadAccounts = async (page: number) => {
 		try {
+			setIsLoading(true);
 			const res = await accountService.getAll({
 				page: page,
 				limit: pageSize,
@@ -398,9 +508,10 @@ export default function AdminAccounts() {
 			}
 		} catch (error) {
 			toast({ title: "Lỗi tải danh sách", variant: "destructive" });
+		} finally {
+			setIsLoading(false);
 		}
 	};
-
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			setDebouncedSearch(searchTerm);
@@ -418,11 +529,6 @@ export default function AdminAccounts() {
 	}, [currentPage, debouncedSearch]);
 
 	const handlePageChange = (page: number) => setCurrentPage(page);
-	const currentSchema = getGameSchema(formData.gameName);
-
-	const handleGameChange = (gameName: string) => {
-		setFormData({ ...formData, gameName, attributes: {} });
-	};
 
 	const handleAttributesChange = (attributes: GameAttributes) => {
 		setFormData({ ...formData, attributes });
@@ -443,7 +549,7 @@ export default function AdminAccounts() {
 			(img) => img === account.thumbnail,
 		);
 		setFormData({
-			gameName: account.game_name || "",
+			category_id: account.category_id?.toString() || "",
 			title: account.title,
 			price: String(account.price),
 			original_price: account.original_price
@@ -473,7 +579,7 @@ export default function AdminAccounts() {
 		setIsDialogOpen(true);
 
 		try {
-			const res = await accountService.getCredentials(account.id);
+			const res = await accountService.getAdminCredentials(account.id);
 			if (res.data) {
 				setFormData((prev) => ({
 					...prev,
@@ -513,20 +619,35 @@ export default function AdminAccounts() {
 	};
 
 	const handleAddImageUrl = () => {
-		if (imageUrlInput.trim()) {
-			const url = imageUrlInput.trim();
-			setPreviewImages([
-				...previewImages,
-				{
-					id: crypto.randomUUID(),
-					url: url,
-					mediaType: getMediaType(url),
-				},
-			]);
+		if (!imageUrlInput.trim()) return;
+
+		const input = imageUrlInput.trim();
+		let urlsToAdd: string[] = [];
+
+		try {
+			const parsed = JSON.parse(input);
+			if (Array.isArray(parsed)) {
+				urlsToAdd = parsed
+					.map((url) => String(url).trim())
+					.filter(Boolean);
+			} else {
+				urlsToAdd = [input];
+			}
+		} catch (e) {
+			urlsToAdd = [input];
+		}
+
+		if (urlsToAdd.length > 0) {
+			const newPhotos: SortablePhoto[] = urlsToAdd.map((url) => ({
+				id: crypto.randomUUID(),
+				url: url,
+				mediaType: getMediaType(url),
+			}));
+
+			setPreviewImages((prev) => [...prev, ...newPhotos]);
 			setImageUrlInput("");
 		}
 	};
-
 	const removeImage = (index: number) => {
 		const itemToRemove = previewImages[index];
 		setPreviewImages(previewImages.filter((_, i) => i !== index));
@@ -611,7 +732,7 @@ export default function AdminAccounts() {
 
 			if (!editingAccount) {
 				const createPayload = {
-					game_name: formData.gameName,
+					category_id: Number(formData.category_id),
 					title: formData.title,
 					price: Number(formData.price),
 					original_price: formData.original_price
@@ -668,11 +789,15 @@ export default function AdminAccounts() {
 					finalImageUrls[0] ||
 					"";
 
-				await accountService.update(String(newAccountId), {
-					images: finalImageUrls.filter(Boolean),
-					thumbnail: thumbnailImage,
-					status: formData.status,
-				});
+				await accountService.update(
+					String(newAccountId),
+					{
+						images: finalImageUrls.filter(Boolean),
+						thumbnail: thumbnailImage,
+						status: formData.status,
+					},
+					0,
+				);
 
 				toast({ title: "Thêm mới thành công" });
 			} else {
@@ -696,27 +821,31 @@ export default function AdminAccounts() {
 					finalImageUrls[0] ||
 					"";
 
-				await accountService.update(editingAccount.id, {
-					game_name: formData.gameName,
-					title: formData.title,
-					price: Number(formData.price),
-					original_price: formData.original_price
-						? Number(formData.original_price)
-						: undefined,
-					description: formData.description,
-					features: formData.features
-						.split(",")
-						.map((f) => f.trim())
-						.filter(Boolean),
-					attributes: formData.attributes,
-					status: formData.status,
-					images: finalImageUrls.filter(Boolean),
-					thumbnail: thumbnailImage,
+				await accountService.update(
+					editingAccount.id,
+					{
+						category_id: Number(formData.category_id),
+						title: formData.title,
+						price: Number(formData.price),
+						original_price: formData.original_price
+							? Number(formData.original_price)
+							: undefined,
+						description: formData.description,
+						features: formData.features
+							.split(",")
+							.map((f) => f.trim())
+							.filter(Boolean),
+						attributes: formData.attributes,
+						status: formData.status,
+						images: finalImageUrls.filter(Boolean),
+						thumbnail: thumbnailImage,
 
-					username: formData.username,
-					password: formData.password,
-					extra_data: formData.extraData,
-				});
+						username: formData.username,
+						password: formData.password,
+						extra_data: formData.extraData,
+					},
+					editingAccount.version,
+				);
 
 				toast({ title: "Cập nhật thành công" });
 			}
@@ -792,11 +921,15 @@ export default function AdminAccounts() {
 				<motion.div
 					initial={{ opacity: 0, y: 10 }}
 					animate={{ opacity: 1, y: 0 }}
+					className="mt-6 md:mt-0"
 				>
-					<h1 className="font-gaming text-2xl md:text-3xl font-bold">
-						Quản Lý Acc
+					<h1 className="font-gaming text-3xl md:text-4xl font-extrabold tracking-tight">
+						<span className="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
+							Quản Lý Acc
+						</span>
 					</h1>
-					<p className="text-sm text-muted-foreground hidden md:block">
+					<div className="h-1 w-12 bg-primary rounded-full mt-1 hidden md:block" />
+					<p className="text-xs md:text-sm text-muted-foreground mt-2 font-medium opacity-80">
 						Thêm, sửa, xóa acc game trong shop
 					</p>
 				</motion.div>
@@ -824,193 +957,241 @@ export default function AdminAccounts() {
 			{/* --- DANH SÁCH TÀI KHOẢN (Responsive switch) --- */}
 
 			{/* VIEW 1: Cards cho Mobile */}
-			<div className="grid grid-cols-1 gap-4 md:hidden">
-				{accounts.map((account) => (
-					<div
-						key={account.id}
-						className="bg-card rounded-xl p-3 border border-border shadow-sm flex gap-3"
-					>
-						{/* Thumbnail */}
-						<div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden border border-border bg-secondary">
-							{account.thumbnail ? (
-								<img
-									src={account.thumbnail}
-									alt=""
-									className="w-full h-full object-cover"
-								/>
-							) : (
-								<div className="w-full h-full flex items-center justify-center">
-									<ImageIcon className="h-6 w-6 text-muted-foreground/50" />
-								</div>
-							)}
-						</div>
-
-						{/* Info */}
-						<div className="flex-1 min-w-0 flex flex-col justify-between">
-							<div>
-								<div className="flex justify-between items-start">
-									<span className="text-[10px] font-bold uppercase text-primary tracking-wider">
-										{account.game_name}
-									</span>
-									<span className="text-xs text-muted-foreground">
-										#{account.id}
-									</span>
-								</div>
-								<h3 className="font-medium text-sm truncate pr-2 mt-0.5">
-									{account.title}
-								</h3>
+			{isLoading ? (
+				<AccountsSkeleton />
+			) : (
+				<>
+					{/* VIEW 1: Cards cho Mobile */}
+					<div className="grid grid-cols-1 gap-4 md:hidden">
+						{accounts.length === 0 ? (
+							<div className="text-center p-8 text-muted-foreground border border-dashed rounded-xl">
+								Không tìm thấy tài khoản nào.
 							</div>
-
-							<div className="flex items-end justify-between mt-2">
-								<div className="flex flex-col gap-1">
-									<span className="font-gaming text-emerald-500 font-bold">
-										{formatCurrency(account.price)}
-									</span>
-									{getStatusBadge(account.status)}
-								</div>
-
-								{/* Mobile Actions */}
-								<DropdownMenu>
-									<DropdownMenuTrigger asChild>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="h-8 w-8"
-										>
-											<MoreVertical className="h-4 w-4" />
-										</Button>
-									</DropdownMenuTrigger>
-									<DropdownMenuContent align="end">
-										<DropdownMenuItem
-											onClick={() =>
-												openEditDialog(account)
-											}
-										>
-											<Pencil className="mr-2 h-4 w-4" />{" "}
-											Sửa
-										</DropdownMenuItem>
-										<DropdownMenuItem
-											className="text-destructive focus:text-destructive cursor-pointer"
-											onClick={() =>
-												confirmDelete(account)
-											}
-										>
-											<Trash2 className="mr-2 h-4 w-4" />{" "}
-											Xóa
-										</DropdownMenuItem>
-									</DropdownMenuContent>
-								</DropdownMenu>
-							</div>
-						</div>
-					</div>
-				))}
-			</div>
-
-			{/* VIEW 2: Table cho Desktop */}
-			<div className="hidden md:block rounded-xl border border-border overflow-hidden bg-card">
-				<table className="w-full text-sm">
-					<thead className="bg-secondary/50 border-b border-border">
-						<tr>
-							<th className="px-4 py-3 text-left font-medium">
-								Hình ảnh
-							</th>
-							<th className="px-4 py-3 text-left font-medium">
-								ID / Game
-							</th>
-							<th className="px-4 py-3 text-left font-medium">
-								Tiêu đề
-							</th>
-							<th className="px-4 py-3 text-left font-medium">
-								Giá bán
-							</th>
-							<th className="px-4 py-3 text-left font-medium">
-								Trạng thái
-							</th>
-							<th className="px-4 py-3 text-right font-medium">
-								Thao tác
-							</th>
-						</tr>
-					</thead>
-					<tbody className="divide-y divide-border">
-						{accounts.map((account) => (
-							<tr
-								key={account.id}
-								className="hover:bg-secondary/30 transition-colors"
-							>
-								<td className="px-4 py-3">
-									<div className="w-12 h-12 rounded-lg bg-secondary/50 border border-border overflow-hidden">
-										{account.thumbnail && (
+						) : (
+							accounts.map((account) => (
+								<div
+									key={account.id}
+									className="bg-card rounded-xl p-3 border border-border shadow-sm flex gap-3"
+								>
+									{/* Thumbnail */}
+									<div className="w-20 h-20 shrink-0 rounded-lg overflow-hidden border border-border bg-secondary">
+										{account.thumbnail ? (
 											<img
 												src={account.thumbnail}
+												alt=""
 												className="w-full h-full object-cover"
 											/>
+										) : (
+											<div className="w-full h-full flex items-center justify-center">
+												<ImageIcon className="h-6 w-6 text-muted-foreground/50" />
+											</div>
 										)}
 									</div>
-								</td>
-								<td className="px-4 py-3">
-									<div className="font-medium text-primary">
-										#{account.id}
+
+									{/* Info */}
+									<div className="flex-1 min-w-0 flex flex-col justify-between">
+										<div>
+											<div className="flex justify-between items-start">
+												<span className="text-[10px] font-bold uppercase text-primary tracking-wider">
+													{account.category?.name ||
+														getGameName(
+															account.category_id,
+														)}
+												</span>
+												<span className="text-xs text-muted-foreground">
+													#{account.id}
+												</span>
+											</div>
+											<h3 className="font-medium text-sm truncate pr-2 mt-0.5">
+												{account.title}
+											</h3>
+										</div>
+
+										<div className="flex items-end justify-between mt-2">
+											<div className="flex flex-col gap-1">
+												<span className="font-gaming text-emerald-500 font-bold">
+													{formatCurrency(
+														account.price,
+													)}
+												</span>
+												{getStatusBadge(account.status)}
+											</div>
+
+											{/* Mobile Actions */}
+											<DropdownMenu>
+												<DropdownMenuTrigger asChild>
+													<Button
+														variant="ghost"
+														size="icon"
+														className="h-8 w-8"
+													>
+														<MoreVertical className="h-4 w-4" />
+													</Button>
+												</DropdownMenuTrigger>
+												<DropdownMenuContent align="end">
+													<DropdownMenuItem
+														onClick={() =>
+															openEditDialog(
+																account,
+															)
+														}
+													>
+														<Pencil className="mr-2 h-4 w-4" />{" "}
+														Sửa
+													</DropdownMenuItem>
+													<DropdownMenuItem
+														className="text-destructive focus:text-destructive cursor-pointer"
+														onClick={() =>
+															confirmDelete(
+																account,
+															)
+														}
+													>
+														<Trash2 className="mr-2 h-4 w-4" />{" "}
+														Xóa
+													</DropdownMenuItem>
+												</DropdownMenuContent>
+											</DropdownMenu>
+										</div>
 									</div>
-									<div className="text-xs text-muted-foreground">
-										{account.game_name}
-									</div>
-								</td>
-								<td
-									className="px-4 py-3 max-w-[200px] truncate"
-									title={account.title}
-								>
-									{account.title}
-								</td>
-								<td className="px-4 py-3 font-gaming text-emerald-500 font-medium">
-									{formatCurrency(account.price)}
-								</td>
-								<td className="px-4 py-3">
-									{getStatusBadge(account.status)}
-								</td>
-								<td className="px-4 py-3 text-right">
-									<div className="flex justify-end gap-1">
-										<Button
-											variant="ghost"
-											size="icon"
-											onClick={() =>
-												openEditDialog(account)
-											}
+								</div>
+							))
+						)}
+					</div>
+
+					{/* VIEW 2: Table cho Desktop */}
+					<div className="hidden md:block rounded-xl border border-border overflow-hidden bg-card">
+						<table className="w-full text-sm">
+							<thead className="bg-secondary/50 border-b border-border">
+								<tr>
+									<th className="px-4 py-3 text-left font-medium">
+										Hình ảnh
+									</th>
+									<th className="px-4 py-3 text-left font-medium">
+										ID / Game
+									</th>
+									<th className="px-4 py-3 text-left font-medium">
+										Tiêu đề
+									</th>
+									<th className="px-4 py-3 text-left font-medium">
+										Giá bán
+									</th>
+									<th className="px-4 py-3 text-left font-medium">
+										Trạng thái
+									</th>
+									<th className="px-4 py-3 text-right font-medium">
+										Thao tác
+									</th>
+								</tr>
+							</thead>
+							<tbody className="divide-y divide-border">
+								{accounts.length === 0 ? (
+									<tr>
+										<td
+											colSpan={6}
+											className="h-32 text-center text-muted-foreground"
 										>
-											<Pencil className="h-4 w-4" />
-										</Button>
-										<Button
-											variant="ghost"
-											size="icon"
-											className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-											onClick={() =>
-												confirmDelete(account)
-											}
-											disabled={deletingId === account.id}
+											Không có dữ liệu hiển thị
+										</td>
+									</tr>
+								) : (
+									accounts.map((account) => (
+										<tr
+											key={account.id}
+											className="hover:bg-secondary/30 transition-colors"
 										>
-											{deletingId === account.id ? (
-												<Loader2 className="h-4 w-4 animate-spin" />
-											) : (
-												<Trash2 className="h-4 w-4" />
-											)}
-										</Button>
-									</div>
-								</td>
-							</tr>
-						))}
-					</tbody>
-				</table>
-			</div>
+											<td className="px-4 py-3">
+												<div className="w-12 h-12 rounded-lg bg-secondary/50 border border-border overflow-hidden">
+													{account.thumbnail && (
+														<img
+															src={
+																account.thumbnail
+															}
+															className="w-full h-full object-cover"
+														/>
+													)}
+												</div>
+											</td>
+											<td className="px-4 py-3">
+												<div className="font-medium text-primary">
+													#{account.id}
+												</div>
+												<div className="text-xs text-muted-foreground">
+													{account.category?.name ||
+														getGameName(
+															account.category_id,
+														)}
+												</div>
+											</td>
+											<td
+												className="px-4 py-3 max-w-[200px] truncate"
+												title={account.title}
+											>
+												{account.title}
+											</td>
+											<td className="px-4 py-3 font-gaming text-emerald-500 font-medium">
+												{formatCurrency(account.price)}
+											</td>
+											<td className="px-4 py-3">
+												{getStatusBadge(account.status)}
+											</td>
+											<td className="px-4 py-3 text-right">
+												<div className="flex justify-end gap-1">
+													<Button
+														variant="ghost"
+														size="icon"
+														onClick={() =>
+															openEditDialog(
+																account,
+															)
+														}
+													>
+														<Pencil className="h-4 w-4" />
+													</Button>
+													<Button
+														variant="ghost"
+														size="icon"
+														className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+														onClick={() =>
+															confirmDelete(
+																account,
+															)
+														}
+														disabled={
+															deletingId ===
+															String(account.id)
+														}
+													>
+														{deletingId ===
+														String(account.id) ? (
+															<Loader2 className="h-4 w-4 animate-spin" />
+														) : (
+															<Trash2 className="h-4 w-4" />
+														)}
+													</Button>
+												</div>
+											</td>
+										</tr>
+									))
+								)}
+							</tbody>
+						</table>
+					</div>
+				</>
+			)}
 
 			{/* Pagination */}
-			<div className="mt-4">
-				<PaginationWrapper
-					currentPage={currentPage}
-					totalPages={totalPages}
-					totalItems={totalItems}
-					onPageChange={handlePageChange}
-					pageSize={pageSize}
-				/>
-			</div>
+			{!isLoading && totalItems > 0 && (
+				<div className="mt-4">
+					<PaginationWrapper
+						currentPage={currentPage}
+						totalPages={totalPages}
+						totalItems={totalItems}
+						onPageChange={handlePageChange}
+						pageSize={pageSize}
+					/>
+				</div>
+			)}
 
 			{/* --- FORM DIALOG (Responsive: Fullscreen on mobile) --- */}
 			<Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -1048,7 +1229,7 @@ export default function AdminAccounts() {
 										</h3>
 										<div className="space-y-4">
 											<GameSelector
-												value={formData.gameName}
+												value={formData.category_id}
 												onChange={handleGameChange}
 											/>
 											<div className="space-y-1.5">
@@ -1445,7 +1626,7 @@ export default function AdminAccounts() {
 							type="submit"
 							form="account-form"
 							className="btn-gaming w-full md:w-auto min-w-[140px]"
-							disabled={isSubmitting || !formData.gameName}
+							disabled={isSubmitting || !formData.category_id}
 						>
 							{isSubmitting && (
 								<Loader2 className="animate-spin mr-2 h-4 w-4" />
@@ -1477,7 +1658,8 @@ export default function AdminAccounts() {
 								Xác nhận xóa?
 							</DialogTitle>
 							<DialogDescription className="text-center max-w-[280px] mx-auto">
-								Hành động này không thể hoàn tác.
+								Hành động này không thể hoàn tác. Nếu xóa sẽ xóa
+								các order liên quan(nếu có).
 							</DialogDescription>
 						</div>
 					</div>
@@ -1496,7 +1678,9 @@ export default function AdminAccounts() {
 								{accountToDelete?.title}
 							</div>
 							<div className="text-right text-xs text-muted-foreground mt-1">
-								Game: {accountToDelete?.game_name}
+								Game:{" "}
+								{accountToDelete?.category?.name ||
+									getGameName(accountToDelete?.category_id)}
 							</div>
 						</div>
 

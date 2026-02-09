@@ -3,8 +3,6 @@ package entity
 import (
 	"strings"
 	"tradeplay/common"
-
-	"github.com/DatLe328/service-context/core"
 )
 
 type SystemRole int
@@ -23,10 +21,10 @@ const (
 )
 
 type User struct {
-	core.SQLModel
+	common.SQLModel
 	FirstName  string     `json:"first_name" gorm:"column:first_name" db:"first_name"`
 	LastName   string     `json:"last_name" gorm:"column:last_name" db:"last_name"`
-	Phone      string     `json:"phone_number" gorm:"column:phone_number" db:"phone_number"`
+	Phone      *string    `json:"phone_number" gorm:"column:phone_number" db:"phone_number"`
 	SystemRole SystemRole `json:"system_role" gorm:"column:system_role" db:"system_role"`
 	Status     Status     `json:"status" gorm:"column:status" db:"status"`
 	Email      string     `json:"email" gorm:"-"`
@@ -34,10 +32,10 @@ type User struct {
 
 func NewUser(firstName, lastName string) *User {
 	return &User{
-		SQLModel:   core.NewSQLModel(),
+		SQLModel:   common.NewSQLModel(),
 		FirstName:  firstName,
 		LastName:   lastName,
-		Phone:      "",
+		Phone:      nil,
 		SystemRole: RoleUser,
 		Status:     StatusInactive,
 	}

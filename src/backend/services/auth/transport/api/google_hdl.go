@@ -55,7 +55,7 @@ func (api *api) GoogleCallbackHdl() gin.HandlerFunc {
 		c.SetCookie(
 			"accessToken",
 			tokenResp.AccessToken.Token,
-			tokenResp.AccessToken.ExpiredIn,
+			tokenResp.AccessToken.ExpiredIn*8,
 			"/",
 			cookieDomain,
 			true,

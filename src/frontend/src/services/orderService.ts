@@ -4,7 +4,7 @@ import type { ApiResponse } from "@/types";
 import { OrderStatus, OrderType } from "@/constants/enums";
 
 export const orderService = {
-	createOrder: async (accountId: string) => {
+	createOrder: async (accountId: number) => {
 		const payload = { account_id: String(accountId) };
 		return apiRequest<ApiResponse<Order>>("/orders", {
 			method: "POST",
@@ -48,7 +48,7 @@ export const orderService = {
 	},
 
 	getAdminOrders: async (page = 1, limit = 10, type?: OrderType) => {
-	let url = `/orders?page=${page}&limit=${limit}`;
+	let url = `/admin/orders?page=${page}&limit=${limit}`;
         if (type !== undefined) {
             url += `&type=${type}`;
         }

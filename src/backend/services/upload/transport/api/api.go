@@ -2,8 +2,7 @@ package api
 
 import (
 	"tradeplay/common"
-
-	sctx "github.com/DatLe328/service-context"
+	sctx "tradeplay/components/service-context"
 )
 
 type api struct {

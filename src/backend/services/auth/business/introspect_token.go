@@ -2,8 +2,8 @@ package business
 
 import (
 	"context"
+	"tradeplay/common"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -11,7 +11,7 @@ func (biz *business) IntrospectToken(ctx context.Context, accessToken string) (*
 	claims, err := biz.jwtProvider.ParseToken(ctx, accessToken)
 
 	if err != nil {
-		return nil, core.ErrInvalidToken(err)
+		return nil, common.ErrInvalidToken(err)
 	}
 
 	return claims, nil

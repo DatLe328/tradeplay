@@ -15,3 +15,8 @@ var (
 	ErrCannotCreateUser = errors.New("cannot create new user")
 	ErrUserNotFound     = errors.New("user not found")
 )
+
+var (
+	ErrUserBanned   = errors.New("user is banned")
+	ErrUserInactive = errors.New("user is inactive")
+)

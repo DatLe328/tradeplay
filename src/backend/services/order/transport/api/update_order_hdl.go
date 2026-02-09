@@ -5,37 +5,36 @@ import (
 	"tradeplay/common"
 	"tradeplay/services/order/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) UpdateOrderStatusHandler() func(*gin.Context) {
+func (api *api) UpdateOrderStatusHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uidStr := c.Param("id")
-		uid, err := core.FromBase58(uidStr)
+		uid, err := common.FromBase58(uidStr)
 		if err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 		id := int(uid.GetLocalID())
 
 		var data entity.OrderUpdate
 		if err := c.ShouldBindJSON(&data); err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
-		requester := c.MustGet(core.KeyRequester).(core.Requester)
-		requesterUID, _ := core.FromBase58(requester.GetSubject())
+		requester := c.MustGet(common.KeyRequester).(common.Requester)
+		requesterUID, _ := common.FromBase58(requester.GetSubject())
 		requesterId := int(requesterUID.GetLocalID())
 
 		ipAddress := c.ClientIP()
 
-		if err := api.business.UpdateOrderStatus(c.Request.Context(), id, data.Status, requesterId, ipAddress); err != nil {
+		if err := api.business.UpdateOrderStatus(c.Request.Context(), int32(id), data.Status, int32(requesterId), ipAddress); err != nil {
 			common.WriteErrorResponse(c, err)
 			return
 		}
 
-		c.JSON(http.StatusOK, core.ResponseData(true))
+		c.JSON(http.StatusOK, common.ResponseData(true))
 	}
 }

@@ -10,6 +10,7 @@ const (
 	KeyCompUpload = "upload"
 	KeyCompConf   = "config"
 	KeyCompCron   = "cron"
+	KeyCompRedis  = "redis"
 )
 
 const (
@@ -19,6 +20,7 @@ const (
 	DbTypeOrder           = 4
 	DbTypeBankTransaction = 5
 	DbTypeWallet          = 6
+	DbTypeAuditLog        = 7
 )
 
 const (
@@ -29,6 +31,31 @@ const (
 	MaskTypeBankTransaction = 5
 	MaskTypeWallet          = 6
 	MaskTypeWalletTx        = 7
+	MaskTypeAuditLog        = 8
+)
+
+const (
+	ActionLoginFailed        = "LOGIN_FAILED"
+	ActionLoginSuccess       = "LOGIN_SUCCESS"
+	ActionLoginGoogleFailed  = "LOGIN_GOOGLE_FAILED"
+	ActionLoginGoogleSuccess = "LOGIN_GOOGLE_SUCCESS"
+	ActionLogout             = "LOGOUT"
+
+	ActionResetPassFailed  = "RESET_PASS_FAILED"
+	ActionResetPassSuccess = "RESET_PASS_SUCCESS"
+
+	ActionCreateWalletFailed = "CREATE_WALLET_FAILED"
+
+	ActionChangePasswordFailed  = "CHANGE_PASSWORD_FAILED"
+	ActionChangePasswordSuccess = "CHANGE_PASSWORD_SUCCESS"
+
+	ActionRegisterFailed  = "REGISTER_FAILED"
+	ActionRegisterSuccess = "REGISTER_SUCCESS"
+
+	ActionPushNotificationFailed = "PUSH_NOTIFICATION_FAILED"
+
+	ActionVerifyEmailFailed  = "VERIFY_EMAIL_FAILED"
+	ActionVerifyEmailSuccess = "VERIFY_EMAIL_SUCCESS"
 )
 
 const (
@@ -36,14 +63,7 @@ const (
 	MaskTypeUserDisplay  = 2
 )
 
-type ContextKey string
-
 const (
-	KeyIsAdmin ContextKey = "is_admin"
-)
-
-const (
-	DefaultCurrency   = "VND"
 	DefaultSaltLength = 16
 )
 

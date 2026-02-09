@@ -45,11 +45,6 @@ export const useAuthStore = create<AuthStore>()(
 
 			setCSRFToken: (token: string | null) => {
 				set({ csrfToken: token });
-				if (token) {
-					localStorage.setItem("csrf_token", token);
-				} else {
-					localStorage.removeItem("csrf_token");
-				}
 			},
 			changePassword: async (oldPassword, newPassword) => {
 				set({ isLoading: true });
@@ -99,7 +94,6 @@ export const useAuthStore = create<AuthStore>()(
 						const data = res.data as any;
 						if (data?.csrf_token) {
 							set({ csrfToken: data.csrf_token });
-							localStorage.setItem("csrf_token", data.csrf_token);
 						}
 					}
 
@@ -137,7 +131,6 @@ export const useAuthStore = create<AuthStore>()(
 						const data = res.data as any;
 						if (data?.csrf_token) {
 							set({ csrfToken: data.csrf_token });
-							localStorage.setItem("csrf_token", data.csrf_token);
 						}
 					}
 
@@ -156,8 +149,6 @@ export const useAuthStore = create<AuthStore>()(
 					// console.error("Logout error:", error);
 				} finally {
 					localStorage.removeItem("lastActivity");
-					localStorage.removeItem("csrf_token");
-
 					set({
 						user: null,
 						isAuthenticated: false,
@@ -180,7 +171,6 @@ export const useAuthStore = create<AuthStore>()(
 					set({ user, isAuthenticated: true });
 				} catch (error) {
 					localStorage.removeItem("lastActivity");
-					localStorage.removeItem("csrf_token");
 					set({
 						user: null,
 						isAuthenticated: false,

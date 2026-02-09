@@ -2,16 +2,16 @@ package api
 
 import (
 	"context"
+	"tradeplay/common"
 	"tradeplay/services/order/entity"
-
-	"github.com/DatLe328/service-context/core"
 )
 
 type Business interface {
-	CreateOrder(ctx context.Context, userId int, data *entity.OrderCreate, ipAddress string) (*entity.Order, error)
-	ListOrders(ctx context.Context, userId int, filter *entity.OrderFilter, paging *core.Paging) ([]entity.Order, error)
-	GetOrder(ctx context.Context, id int) (*entity.Order, error)
-	UpdateOrderStatus(ctx context.Context, id int, status entity.OrderStatus, requesterId int, ipAddress string) error
+	FindOrders(ctx context.Context, userID int32, filter *entity.OrderFilter, paging *common.Paging) ([]entity.Order, error)
+	FindOrdersAdmin(ctx context.Context, userID int32, filter *entity.OrderFilter, paging *common.Paging) ([]entity.Order, error)
+	GetOrder(ctx context.Context, id int32) (*entity.Order, error)
+	CreateOrder(ctx context.Context, userID int32, data *entity.OrderCreate, ipAddress string) (*entity.Order, error)
+	UpdateOrderStatus(ctx context.Context, id int32, status entity.OrderStatus, requesterId int32, ipAddress string) error
 }
 
 type api struct {

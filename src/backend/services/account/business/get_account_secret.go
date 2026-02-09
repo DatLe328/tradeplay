@@ -4,55 +4,65 @@ import (
 	"context"
 	"tradeplay/common"
 	"tradeplay/services/account/entity"
-
-	"github.com/DatLe328/service-context/core"
+	auditEntity "tradeplay/services/audit/entity"
 )
 
-func (biz *business) GetAccountCredentials(ctx context.Context, requesterId int, accountId int) (*entity.AccountInfo, error) {
+func (biz *business) GetAccountCredentials(ctx context.Context, requesterID int32, accountId int32) (*entity.AccountCredentialsDTO, error) {
 	acc, err := biz.accountRepo.GetAccountByID(ctx, accountId)
 	if err != nil {
-		return nil, core.ErrCannotGetEntity(entity.Account{}.TableName(), err)
+		return nil, common.ErrCannotGetEntity(entity.Account{}.TableName(), err)
 	}
 
-	isAuthorized := false
+	canAccess := false
 
-	if acc.OwnerId == requesterId {
-		isAuthorized = true
+	if acc.OwnerId == requesterID {
+		canAccess = true
 	}
 
-	if !isAuthorized {
-		hasBought, err := biz.orderRepo.HasUserPurchasedAccount(ctx, requesterId, accountId)
-		if err == nil && hasBought {
-			isAuthorized = true
+	if !canAccess {
+		hasPurchased, err := biz.orderRepo.HasUserPurchasedAccount(ctx, requesterID, accountId)
+		if err == nil && hasPurchased {
+			canAccess = true
 		}
 	}
 
-	if !isAuthorized {
-		return nil, core.ErrUnauthorized(nil, "Bạn không có quyền xem thông tin tài khoản này", "FORBIDDEN")
+	if !canAccess {
+		go func() {
+			biz.auditRepo.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+				UserId:     requesterID,
+				Action:     "GET_ACCOUNT_CREDENTIALS_DENIED",
+				ErrorMsg:   "User attempted to access credentials of account they don't own or haven't purchased",
+				StatusCode: 403,
+			})
+		}()
+		return nil, common.ErrForbidden(nil, "You don't have permission to access this account's credentials")
 	}
 
 	info, err := biz.accountRepo.GetAccountInfoByAccountID(ctx, accountId)
 	if err != nil {
-		return nil, core.ErrInternal(err)
+		return nil, common.ErrInternal(err)
 	}
 
-	decUser, err := common.Decrypt(info.Username, biz.appSecretKey)
-	if err != nil {
-		decUser = "[Error Decrypting]"
+	decryptField := func(cipherText string) string {
+		plain, err := common.Decrypt(cipherText, biz.appSecretKey)
+		if err != nil {
+			return "[Error Decrypting]"
+		}
+		return plain
 	}
-	info.Username = decUser
 
-	decPass, err := common.Decrypt(info.Password, biz.appSecretKey)
-	if err != nil {
-		decPass = "[Error Decrypting]"
-	}
-	info.Password = decPass
+	info.Username = decryptField(info.Username)
+	info.Password = decryptField(info.Password)
+	info.Email = decryptField(info.Email)
+	info.ExtraData = decryptField(info.ExtraData)
 
-	decExtra, err := common.Decrypt(info.ExtraData, biz.appSecretKey)
-	if err != nil {
-		decExtra = ""
-	}
-	info.ExtraData = decExtra
+	go func() {
+		biz.auditRepo.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+			UserId:     requesterID,
+			Action:     "GET_ACCOUNT_CREDENTIALS_SUCCESS",
+			StatusCode: 200,
+		})
+	}()
 
-	return info, nil
+	return info.ToDTO(), nil
 }
