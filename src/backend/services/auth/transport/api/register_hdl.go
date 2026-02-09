@@ -9,9 +9,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) RegisterHdl() func(*gin.Context) {
+func (api *api) RegisterHdl() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var data entity.AuthRegister
+		var data entity.AuthRegisterDTO
 
 		if err := c.ShouldBind(&data); err != nil {
 			common.WriteErrorResponse(c, err)

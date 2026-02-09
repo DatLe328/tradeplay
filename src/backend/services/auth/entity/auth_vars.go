@@ -4,12 +4,12 @@ import (
 	"strings"
 )
 
-type AuthEmailPassword struct {
+type AuthEmailPasswordDTO struct {
 	Email    string `json:"email" form:"email"`
 	Password string `json:"password" form:"password"`
 }
 
-func (aep *AuthEmailPassword) Validate() error {
+func (aep *AuthEmailPasswordDTO) Validate() error {
 	aep.Email = strings.TrimSpace(aep.Email)
 	if err := checkEmailIsValid(aep.Email); err != nil {
 		return err
@@ -23,13 +23,13 @@ func (aep *AuthEmailPassword) Validate() error {
 	return nil
 }
 
-type AuthRegister struct {
-	AuthEmailPassword
+type AuthRegisterDTO struct {
+	AuthEmailPasswordDTO
 	FirstName string `json:"first_name" form:"first_name"`
 	LastName  string `json:"last_name" form:"last_name"`
 }
 
-func (ar *AuthRegister) Validate() error {
+func (ar *AuthRegisterDTO) Validate() error {
 	ar.Email = strings.TrimSpace(ar.Email)
 
 	if err := checkEmailIsValid(ar.Email); err != nil {
@@ -60,24 +60,21 @@ type ResetPasswordData struct {
 }
 
 type Token struct {
-	Token string `json:"token"`
-	// ExpiredIn in seconds
-	ExpiredIn int `json:"expire_in"`
+	Token     string `json:"token"`
+	ExpiredIn int    `json:"expire_in"`
 }
 
 type TokenResponse struct {
-	AccessToken Token `json:"access_token"`
-	// RefreshToken will be used when access token expired
-	// to issue new pair access token and refresh token.
+	AccessToken  Token  `json:"access_token"`
 	RefreshToken *Token `json:"refresh_token,omitempty"`
 }
 
-type ChangePasswordRequest struct {
+type ChangePasswordDTO struct {
 	OldPassword string `json:"old_password" binding:"required,min=8"`
 	NewPassword string `json:"new_password" binding:"required,min=8"`
 }
 
-func (cpr *ChangePasswordRequest) Validate() error {
+func (cpr *ChangePasswordDTO) Validate() error {
 	cpr.OldPassword = strings.TrimSpace(cpr.OldPassword)
 	if err := checkPassword(cpr.OldPassword); err != nil {
 		return err

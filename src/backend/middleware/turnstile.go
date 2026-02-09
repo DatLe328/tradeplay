@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"os"
 	"time"
+	"tradeplay/common"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
@@ -21,9 +21,13 @@ type turnstileResponse struct {
 
 func VerifyTurnstile() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		if os.Getenv("APP_ENV") == "dev" {
+			c.Next()
+			return
+		}
 		token := c.GetHeader("X-Captcha-Token")
 		if token == "" {
-			c.AbortWithStatusJSON(http.StatusBadRequest, core.ErrInvalidRequest(errors.New("missing captcha token")))
+			c.AbortWithStatusJSON(http.StatusBadRequest, common.ErrInvalidRequest(errors.New("missing captcha token")))
 			return
 		}
 
@@ -38,19 +42,19 @@ func VerifyTurnstile() gin.HandlerFunc {
 		client := &http.Client{Timeout: 10 * time.Second}
 		resp, err := client.PostForm(verifyURL, payload)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, core.ErrInternal(err))
+			c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrInternal(err))
 			return
 		}
 		defer resp.Body.Close()
 
 		var result turnstileResponse
 		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-			c.AbortWithStatusJSON(http.StatusInternalServerError, core.ErrInternal(err))
+			c.AbortWithStatusJSON(http.StatusInternalServerError, common.ErrInternal(err))
 			return
 		}
 
 		if !result.Success {
-			c.AbortWithStatusJSON(http.StatusBadRequest, core.ErrInvalidRequest(errors.New("invalid captcha")))
+			c.AbortWithStatusJSON(http.StatusBadRequest, common.ErrInvalidRequest(errors.New("invalid captcha")))
 			return
 		}
 

@@ -5,28 +5,27 @@ import (
 	"tradeplay/common"
 	"tradeplay/services/auth/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
 func (api *api) ChangePasswordHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var data entity.ChangePasswordRequest
+		var data entity.ChangePasswordDTO
 		if err := c.ShouldBindJSON(&data); err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
-		requester := c.MustGet(core.KeyRequester).(core.Requester)
+		requester := c.MustGet(common.KeyRequester).(common.Requester)
 
-		uid, _ := core.FromBase58(requester.GetSubject())
-		userId := int(uid.GetLocalID())
+		uid, _ := common.FromBase58(requester.GetSubject())
+		userID := int32(uid.GetLocalID())
 
-		if err := api.business.ChangePassword(c.Request.Context(), userId, &data); err != nil {
+		if err := api.business.ChangePassword(c.Request.Context(), userID, &data); err != nil {
 			common.WriteErrorResponse(c, err)
 			return
 		}
 
-		c.JSON(http.StatusOK, core.ResponseData(true))
+		c.JSON(http.StatusOK, common.ResponseData(true))
 	}
 }

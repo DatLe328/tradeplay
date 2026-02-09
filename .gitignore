@@ -1,6 +1,7 @@
 backups/*
 scripts/*
 deployments/*
+src/frontend-new/*
 .env
 .env.*
 !.env.example

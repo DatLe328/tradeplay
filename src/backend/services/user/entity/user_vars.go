@@ -2,30 +2,31 @@ package entity
 
 import (
 	"strings"
-
-	"github.com/DatLe328/service-context/core"
+	"time"
+	"tradeplay/common"
 )
 
-type UserDataCreation struct {
-	core.SQLModel
+type UserCreateDTO struct {
+	common.SQLModel
 	FirstName  string     `json:"first_name" gorm:"column:first_name"`
 	LastName   string     `json:"last_name" gorm:"column:last_name"`
 	SystemRole SystemRole `json:"-" gorm:"column:system_role"`
 	Status     Status     `json:"-" gorm:"column:status"`
 }
 
-func NewUserForCreation(firstName, lastName string) *UserDataCreation {
-	return &UserDataCreation{
+func NewUserCreateDTO(firstName, lastName string) *UserCreateDTO {
+	return &UserCreateDTO{
+		SQLModel:   common.NewSQLModel(),
 		FirstName:  firstName,
 		LastName:   lastName,
 		SystemRole: RoleUser,
-		Status:     StatusActive,
+		Status:     StatusInactive,
 	}
 }
 
-func (*UserDataCreation) TableName() string { return User{}.TableName() }
+func (*UserCreateDTO) TableName() string { return User{}.TableName() }
 
-func (u *UserDataCreation) Validate() error {
+func (u *UserCreateDTO) Validate() error {
 	u.FirstName = strings.TrimSpace(u.FirstName)
 
 	if err := checkFirstName(u.FirstName); err != nil {
@@ -49,15 +50,16 @@ func (u *UserDataCreation) Validate() error {
 	return nil
 }
 
-type UserDataPatch struct {
-	FirstName *string `json:"first_name" gorm:"first_name"`
-	LastName  *string `json:"last_name" gorm:"last_name"`
-	Phone     *string `json:"phone_number" gorm:"phone_number"`
+type UserUpdateDTO struct {
+	FirstName *string    `json:"first_name" gorm:"first_name"`
+	LastName  *string    `json:"last_name" gorm:"last_name"`
+	Phone     *string    `json:"phone_number" gorm:"phone_number"`
+	UpdatedAt *time.Time `json:"updated_at" gorm:"column:updated_at;"`
 }
 
-func (*UserDataPatch) TableName() string { return User{}.TableName() }
+func (*UserUpdateDTO) TableName() string { return User{}.TableName() }
 
-func (u *UserDataPatch) Validate() error {
+func (u *UserUpdateDTO) Validate() error {
 	if u.FirstName != nil {
 		*u.FirstName = strings.TrimSpace(*u.FirstName)
 		if err := checkFirstName(*u.FirstName); err != nil {
@@ -81,7 +83,7 @@ func (u *UserDataPatch) Validate() error {
 	return nil
 }
 
-func (u *UserDataPatch) ToUpdateMap() map[string]interface{} {
+func (u *UserUpdateDTO) ToUpdateMap() map[string]interface{} {
 	updates := map[string]interface{}{}
 
 	if u.FirstName != nil {
@@ -93,6 +95,9 @@ func (u *UserDataPatch) ToUpdateMap() map[string]interface{} {
 	if u.Phone != nil {
 		updates["phone_number"] = *u.Phone
 	}
+	now := time.Now().UTC()
+	u.UpdatedAt = &now
+	updates["updated_at"] = u.UpdatedAt
 
 	return updates
 }

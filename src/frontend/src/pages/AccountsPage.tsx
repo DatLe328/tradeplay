@@ -8,20 +8,23 @@ import {
 	accountService,
 	type GetAccountsParams,
 } from "@/services/accountService";
-import { Gamepad2, Loader2 } from "lucide-react";
+import { Gamepad2 } from "lucide-react";
 import type { GameAccount } from "@/types";
 import { useLocation, useSearchParams } from "react-router-dom";
 import { useTranslation } from "@/stores/languageStore";
+import { AccountStatus, getGameName } from "@/constants/enums";
+import { SeoMetadata } from "@/components/seo/SeoMetadata";
 
 interface FilterState {
 	search: string;
-	game: string;
+	categoryId: string;
 	priceRange: string;
 	status: string;
+	sort: string;
 }
 
 export default function AccountsPage() {
-	const { t, language } = useTranslation();
+	const { t } = useTranslation();
 	const [searchParams] = useSearchParams();
 	const location = useLocation();
 
@@ -31,11 +34,10 @@ export default function AccountsPage() {
 
 		return {
 			search: searchParams.get("search") || "",
-			game:
-				searchParams.get("game") ||
-				(language === "vi" ? "Tất cả" : "All Games"),
+			categoryId: searchParams.get("category_id") || "all",
 			priceRange: hiddenPrice || urlPrice || "all",
-			status: "available",
+			status: searchParams.get("status") || "all",
+			sort: searchParams.get("sort") || "newest",
 		};
 	});
 
@@ -47,6 +49,11 @@ export default function AccountsPage() {
 	const [totalPages, setTotalPages] = useState(1);
 	const [totalItems, setTotalItems] = useState(0);
 	const [debouncedSearch, setDebouncedSearch] = useState(filters.search);
+
+	useEffect(() => {
+		window.scrollTo({ top: 0, behavior: "smooth" });
+	}, [currentPage]);
+
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			setDebouncedSearch(filters.search);
@@ -73,18 +80,30 @@ export default function AccountsPage() {
 					maxPrice = Number(maxStr);
 				}
 
+				let statusParam: AccountStatus | AccountStatus[] | undefined;
+
+				if (filters.status && filters.status !== "all") {
+					statusParam = Number(filters.status) as AccountStatus;
+				} else {
+					statusParam = [
+						AccountStatus.Available,
+						AccountStatus.Reserved,
+						AccountStatus.Sold,
+					];
+				}
+
 				const params: GetAccountsParams = {
 					page: currentPage,
 					limit: pageSize,
-					game_name:
-						filters.game === "Tất cả" ||
-						filters.game === "All Games"
+					category_id:
+						filters.categoryId === "all"
 							? undefined
-							: filters.game,
+							: Number(filters.categoryId),
 					min_price: minPrice,
 					max_price: maxPrice,
 					search: debouncedSearch,
-					status: ["available", "reserved"],
+					status: statusParam,
+					sort: filters.sort,
 				};
 
 				const res = await accountService.getAll(params);
@@ -94,7 +113,7 @@ export default function AccountsPage() {
 				if (res.paging) {
 					setTotalItems(Number(res.paging.total));
 					setTotalPages(
-						Math.ceil(Number(res.paging.total) / pageSize)
+						Math.ceil(Number(res.paging.total) / pageSize),
 					);
 				}
 			} catch (error) {
@@ -108,13 +127,27 @@ export default function AccountsPage() {
 	}, [
 		currentPage,
 		pageSize,
-		filters.game,
+		filters.categoryId,
 		filters.priceRange,
+		filters.status,
+		filters.sort,
 		debouncedSearch,
 	]);
+	const getPageTitle = () => {
+		const pageSuffix = currentPage > 1 ? ` - Trang ${currentPage}` : "";
+		if (filters.categoryId !== "all") {
+			const gameName = getGameName(Number(filters.categoryId));
+			return `Danh sách acc ${gameName} Giá Rẻ${pageSuffix} | Tiến Cơ Trưởng`;
+		}
+		return `Danh sách acc game${pageSuffix} | Tiến Cơ Trưởng`;
+	};
 
 	return (
 		<Layout>
+			<SeoMetadata
+				title={getPageTitle()}
+				description={`Danh sách ${totalItems} tài khoản Play Together đang bán. Giá từ rẻ đến VIP, bảo hành uy tín. Cập nhật mới nhất.`}
+			/>
 			<div className="container mx-auto px-4 py-8">
 				{/* Header */}
 				<motion.div
@@ -134,7 +167,7 @@ export default function AccountsPage() {
 					initial={{ opacity: 0, y: 20 }}
 					animate={{ opacity: 1, y: 0 }}
 					transition={{ delay: 0.1 }}
-					className="mb-8"
+					className="sticky top-16 z-30 mb-6 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 py-2 -mx-4 px-4 md:mx-0 md:px-0"
 				>
 					<AccountFilter
 						onFilterChange={setFilters}
@@ -146,15 +179,49 @@ export default function AccountsPage() {
 				<div className="mb-6 text-muted-foreground">
 					{t("found")}{" "}
 					<span className="text-primary font-semibold">
-						{totalItems}
+						{isLoading ? "..." : totalItems}
 					</span>{" "}
 					{t("accGameCount")}
 				</div>
 
 				{/* Content */}
 				{isLoading ? (
-					<div className="flex justify-center py-20">
-						<Loader2 className="h-8 w-8 animate-spin text-primary" />
+					// --- SKELETON LOADING EFFECT ---
+					<div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+						{Array.from({ length: pageSize }).map((_, index) => (
+							<div
+								key={index}
+								className="rounded-xl border border-border bg-card overflow-hidden flex flex-col h-full"
+							>
+								{/* Image Skeleton */}
+								<div className="aspect-video w-full bg-secondary/50 animate-pulse" />
+
+								<div className="p-4 flex flex-col flex-1 gap-4">
+									{/* Title & Tags */}
+									<div className="space-y-2">
+										<div className="flex gap-2">
+											<div className="h-5 w-16 bg-secondary/50 rounded animate-pulse" />
+											<div className="h-5 w-20 bg-secondary/50 rounded animate-pulse" />
+										</div>
+										<div className="h-6 w-3/4 bg-secondary/50 rounded animate-pulse" />
+									</div>
+
+									{/* Info Grid Skeleton (giống 4 thuộc tính game) */}
+									<div className="grid grid-cols-2 gap-2 mt-auto">
+										<div className="h-4 w-full bg-secondary/50 rounded animate-pulse" />
+										<div className="h-4 w-full bg-secondary/50 rounded animate-pulse" />
+										<div className="h-4 w-full bg-secondary/50 rounded animate-pulse" />
+										<div className="h-4 w-full bg-secondary/50 rounded animate-pulse" />
+									</div>
+
+									{/* Footer: Price & Button */}
+									<div className="mt-4 pt-3 flex items-center justify-between border-t border-border/50">
+										<div className="h-7 w-28 bg-secondary/50 rounded animate-pulse" />
+										<div className="h-9 w-24 bg-secondary/50 rounded-lg animate-pulse" />
+									</div>
+								</div>
+							</div>
+						))}
 					</div>
 				) : accounts.length > 0 ? (
 					<>
@@ -169,7 +236,7 @@ export default function AccountsPage() {
 							))}
 						</div>
 
-						{/* Pagination Wrapper (Đã sửa props) */}
+						{/* Pagination Wrapper */}
 						<PaginationWrapper
 							currentPage={currentPage}
 							totalPages={totalPages}

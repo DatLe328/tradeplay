@@ -10,8 +10,10 @@ import {
 	LogOut,
 	UserCircle,
 	ChevronDown,
+	Wallet,
+	Plus,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useThemeStore } from "@/stores/themeStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -25,8 +27,11 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LanguageToggle } from "@/components/ui/LanguageToggle";
+import { formatCurrency } from "@/utils/format";
+import { NotificationCenter } from "./NotificationCenter";
+import { useWalletStore } from "@/stores/walletStore";
+import { SystemRole } from "@/constants/enums";
 
-// Sử dụng key thay vì label cứng
 const navLinks = [
 	{ to: "/", labelKey: "navHome" },
 	{ to: "/accounts", labelKey: "navAccounts" },
@@ -38,9 +43,16 @@ export function Header() {
 	const location = useLocation();
 	const { theme, toggleTheme } = useThemeStore();
 	const { isAuthenticated, user, logout } = useAuthStore();
+	const { balance, fetchBalance } = useWalletStore();
 	const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 	const [mobileUserMenuOpen, setMobileUserMenuOpen] = useState(false);
 	const { t } = useTranslation();
+
+	useEffect(() => {
+		if (isAuthenticated) {
+			fetchBalance();
+		}
+	}, [isAuthenticated, fetchBalance]);
 
 	return (
 		<header className="sticky top-0 z-50 w-full border-b-2 border-primary/20 bg-background/90 backdrop-blur-md">
@@ -72,7 +84,7 @@ export function Header() {
 								{t(link.labelKey)}
 							</Link>
 						))}
-						{user?.system_role === "admin" && (
+						{user?.system_role === SystemRole.Admin && (
 							<Link
 								to="/admin"
 								className={`px-4 py-2 rounded-lg font-semibold transition-all duration-200 ${
@@ -90,6 +102,10 @@ export function Header() {
 					<div className="flex items-center gap-2">
 						{/* Language Toggle */}
 						<LanguageToggle />
+
+						{/* Notifications */}
+						{isAuthenticated && <NotificationCenter />}
+
 						{/* Theme Toggle */}
 						<Button
 							variant="ghost"
@@ -122,27 +138,138 @@ export function Header() {
 							</AnimatePresence>
 						</Button>
 
-						{/* Auth Buttons */}
+						{/* Auth Section - Desktop Only */}
 						{isAuthenticated ? (
 							<div className="hidden md:flex items-center gap-2">
 								<DropdownMenu>
 									<DropdownMenuTrigger asChild>
 										<Button
 											variant="ghost"
-											className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-secondary"
+											className="flex items-center gap-3 px-2 py-1.5 h-10 rounded-xl hover:bg-secondary border border-border/40 transition-all"
 										>
-											<div className="p-1.5 rounded-full bg-primary/10">
-												<User className="h-4 w-4 text-primary" />
+											<div className="flex flex-col items-end pl-2 border-r border-border/50 pr-3 leading-tight">
+												<span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
+													{t("balance")}
+												</span>
+												<span className="text-sm font-bold text-primary">
+													{formatCurrency(balance)}
+												</span>
 											</div>
-											<span className="text-sm font-medium">
+
+											<div className="flex items-center gap-2">
+												<div className="p-1.5 rounded-full bg-primary/10">
+													<User className="h-4 w-4 text-primary" />
+												</div>
+												<span className="text-sm font-semibold">
+													{user?.first_name}{" "}
+													{user?.last_name}
+												</span>
+												<ChevronDown className="h-3 w-3 text-muted-foreground" />
+											</div>
+										</Button>
+									</DropdownMenuTrigger>
+
+									<DropdownMenuContent
+										align="end"
+										className="w-60 bg-background border border-border shadow-xl rounded-xl p-1"
+									>
+										<div className="px-3 py-3 mb-1 bg-muted/30 rounded-t-lg">
+											<p className="text-sm font-bold leading-none mb-1">
 												{user?.first_name}{" "}
 												{user?.last_name}
-											</span>
+											</p>
+											<p className="text-xs text-muted-foreground truncate">
+												{user?.email}
+											</p>
+										</div>
+
+										<DropdownMenuSeparator />
+
+										<DropdownMenuItem
+											asChild
+											className="focus:bg-primary/5"
+										>
+											<Link
+												to="/deposit"
+												className="flex items-center justify-between w-full cursor-pointer"
+											>
+												<div className="flex items-center gap-2">
+													<Wallet className="h-4 w-4 text-primary" />
+													<span>
+														{t("deposit")}
+													</span>
+												</div>
+												<Plus className="h-3 w-3 text-primary" />
+											</Link>
+										</DropdownMenuItem>
+
+										<DropdownMenuItem asChild>
+											<Link
+												to="/profile"
+												className="flex items-center gap-2 cursor-pointer"
+											>
+												<UserCircle className="h-4 w-4" />
+												{t("profile")}
+											</Link>
+										</DropdownMenuItem>
+
+										<DropdownMenuItem asChild>
+											<Link
+												to="/orders"
+												className="flex items-center gap-2 cursor-pointer"
+											>
+												<ShoppingBag className="h-4 w-4" />
+												{t("orders")}
+											</Link>
+										</DropdownMenuItem>
+
+										<DropdownMenuSeparator />
+
+										<DropdownMenuItem
+											onClick={logout}
+											className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/5"
+										>
+											<LogOut className="h-4 w-4" />
+											{t("logout")}
+										</DropdownMenuItem>
+									</DropdownMenuContent>
+								</DropdownMenu>
+							</div>
+						) : (
+							<Link to="/auth" className="hidden md:block">
+								<Button className="btn-gaming">
+									{t("login")}
+								</Button>
+							</Link>
+						)}
+
+						{/* Auth Section - Mobile Only (below md) */}
+						{isAuthenticated && (
+							<div className="md:hidden">
+								<DropdownMenu>
+									<DropdownMenuTrigger asChild>
+										<Button
+											variant="ghost"
+											size="sm"
+											className="flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-secondary"
+										>
+											<div className="p-1 rounded-full bg-primary/10">
+												<User className="h-3.5 w-3.5 text-primary" />
+											</div>
+											<div className="text-left">
+												<p className="text-[10px] text-muted-foreground leading-tight">
+													{t("balance")}
+												</p>
+												<p className="text-xs font-bold text-primary leading-tight">
+													{formatCurrency(balance)}
+												</p>
+											</div>
+											<ChevronDown className="h-3 w-3 text-muted-foreground" />
 										</Button>
 									</DropdownMenuTrigger>
 									<DropdownMenuContent
 										align="end"
-										className="w-48 bg-background border border-border"
+										className="w-56 bg-background border border-border"
 									>
 										<div className="px-3 py-2">
 											<p className="text-sm font-medium">
@@ -153,6 +280,25 @@ export function Header() {
 												{user?.email}
 											</p>
 										</div>
+										<DropdownMenuSeparator />
+										{/* Balance Section */}
+										<DropdownMenuItem
+											asChild
+											className="focus:bg-primary/5"
+										>
+											<Link
+												to="/deposit"
+												className="flex items-center justify-between w-full cursor-pointer"
+											>
+												<div className="flex items-center gap-2">
+													<Wallet className="h-4 w-4 text-primary" />
+													<span>
+														{t("deposit")}
+													</span>
+												</div>
+												<Plus className="h-3 w-3 text-primary" />
+											</Link>
+										</DropdownMenuItem>
 										<DropdownMenuSeparator />
 										<DropdownMenuItem asChild>
 											<Link
@@ -169,7 +315,7 @@ export function Header() {
 												className="flex items-center gap-2 cursor-pointer"
 											>
 												<ShoppingBag className="h-4 w-4" />
-												{t("myOrders")}
+												{t("orders")}
 											</Link>
 										</DropdownMenuItem>
 										<DropdownMenuSeparator />
@@ -183,12 +329,6 @@ export function Header() {
 									</DropdownMenuContent>
 								</DropdownMenu>
 							</div>
-						) : (
-							<Link to="/auth" className="hidden md:block">
-								<Button className="btn-gaming">
-									{t("login")}
-								</Button>
-							</Link>
 						)}
 
 						{/* Mobile Menu Button */}
@@ -226,7 +366,7 @@ export function Header() {
 							animate={{ opacity: 1, y: 0 }}
 							exit={{ opacity: 0, y: -10 }}
 							transition={{ duration: 0.2, ease: "easeOut" }}
-							className="absolute left-0 right-0 top-16 z-50 md:hidden mx-4 mt-2 rounded-2xl border border-border/50 bg-background/90 backdrop-blur-xl shadow-xl"
+							className="absolute left-0 right-0 top-16 z-50 md:hidden mx-4 mt-2 rounded-2xl border border-border/50 bg-background/95 backdrop-blur-xl shadow-xl"
 						>
 							<nav className="p-4 space-y-2">
 								{navLinks.map((link) => (
@@ -244,7 +384,7 @@ export function Header() {
 										{t(link.labelKey)}
 									</Link>
 								))}
-								{user?.system_role === "admin" && (
+								{user?.system_role === SystemRole.Admin && (
 									<Link
 										to="/admin"
 										onClick={() => setMobileMenuOpen(false)}
@@ -253,23 +393,30 @@ export function Header() {
 										{t("navAdmin")}
 									</Link>
 								)}
+
+								{/* Login Button - Only show in mobile menu if NOT authenticated */}
 								{!isAuthenticated && (
-									<Link
-										to="/auth"
-										onClick={() => setMobileMenuOpen(false)}
-										className="block px-4 pt-2"
-									>
-										<Button className="btn-gaming w-full">
-											{t("login")}
-										</Button>
-									</Link>
+									<div className="pt-2">
+										<Link
+											to="/auth"
+											onClick={() =>
+												setMobileMenuOpen(false)
+											}
+										>
+											<Button className="btn-gaming w-full">
+												{t("login")}
+											</Button>
+										</Link>
+									</div>
 								)}
+
+								{/* User Menu - Only show in mobile menu if authenticated */}
 								{isAuthenticated && (
 									<div className="pt-2 border-t border-border/50">
 										<button
 											onClick={() =>
 												setMobileUserMenuOpen(
-													!mobileUserMenuOpen
+													!mobileUserMenuOpen,
 												)
 											}
 											className="flex items-center justify-between w-full px-4 py-3 rounded-xl hover:bg-secondary/50 transition-colors"
@@ -318,11 +465,39 @@ export function Header() {
 													className="overflow-hidden"
 												>
 													<div className="pl-6 space-y-1 mt-1">
+														{/* Mobile Balance */}
+														{/* <div className="px-4 py-2.5 rounded-xl bg-primary/5">
+															<div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
+																<Wallet className="h-3.5 w-3.5 text-primary" />
+																<span>
+																	{t("balance")}
+																</span>
+															</div>
+															<div className="flex items-center justify-between">
+																<span className="text-base font-bold text-primary">
+																	{formatCurrency(balance)}
+																</span>
+																<Link
+																	to="/deposit"
+																	onClick={() =>
+																		setMobileMenuOpen(false)
+																	}
+																>
+																	<Button
+																		size="icon"
+																		variant="ghost"
+																		className="h-6 w-6 rounded-full bg-primary/10 hover:bg-primary/20"
+																	>
+																		<Plus className="h-3 w-3 text-primary" />
+																	</Button>
+																</Link>
+															</div>
+														</div> */}
 														<Link
 															to="/profile"
 															onClick={() =>
 																setMobileMenuOpen(
-																	false
+																	false,
 																)
 															}
 															className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/50"
@@ -334,7 +509,7 @@ export function Header() {
 															to="/orders"
 															onClick={() =>
 																setMobileMenuOpen(
-																	false
+																	false,
 																)
 															}
 															className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/50"
@@ -346,7 +521,7 @@ export function Header() {
 															onClick={() => {
 																logout();
 																setMobileMenuOpen(
-																	false
+																	false,
 																);
 															}}
 															className="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl text-destructive hover:bg-destructive/10"

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"log"
 	"net/http"
 	"tradeplay/common"
 	"tradeplay/middleware"
@@ -9,16 +10,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) LoginHdl() func(*gin.Context) {
+func (api *api) LoginHdl() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var data entity.AuthEmailPassword
+		var data entity.AuthEmailPasswordDTO
 
 		if err := c.ShouldBind(&data); err != nil {
 			common.WriteErrorResponse(c, err)
 			return
 		}
 
-		response, err := api.business.Authenticate(c.Request.Context(), &data)
+		userAgent := c.Request.UserAgent()
+		clientIP := c.ClientIP()
+
+		response, err := api.business.Authenticate(c.Request.Context(), &data, userAgent, clientIP)
 		if err != nil {
 			common.WriteErrorResponse(c, err)
 			return
@@ -26,6 +30,7 @@ func (api *api) LoginHdl() func(*gin.Context) {
 
 		origin := c.GetHeader("Origin")
 		cookieDomain := common.GetCookieDomainForOrigin(origin)
+		log.Println("Cookie domain for login", cookieDomain)
 
 		c.SetSameSite(http.SameSiteNoneMode)
 

@@ -6,12 +6,14 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type GinEngine interface {
 	GetPort() int
 	GetRouter() *gin.Engine
+	Run()
 }
 
 type JWTProvider interface {
@@ -45,4 +47,13 @@ type UploadComponent interface {
 
 type ConfigComponent interface {
 	S3Prefix() string
+	SepayAPIKey() string
+	UnderMaintenance() bool
+	AppSecretKey() string
+}
+
+type RedisComponent interface {
+	GetClient() *redis.Client
+	Produce(ctx context.Context, stream string, data map[string]interface{}) error
+	Consume(ctx context.Context, stream, group, consumer string, handler func(map[string]interface{}) error)
 }

@@ -22,9 +22,11 @@ import ForgotPasswordPage from "./pages/auth/ForgotPasswordPage";
 import GoogleCallbackPage from "./pages/auth/GoogleCallbackPage";
 import GuidePage from "./pages/GuidePage";
 import WarrantyPage from "./pages/WarrantyPage";
-import { useIdleTimeout } from "./hooks/useIdleTimeout";
 import { ScrollToTop } from "./components/layout/ScrollToTop";
 import ProfilePage from "./pages/ProfilePage";
+import DepositPage from "./pages/DepositPage";
+import AuditLogs from "./pages/admin/AuditLogs";
+import { NotificationsPage } from "./pages/NotificationsPage";
 
 const queryClient = new QueryClient();
 
@@ -39,7 +41,7 @@ function ThemeInitializer() {
 }
 
 const App = () => {
-	useIdleTimeout();
+	// useIdleTimeout();
 
 	return (
 		<QueryClientProvider client={queryClient}>
@@ -64,6 +66,11 @@ const App = () => {
 						<Route path="/guide" element={<GuidePage />} />
 						<Route path="/warranty" element={<WarrantyPage />} />
 						<Route path="/profile" element={<ProfilePage />} />
+						<Route path="/deposit" element={<DepositPage />} />{" "}
+						<Route
+							path="/notifications"
+							element={<NotificationsPage />}
+						/>{" "}
 						<Route path="/auth" element={<AuthPage />} />
 						<Route
 							path="/auth/google-success"
@@ -77,7 +84,6 @@ const App = () => {
 							path="/forgot-password"
 							element={<ForgotPasswordPage />}
 						/>
-
 						{/* Admin Routes */}
 						<Route path="/admin" element={<AdminLayout />}>
 							<Route index element={<AdminDashboard />} />
@@ -86,8 +92,8 @@ const App = () => {
 								element={<AdminAccounts />}
 							/>
 							<Route path="orders" element={<AdminOrders />} />
+							<Route path="audit-logs" element={<AuditLogs />} />
 						</Route>
-
 						<Route path="*" element={<NotFound />} />
 					</Routes>
 				</BrowserRouter>

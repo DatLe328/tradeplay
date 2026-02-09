@@ -32,8 +32,9 @@ export default function ForgotPasswordPage() {
 
 	const handleRequestOtp = async (e: React.FormEvent) => {
 		e.preventDefault();
+		const isDev = import.meta.env.DEV;
 
-		if (!captchaToken) {
+		if (!isDev && !captchaToken) {
 			toast({
 				title: t("notVerified"),
 				description: t("captchaError"),

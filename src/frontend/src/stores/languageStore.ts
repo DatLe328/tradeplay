@@ -21,8 +21,8 @@ export const useLanguageStore = create<LanguageState>()(
 		}),
 		{
 			name: "language-storage",
-		}
-	)
+		},
+	),
 );
 
 // Translations
@@ -32,7 +32,7 @@ export const translations = {
 		no: "Không",
 		success: "Thành công",
 		error: "Lỗi",
-		
+
 		// Header
 		home: "🏠 Trang Chủ",
 		accounts: "🎮 Acc Game",
@@ -41,7 +41,7 @@ export const translations = {
 		orders: "Đơn Hàng",
 		login: "Đăng nhập",
 		logout: "Đăng xuất",
-		
+
 		// Header Navigation Keys
 		navHome: "Trang Chủ",
 		navAccounts: "Acc Game",
@@ -53,8 +53,7 @@ export const translations = {
 		shopBadge: "✨ Shop acc Play Together uy tín ✨",
 		heroTitle1: "TienCoTruong",
 		heroTitle2: "Shop 🎮💖",
-		heroDescription:
-			"🌟 Chuyên mua bán acc Play Together chất lượng cao!",
+		heroDescription: "🌟 Chuyên mua bán acc Play Together chất lượng cao!",
 		viewAccounts: "🎮 Xem Acc Ngay",
 		viewAccNow: "Xem Acc Ngay",
 		registerFree: "✨ Đăng ký miễn phí",
@@ -78,7 +77,7 @@ export const translations = {
 		findByPrice: "Tìm Acc theo",
 		price: "Giá",
 		findByPriceDesc: "Chọn khoảng giá phù hợp với túi tiền của bạn! 🎯",
-		
+
 		// Price Filters
 		priceUnder1m: "Dưới 1 Triệu",
 		price1mTo5m: "1 - 5 Triệu",
@@ -90,7 +89,7 @@ export const translations = {
 		filterPrice5mTo10m: "5 - 10 Triệu",
 		filterPrice10mTo20m: "10 - 20 Triệu",
 		filterPriceAbove20m: "Trên 20 Triệu",
-		
+
 		priceDescCheap: "Acc giá rẻ cho newbie",
 		priceDescGood: "Acc chất lượng tốt",
 		priceDescVip: "Acc VIP nhiều đồ",
@@ -279,7 +278,7 @@ export const translations = {
 		step2Tips: [],
 		step3Title: "Đặt hàng & Thanh toán",
 		step3Desc:
-			"Vì trang web đang trong quá trình phát triển, vui lòng liên hệ qua zalo hoặc telegram để được hỗ trợ mua acc.",
+			"Vì trang web đang trong quá trình phát triển, vui lòng liên hệ qua zalo hoặc instagram để được hỗ trợ mua acc.",
 		step3Tips: [],
 		step4Title: "Nhận acc & Kiểm tra",
 		step4Desc:
@@ -301,7 +300,7 @@ export const translations = {
 		phoneCardDesc: "Viettel, Mobifone, Vinaphone",
 		needSupport: "Cần hỗ trợ?",
 		supportDesc:
-			"Nếu bạn gặp bất kỳ vấn đề nào trong quá trình mua hàng, đừng ngần ngại liên hệ với chúng tôi qua Zalo hoặc Telegram. Đội ngũ hỗ trợ luôn sẵn sàng giúp đỡ bạn 24/7!",
+			"Nếu bạn gặp bất kỳ vấn đề nào trong quá trình mua hàng, đừng ngần ngại liên hệ với chúng tôi qua Zalo hoặc Instagram. Đội ngũ hỗ trợ luôn sẵn sàng giúp đỡ bạn 24/7!",
 		support247: "24/7",
 		reliable: "Uy tín",
 
@@ -341,14 +340,11 @@ export const translations = {
 		processStep3Desc:
 			"Hoàn tiền hoặc đổi acc mới trong vòng 1-2 giờ sau khi xác nhận",
 		importantNotice: "⚠️ Lưu ý quan trọng",
-		notice1:
-			"Sau khi nhận acc, vui lòng <strong>đổi mật khẩu ngay</strong> để bảo mật.",
-		notice2:
-			"<strong>Không chia sẻ</strong> thông tin đăng nhập cho bất kỳ ai.",
-		notice3:
-			"Lưu lại <strong>mã đơn hàng</strong> để tiện theo dõi và bảo hành.",
+		notice1: "Sau khi nhận acc, vui lòng đổi mật khẩu ngay để bảo mật.",
+		notice2: "Không chia sẻ thông tin đăng nhập cho bất kỳ ai.",
+		notice3: "Lưu lại mã đơn hàng để tiện theo dõi và bảo hành.",
 		notice4:
-			"Kiểm tra acc <strong>ngay sau khi nhận</strong> để đảm bảo quyền lợi bảo hành.",
+			"Kiểm tra acc ngay sau khi nhận để đảm bảo quyền lợi bảo hành.",
 		requestWarranty: "Yêu cầu bảo hành",
 		requestWarrantyDesc:
 			"Liên hệ ngay với chúng tôi qua Facebook hoặc Zalo kèm mã đơn hàng để được hỗ trợ nhanh nhất. Đội ngũ luôn sẵn sàng giải quyết mọi vấn đề của bạn!",
@@ -367,7 +363,7 @@ export const translations = {
 		contactLabel: "📞 Liên hệ",
 		madeWith: "Made with",
 		by: "by TienCoTruong Shop",
-		
+
 		// Profile Page
 		profile: "Thông tin cá nhân",
 		profileDesc: "Xem và chỉnh sửa thông tin cá nhân của bạn",
@@ -380,6 +376,74 @@ export const translations = {
 		// Pagination
 		showingResults: "Hiển thị {start}-{end} / {totalItems} kết quả",
 		perPage: "Mỗi trang:",
+
+		// Payment Page
+		paymentSuccess: "Thanh toán thành công!",
+
+		// Deposit Page
+		balance: "Số dư",
+		deposit: "Nạp Tiền",
+		depositDesc: "Nạp tiền vào tài khoản để mua acc game",
+		depositSubtitle: "Chọn phương thức thanh toán và số tiền bạn muốn nạp",
+		currentBalance: "Số dư hiện tại",
+		selectPaymentMethod: "Chọn phương thức thanh toán",
+		depositBankTransferDesc: "Thanh toán qua QR code ngân hàng",
+		depositMomoDesc: "Thanh toán qua ví MoMo",
+		phoneScratchCard: "Thẻ cào điện thoại (Viettel, Mobifone, Vinaphone)",
+		phoneScratchCardDesc: "Thanh toán bằng thẻ cào điện thoại",
+		comingSoon: "Sắp có",
+		selectAmount: "Chọn số tiền nạp",
+		orEnterAmount: "Hoặc nhập số tiền khác",
+		minAmount: "Tối thiểu 10.000đ",
+		minAmountError: "Số tiền tối thiểu là 10.000đ",
+		depositAmount: "Số tiền nạp",
+		generateQR: "Tạo mã QR",
+		scanQRToPay: "Quét mã QR để thanh toán",
+		amount: "Số tiền",
+		transactionCode: "Mã giao dịch",
+		qrNote: "Vui lòng nhập đúng nội dung chuyển khoản để được cộng tiền tự động",
+		qrExpired: "Mã QR đã hết hạn",
+		qrExpiredDesc: "Mã QR này đã hết hạn sau 5 phút. Vui lòng tạo mã mới.",
+		generateNewQR: "Tạo mã QR mới",
+		createOrderFailed: "Tạo đơn hàng không thành công.",
+		depositSuccessDesc: "Nạp tiền thành công!",
+		unknown: "Không tồn tại.",
+		allStatuses: "Tất cả trạng thái",
+		sortBy: "Sắp xếp theo",
+		enterAmount: "Nhập số tiền muốn nạp",
+
+		// Notifications
+		notifications: "Thông báo",
+		loading: "Đang tải",
+		notifOrder: "Đơn hàng",
+		notifSold: "Mua hàng",
+		notifPromo: "Khuyến mãi",
+		notifSystem: "Hệ thống",
+		notifMsg: "Thông báo",
+		notifSubtitle: "Quản lý thông báo",
+		markAllRead: "Đánh dấu toàn bộ đã đọc",
+		noNotifications: "Không có thông báo",
+		viewDetails: "Xem chi tiết",
+		viewAll: "Xem tất cả",
+		viewAllNotifications: "Xem tất cả thông báo",
+		unreadNotifications: "Các thông báo chưa xem",
+		notificationEmptyDesc: "Bạn không có thông báo nào mới",
+		markAsRead: "Đánh dấu đã đọc",
+		delete: "Xóa",
+		searchNotifications: "Tìm thông báo...",
+		filters: "Lọc",
+		filterByType: "Lọc theo loại",
+		noMatchingNotifications: "Không có thông báo nào phù hợp",
+		tryAdjustingFilters: "Hãy thử điều chỉnh tìm kiếm hoặc bộ lọc của bạn.",
+		unreadOnly: "Chưa đọc",
+		activeFilters: "Active filters",
+		filterByStatus: "Lọc theo trạng thái",
+
+		statusAvailable: "Còn hàng",
+		statusReserved: "Đã đặt cọc",
+		statusSold: "Đã bán",
+		statusDraft: "Bản nháp",
+		statusDeleted: "Đã xóa",
 	},
 	en: {
 		yes: "Yes",
@@ -392,7 +456,7 @@ export const translations = {
 		accounts: "🎮 Accounts",
 		guide: "📖 Guide",
 		warranty: "🛡️ Warranty",
-		orders: "📦 Orders",
+		orders: "Orders",
 		login: "Login",
 		logout: "Logout",
 
@@ -407,8 +471,7 @@ export const translations = {
 		shopBadge: "✨ Trusted Play Together Account Shop ✨",
 		heroTitle1: "TienCoTruong",
 		heroTitle2: "Shop 🎮💖",
-		heroDescription:
-			"🌟 Premium Play Together accounts!",
+		heroDescription: "🌟 Premium Play Together accounts!",
 		viewAccounts: "🎮 View Accounts",
 		viewAccNow: "View Accounts",
 		registerFree: "✨ Register Free",
@@ -432,7 +495,7 @@ export const translations = {
 		findByPrice: "Find Accounts by",
 		price: "Price",
 		findByPriceDesc: "Choose a price range that fits your budget! 🎯",
-		
+
 		// Price Filters
 		priceUnder1m: "Under 1 Million VND",
 		price1mTo5m: "1 - 5 Million VND",
@@ -632,7 +695,7 @@ export const translations = {
 		step2Tips: [],
 		step3Title: "Order & Payment",
 		step3Desc:
-			"Since the website is currently under development, please contact us via Zalo or Telegram for support in purchasing accounts.",
+			"Since the website is currently under development, please contact us via Zalo or Instagram for support in purchasing accounts.",
 		step3Tips: [],
 		step4Title: "Receive & Check",
 		step4Desc:
@@ -654,7 +717,7 @@ export const translations = {
 		phoneCardDesc: "Viettel, Mobifone, Vinaphone",
 		needSupport: "Need help?",
 		supportDesc:
-			"If you encounter any issues during the purchase process, do not hesitate to contact us via Zalo or Telegram. Our support team is always ready to help you 24/7!",
+			"If you encounter any issues during the purchase process, do not hesitate to contact us via Zalo or Instagram. Our support team is always ready to help you 24/7!",
 		support247: "24/7",
 		reliable: "Trusted",
 
@@ -696,12 +759,11 @@ export const translations = {
 			"Refund or exchange new account within 1-2 hours after confirmation",
 		importantNotice: "⚠️ Important Notice",
 		notice1:
-			"After receiving the account, please <strong>change password immediately</strong> for security.",
-		notice2: "<strong>Do not share</strong> login information with anyone.",
-		notice3:
-			"Save your <strong>order ID</strong> for tracking and warranty.",
+			"After receiving the account, please change password immediately for security.",
+		notice2: "Do not share login information with anyone.",
+		notice3: "Save your order ID for tracking and warranty.",
 		notice4:
-			"Check the account <strong>immediately after receiving</strong> to ensure warranty rights.",
+			"Check the account immediately after receiving to ensure warranty rights.",
 		requestWarranty: "Request Warranty",
 		requestWarrantyDesc:
 			"Contact us immediately via Facebook or Zalo with your order ID for the fastest support. Our team is always ready to solve any of your problems!",
@@ -720,7 +782,7 @@ export const translations = {
 		contactLabel: "📞 Contact",
 		madeWith: "Made with",
 		by: "by TienCoTruong Shop",
-		
+
 		// Profile Page
 		profile: "Profile",
 		profileDesc: "View and edit your profile information",
@@ -733,6 +795,76 @@ export const translations = {
 		// Pagination
 		showingResults: "Showing {start}-{end} of {totalItems} results",
 		perPage: "Per page:",
+
+		// Payment Page
+		paymentSuccess: "Payment Successful!",
+
+		// Deposit Page
+		balance: "Balance",
+		deposit: "Deposit",
+		depositDesc: "Add funds to your account to buy game accounts",
+		depositSubtitle: "Choose payment method and amount you want to deposit",
+		currentBalance: "Current Balance",
+		selectPaymentMethod: "Select Payment Method",
+		depositBankTransferDesc: "Pay via bank QR code",
+		depositMomoDesc: "Pay via MoMo wallet",
+		phoneScratchCard: "Phone Scratch Card",
+		phoneScratchCardDesc: "Pay with phone scratch card",
+		comingSoon: "Coming Soon",
+		selectAmount: "Select Amount",
+		orEnterAmount: "Or enter custom amount",
+		minAmount: "Minimum 10,000đ",
+		minAmountError: "Minimum amount is 10,000đ",
+		depositAmount: "Deposit Amount",
+		generateQR: "Generate QR Code",
+		scanQRToPay: "Scan QR Code to Pay",
+		amount: "Amount",
+		transactionCode: "Transaction Code",
+		qrNote: "Please enter the correct transfer content to receive automatic credit",
+		qrExpired: "QR Code Expired",
+		qrExpiredDesc:
+			"This QR code has expired after 5 minutes. Please generate a new one.",
+		generateNewQR: "Generate New QR",
+		createOrderFailed: "Fail to create order",
+		depositSuccessDesc: "Deposit successful!",
+		unknown: "Unknown.",
+		allStatuses: "All statues",
+		sortBy: "Sort by",
+		enterAmount: "Enter amount to deposit",
+
+		// Notifications
+		notifications: "Notifications",
+		loading: "Loading",
+		notifOrder: "Order",
+		notifSold: "Sold",
+		notifPromo: "Promo",
+		notifSystem: "System",
+		notifMsg: "Message",
+		notifSubtitle: "Manage your notifications and stay updated",
+		markAllRead: "Mark all as read",
+		noNotifications: "No notifications yet",
+		viewDetails: "View details",
+		viewAll: "View All",
+		viewAllNotifications: "See all notifications",
+		unreadNotifications: "unread notifications",
+		notificationEmptyDesc:
+			"You're all caught up! Check back later for updates.",
+		markAsRead: "Mark as read",
+		delete: "Delete",
+		searchNotifications: "Search notifications...",
+		filters: "Filters",
+		filterByType: "Filter by type",
+		noMatchingNotifications: "No matching notifications",
+		tryAdjustingFilters: "Try adjusting your search or filters",
+		unreadOnly: "Unread only",
+		activeFilters: "Active filters",
+		filterByStatus: "Filter by status",
+
+		statusDraft: "Draft",
+		statusAvailable: "Available",
+		statusReserved: "Reserved",
+		statusSold: "Sold",
+		statusDeleted: "Deleted",
 	},
 };
 
@@ -741,7 +873,7 @@ export const useTranslation = () => {
 
 	const t = (
 		key: keyof typeof translations.vi,
-		params?: Record<string, string | number>
+		params?: Record<string, string | number>,
 	): string => {
 		const value = translations[language][key];
 		if (Array.isArray(value)) {

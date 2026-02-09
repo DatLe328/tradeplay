@@ -2,30 +2,51 @@ package composer
 
 import (
 	"tradeplay/common"
+	accountBusiness "tradeplay/services/account/business"
 	accountRepo "tradeplay/services/account/repository/mysql"
-	"tradeplay/services/order/business"
+	auditRepo "tradeplay/services/audit/repository/mysql"
+	orderBusiness "tradeplay/services/order/business"
 	orderRepo "tradeplay/services/order/repository/mysql"
 	"tradeplay/services/order/transport/api"
+	walletBusiness "tradeplay/services/wallet/business"
+	walletRepo "tradeplay/services/wallet/repository/mysql"
 
-	sctx "github.com/DatLe328/service-context"
+	sctx "tradeplay/components/service-context"
+
 	"github.com/gin-gonic/gin"
 )
 
 type OrderService interface {
-	CreateOrderHandler() func(*gin.Context)
-	ListOrderHandler() func(*gin.Context)
-	GetOrderHandler() func(*gin.Context)
-	UpdateOrderStatusHandler() func(*gin.Context)
+	CreateOrderHandler() gin.HandlerFunc
+	FindOrdersHandler() gin.HandlerFunc
+	FindOrdersAdminHandler() gin.HandlerFunc
+	GetOrderHandler() gin.HandlerFunc
+	UpdateOrderStatusHandler() gin.HandlerFunc
 }
 
 func ComposeOrderAPIService(serviceCtx sctx.ServiceContext) OrderService {
 	db := serviceCtx.MustGet(common.KeyCompMySQL).(common.GormComponent).GetDB()
+	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
 
-	accRepo := accountRepo.NewMySQLRepository(db)
-	ordRepo := orderRepo.NewMySQLRepository(db)
-	biz := business.NewBusiness(ordRepo, accRepo)
+	accRepository := accountRepo.NewMySQLRepository(db)
+	orderRepository := orderRepo.NewMySQLRepository(db)
+	walletRepository := walletRepo.NewMySQLRepository(db)
+	auditRepository := auditRepo.NewMySQLRepository(db, redisComp)
 
-	serviceAPI := api.NewOrderAPI(biz)
+	accountBusiness := accountBusiness.NewAccountBusiness(
+		accRepository,
+		orderRepository,
+		nil,
+		"",
+		auditRepository,
+	)
+	walletBusiness := walletBusiness.NewWalletBusiness(
+		walletRepository,
+		auditRepository,
+	)
+	orderBusiness := orderBusiness.NewOrderBusiness(orderRepository, accountBusiness, walletBusiness, auditRepository)
+
+	serviceAPI := api.NewOrderAPI(orderBusiness)
 
 	return serviceAPI
 }

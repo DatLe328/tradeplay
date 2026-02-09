@@ -5,33 +5,32 @@ import (
 	"tradeplay/common"
 	"tradeplay/services/account/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) ListAccountHandler() func(*gin.Context) {
+func (api *api) FindAccountsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var paging core.Paging
+		var paging common.Paging
 		var filter entity.Filter
 
 		if err := c.ShouldBindQuery(&paging); err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
 		if err := c.ShouldBindQuery(&filter); err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
 		paging.Process()
 
-		result, err := api.business.ListAccount(c.Request.Context(), &filter, &paging)
+		result, err := api.business.FindAccounts(c.Request.Context(), &filter, &paging)
 		if err != nil {
 			common.WriteErrorResponse(c, err)
 			return
 		}
 
-		c.JSON(http.StatusOK, core.SuccessResponse(result, paging, filter))
+		c.JSON(http.StatusOK, common.SuccessResponse(result, paging, filter))
 	}
 }

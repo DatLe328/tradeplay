@@ -2,47 +2,69 @@ package business
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"time"
+	"tradeplay/common"
+	auditEntity "tradeplay/services/audit/entity"
 	"tradeplay/services/auth/entity"
-
-	"github.com/DatLe328/service-context/core"
 )
 
 func (biz *business) ResetPassword(ctx context.Context, data *entity.ResetPasswordData) error {
-	verifyEntry, err := biz.authRepository.FindVerifyCode(ctx, data.Email, data.Code, "forgot_password")
+	logReset := func(success bool, msg string) {
+		action := common.ActionResetPassFailed
+		code := 400
+		if success {
+			action = common.ActionResetPassSuccess
+			code = 200
+		}
+		biz.auditRepository.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+			Action:     action,
+			Payload:    auditEntity.JSONMap{"email": data.Email},
+			StatusCode: code,
+			ErrorMsg:   msg,
+			Method:     "POST",
+			Path:       "/auth/reset-password",
+		})
+	}
+	verifyEntry, err := biz.authRepository.GetAvailableVerifyCode(ctx, data.Email, data.Code, entity.ForgotPasswordVerify)
+
 	if err != nil {
-		return core.ErrInvalidRequest(errors.New("mã xác thực không đúng"))
+		return common.ErrInvalidRequest(entity.ErrVerifyCodeInvalid)
 	}
 
 	if verifyEntry.ExpiredAt.Before(time.Now()) {
-		return core.ErrInvalidRequest(errors.New("mã xác thực đã hết hạn"))
+		logReset(false, "Code expired")
+		return common.ErrInvalidRequest(entity.ErrVerifyCodeExpired)
 	}
 
-	auth, err := biz.authRepository.GetAuth(ctx, data.Email)
+	auth, err := biz.authRepository.GetAuthByEmail(ctx, data.Email)
 	if err != nil {
-		return core.ErrEntityNotFound(auth.TableName(), entity.ErrEmailIsNotValid)
+		logReset(false, fmt.Sprintf("email not found: %v", err))
+		return common.ErrEntityNotFound(auth.TableName(), entity.ErrEmailIsNotValid)
 	}
 
-	salt, err := core.GenSalt(16)
+	salt, err := common.GenSalt(common.DefaultSaltLength)
 	if err != nil {
-		return core.ErrInternal(err)
+		return common.ErrInternal(err)
 	}
 
 	hashedPassword, err := biz.hasher.HashPassword(salt, data.NewPassword)
 	if err != nil {
-		return core.ErrInternal(err)
+		return common.ErrInternal(err)
 	}
 
 	auth.Password = &hashedPassword
 	auth.Salt = &salt
-	auth.Status = entity.AuthStatusActive
+	auth.Status = entity.AuthStatusVerified
 
 	if err := biz.authRepository.UpdateAuth(ctx, auth); err != nil {
-		return core.ErrInternal(err)
+		return common.ErrInternal(err)
 	}
 
-	_ = biz.authRepository.DeleteVerifyCode(ctx, verifyEntry.Id)
+	if err := biz.authRepository.MarkCodeAsUsed(ctx, verifyEntry.ID); err != nil {
+		logReset(false, fmt.Sprintf("Failed to mark code as used: %v", err))
+	}
+	logReset(true, "")
 
 	return nil
 }

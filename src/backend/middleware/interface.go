@@ -6,5 +6,5 @@ import (
 )
 
 type UserStore interface {
-	GetUserByID(ctx context.Context, id int) (*entity.User, error)
+	GetUserByID(ctx context.Context, id int32) (*entity.User, error)
 }

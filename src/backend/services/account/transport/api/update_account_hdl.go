@@ -8,37 +8,41 @@ import (
 	"tradeplay/common"
 	"tradeplay/services/account/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) UpdateAccountHandler() func(*gin.Context) {
+func (api *api) UpdateAccountHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
-		var data entity.AccountDataPatch
+		if id < 0 {
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(nil))
+			return
+		}
+
+		var data entity.AccountDataUpdate
 		if err := c.ShouldBindJSON(&data); err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
-		requester, exists := c.Get(core.KeyRequester)
+		requester, exists := c.Get(common.KeyRequester)
 		if !exists {
-			common.WriteErrorResponse(c, core.ErrUnauthorized(errors.New("unauthorized"), "unauthorized", "unauthorized"))
+			common.WriteErrorResponse(c, common.ErrUnauthorized(errors.New("unauthorized"), "unauthorized"))
 			return
 		}
 
-		ctx := context.WithValue(c.Request.Context(), core.KeyRequester, requester)
+		ctx := context.WithValue(c.Request.Context(), common.KeyRequester, requester)
 
-		if err := api.business.UpdateAccount(ctx, id, &data); err != nil {
+		if err := api.business.UpdateAccount(ctx, int32(id), &data); err != nil {
 			common.WriteErrorResponse(c, err)
 			return
 		}
 
-		c.JSON(http.StatusOK, core.ResponseData(true))
+		c.JSON(http.StatusOK, common.ResponseData(true))
 	}
 }

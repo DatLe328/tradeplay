@@ -2,158 +2,159 @@ package business
 
 import (
 	"context"
-	"encoding/json"
-	"errors"
 	"fmt"
-	"net/http"
-	"net/url"
-	"os"
 	"time"
-	"tradeplay/services/auth/entity"
+	"tradeplay/common"
+	auditEntity "tradeplay/services/audit/entity"
+	authEntity "tradeplay/services/auth/entity"
 	userEntity "tradeplay/services/user/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/google/uuid"
 )
 
-type GoogleUser struct {
-	ID            string `json:"id"`
-	Email         string `json:"email"`
-	VerifiedEmail bool   `json:"verified_email"`
-	Name          string `json:"name"`
-	GivenName     string `json:"given_name"`
-	FamilyName    string `json:"family_name"`
-	Picture       string `json:"picture"`
-}
-
-func (biz *business) LoginWithGoogle(ctx context.Context, code string) (*entity.TokenResponse, error) {
-	googleToken, err := biz.exchangeGoogleToken(code)
+func (biz *business) LoginWithGoogle(
+	ctx context.Context,
+	code string,
+	userAgent, ipAddress string,
+) (*authEntity.TokenResponse, error) {
+	googleToken, err := common.ExchangeGoogleToken(code)
 	if err != nil {
-		return nil, core.ErrInvalidRequest(err)
+		return nil, common.ErrInvalidRequest(err)
+	}
+	googleUser, err := common.GetGoogleUserInfo(googleToken)
+	if err != nil {
+		return nil, common.ErrInvalidRequest(err)
 	}
 
-	googleUser, err := biz.getGoogleUserInfo(googleToken)
-	if err != nil {
-		return nil, core.ErrInvalidRequest(err)
+	logGoogleLogin := func(uid int32, success bool, msg string) {
+		action := common.ActionLoginGoogleSuccess
+		code := 200
+		if !success {
+			action = common.ActionLoginGoogleFailed
+			code = 400
+		}
+		biz.auditRepository.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+			UserId:     uid,
+			Action:     action,
+			Payload:    auditEntity.JSONMap{"email": googleUser.Email, "google_id": googleUser.ID},
+			IpAddress:  ipAddress,
+			UserAgent:  userAgent,
+			StatusCode: code,
+			ErrorMsg:   msg,
+			Method:     "POST",
+			Path:       "/auth/google-login",
+		})
 	}
 
-	authData, err := biz.authRepository.FindAuthByGoogleIDOrEmail(ctx, googleUser.ID, googleUser.Email)
+	authGoogle, err := biz.authRepository.GetAuthByGoogleID(ctx, googleUser.ID)
+	var userID int32
 
-	var userID int
-
-	if err == nil && authData != nil {
-		if authData.Status == entity.AuthStatusBanned {
-			return nil, core.ErrAccountLocked(errors.New("account has been banned"))
+	if err == nil && authGoogle != nil {
+		if authGoogle.Status == authEntity.AuthStatusSuspended {
+			logGoogleLogin(authGoogle.UserID, false, authEntity.ErrAuthSuspended.Error())
+			return nil, common.ErrAccountLocked(authEntity.ErrAuthSuspended)
 		}
-
-		userID = int(authData.UserID)
-
-		if *authData.GoogleID == "" {
-			_ = biz.authRepository.UpdateAuthGoogleID(ctx, authData.Id, googleUser.ID)
-		}
-
+		userID = authGoogle.UserID
 	} else {
-		newUser := &userEntity.User{
-			FirstName:  googleUser.GivenName,
-			LastName:   googleUser.FamilyName,
-			SystemRole: "user",
-			Status:     1,
-		}
+		authByEmail, errEmail := biz.authRepository.GetAuthByEmail(ctx, googleUser.Email)
 
-		if newUser.FirstName == "" {
-			newUser.FirstName = googleUser.Name
-		}
+		if errEmail == nil && authByEmail != nil {
+			userID = authByEmail.UserID
 
-		newAuth := &entity.Auth{
-			AuthType: entity.AuthTypeGoogle,
-			Email:    googleUser.Email,
-			GoogleID: &googleUser.ID,
-			Status:   entity.AuthStatusActive,
-		}
+			if authByEmail.Status == authEntity.AuthStatusSuspended {
+				logGoogleLogin(userID, false, authEntity.ErrAuthSuspended.Error())
+				return nil, common.ErrAccountLocked(authEntity.ErrAuthSuspended)
+			}
 
-		if err := biz.authRepository.CreateUserAndAuthGoogle(ctx, newUser, newAuth); err != nil {
-			return nil, core.ErrInternal(err)
-		}
+			newAuth := &authEntity.Auth{
+				UserID:   userID,
+				AuthType: authEntity.AuthTypeGoogle,
+				Email:    googleUser.Email,
+				GoogleID: &googleUser.ID,
+				Status:   authEntity.AuthStatusVerified,
+			}
 
-		userID = newUser.Id
+			if err := biz.authRepository.CreateAuth(ctx, newAuth); err != nil {
+				logGoogleLogin(userID, false, err.Error())
+				return nil, common.ErrInternal(err)
+			}
+
+		} else {
+			newUser := userEntity.NewUser(googleUser.GivenName, googleUser.FamilyName)
+			newUser.Status = userEntity.StatusActive
+			if newUser.FirstName == "" {
+				newUser.FirstName = googleUser.Name
+			}
+
+			newAuth := &authEntity.Auth{
+				AuthType: authEntity.AuthTypeGoogle,
+				Email:    googleUser.Email,
+				GoogleID: &googleUser.ID,
+				Status:   authEntity.AuthStatusVerified,
+			}
+
+			if err := biz.authRepository.CreateUserAndAuthGoogle(ctx, newUser, newAuth); err != nil {
+				logGoogleLogin(0, false, fmt.Sprintf("Create user failed: %v", err))
+				return nil, common.ErrInternal(err)
+			}
+			userID = newUser.ID
+		}
 	}
 
-	uid := core.NewUID(uint32(userID), 1, 1)
+	existingWallet, err := biz.walletBusiness.GetUserWallet(ctx, userID)
+	if err != nil || existingWallet == nil {
+		if err := biz.walletBusiness.CreateWallet(ctx, userID); err != nil {
+			logGoogleLogin(userID, false, fmt.Sprintf("Create wallet failed: %v", err))
+		}
+	}
+
+	user, err := biz.userBusiness.GetUserByID(ctx, userID)
+	if err == nil && user != nil {
+		if user.Status == userEntity.StatusBanned {
+			logGoogleLogin(userID, false, userEntity.ErrUserBanned.Error())
+			return nil, common.ErrAccountLocked(userEntity.ErrUserBanned)
+		}
+	}
+
+	uid := common.NewUID(uint32(userID), common.DbTypeAuth, 1)
 	sub := uid.String()
 
 	accessTid := uuid.New().String()
 	accessToken, accessExp, err := biz.jwtProvider.IssueToken(ctx, accessTid, sub, 0)
 	if err != nil {
-		return nil, core.ErrInternal(err)
+		return nil, common.ErrInternal(err)
 	}
 
 	refreshTid := uuid.New().String()
 	refreshToken, refreshExp, err := biz.jwtProvider.IssueToken(ctx, refreshTid, sub, 2592000)
 	if err != nil {
-		return nil, core.ErrInternal(err)
+		return nil, common.ErrInternal(err)
 	}
 
-	err = biz.authRepository.CreateUserToken(ctx, &entity.UserToken{
-		UserId:    userID,
-		TokenId:   refreshTid,
-		Token:     refreshToken,
-		ExpiresAt: time.Now().Add(time.Second * time.Duration(refreshExp)),
-		IsRevoked: false,
-	})
+	userToken := authEntity.NewUserToken(
+		userID,
+		refreshTid,
+		refreshToken,
+		time.Now().Add(time.Second*time.Duration(refreshExp)),
+		ipAddress,
+		userAgent,
+	)
+
+	err = biz.authRepository.CreateUserToken(ctx, userToken)
 	if err != nil {
-		return nil, core.ErrInternal(err)
+		return nil, common.ErrInternal(err)
 	}
 
-	return &entity.TokenResponse{
-		AccessToken: entity.Token{
+	logGoogleLogin(userID, true, "")
+
+	return &authEntity.TokenResponse{
+		AccessToken: authEntity.Token{
 			Token:     accessToken,
 			ExpiredIn: accessExp,
 		},
-		RefreshToken: &entity.Token{
+		RefreshToken: &authEntity.Token{
 			Token:     refreshToken,
 			ExpiredIn: refreshExp,
 		},
 	}, nil
-}
-
-func (biz *business) exchangeGoogleToken(code string) (string, error) {
-	resp, err := http.PostForm("https://oauth2.googleapis.com/token", url.Values{
-		"client_id":     {os.Getenv("GOOGLE_CLIENT_ID")},
-		"client_secret": {os.Getenv("GOOGLE_CLIENT_SECRET")},
-		"redirect_uri":  {os.Getenv("GOOGLE_REDIRECT_URL")},
-		"code":          {code},
-		"grant_type":    {"authorization_code"},
-	})
-	if err != nil {
-		return "", fmt.Errorf("connect google failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	var tokenResp struct {
-		AccessToken string `json:"access_token"`
-	}
-	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
-		return "", fmt.Errorf("decode token failed: %v", err)
-	}
-
-	if tokenResp.AccessToken == "" {
-		return "", errors.New("empty access token")
-	}
-
-	return tokenResp.AccessToken, nil
-}
-
-func (biz *business) getGoogleUserInfo(accessToken string) (*GoogleUser, error) {
-	resp, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + accessToken)
-	if err != nil {
-		return nil, fmt.Errorf("get user info failed: %v", err)
-	}
-	defer resp.Body.Close()
-
-	var gUser GoogleUser
-	if err := json.NewDecoder(resp.Body).Decode(&gUser); err != nil {
-		return nil, fmt.Errorf("decode user info failed: %v", err)
-	}
-
-	return &gUser, nil
 }

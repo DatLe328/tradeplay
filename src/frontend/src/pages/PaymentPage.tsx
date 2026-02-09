@@ -1,14 +1,26 @@
 import { useParams, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, Copy, Clock, AlertCircle } from "lucide-react";
+import {
+	ArrowLeft,
+	Copy,
+	CheckCircle,
+	Loader2,
+	Package,
+	Wallet,
+	Calendar,
+	ShoppingBag,
+	AlertTriangle,
+} from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { useOrderStore } from "@/stores/orderStore";
-import { formatCurrency } from "@/utils/format";
+import { formatCurrency, formatDateTime } from "@/utils/format";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
-import { genVietQR } from "@/utils/qr";
 import { useTranslation } from "@/stores/languageStore";
+import { getGameName, OrderStatus } from "@/constants/enums";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export default function PaymentPage() {
 	const { orderId } = useParams();
@@ -20,29 +32,7 @@ export default function PaymentPage() {
 		if (orderId) {
 			fetchOrderDetail(orderId);
 		}
-	}, [orderId]);
-
-	const order = currentOrder;
-	if (isLoading)
-		return (
-			<Layout>
-				<div>Loading...</div>
-			</Layout>
-		);
-	if (!order) {
-		return (
-			<Layout>
-				<div className="container mx-auto px-4 py-20 text-center">
-					<h1 className="font-gaming text-2xl font-bold mb-4">
-						{t("orderNotFound")}
-					</h1>
-					<Link to="/orders">
-						<Button variant="outline">{t("viewMyOrders")}</Button>
-					</Link>
-				</div>
-			</Layout>
-		);
-	}
+	}, [orderId, fetchOrderDetail]);
 
 	const copyToClipboard = (text: string) => {
 		navigator.clipboard.writeText(text);
@@ -52,15 +42,44 @@ export default function PaymentPage() {
 		});
 	};
 
-	const transferContent = `${order.id}`;
+	if (isLoading) {
+		return (
+			<Layout>
+				<div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+					<Loader2 className="h-10 w-10 animate-spin text-primary" />
+					<p className="text-muted-foreground animate-pulse">
+						Đang kiểm tra trạng thái giao dịch...
+					</p>
+				</div>
+			</Layout>
+		);
+	}
 
-	const qrImg = genVietQR({
-		bankCode: "BIDV",
-		accountNo: "0368142412",
-		amount: order.total_price,
-		orderId: transferContent,
-		accountName: "LE VAN DAT",
-	});
+	if (!currentOrder) {
+		return (
+			<Layout>
+				<div className="container mx-auto px-4 py-20 text-center">
+					<div className="p-4 rounded-full bg-secondary w-fit mx-auto mb-4">
+						<Package className="h-12 w-12 text-muted-foreground" />
+					</div>
+					<h1 className="font-gaming text-2xl font-bold mb-4">
+						{t("orderNotFound")}
+					</h1>
+					<Link to="/accounts">
+						<Button variant="outline">{t("backToList")}</Button>
+					</Link>
+				</div>
+			</Layout>
+		);
+	}
+
+	const isSuccess =
+		currentOrder.status === OrderStatus.Paid ||
+		currentOrder.status === OrderStatus.Completed;
+
+	const isCancelled =
+		currentOrder.status === OrderStatus.Cancelled ||
+		currentOrder.status === OrderStatus.Refunded;
 
 	return (
 		<Layout>
@@ -71,10 +90,10 @@ export default function PaymentPage() {
 					animate={{ opacity: 1, x: 0 }}
 					className="mb-6"
 				>
-					<Link to="/orders">
+					<Link to="/accounts">
 						<Button variant="ghost" className="gap-2">
 							<ArrowLeft className="h-4 w-4" />
-							{t("myOrders")}
+							{t("continueShopping")}
 						</Button>
 					</Link>
 				</motion.div>
@@ -84,167 +103,180 @@ export default function PaymentPage() {
 					animate={{ opacity: 1, y: 0 }}
 					className="space-y-6"
 				>
-					{/* Header */}
-					<div className="text-center space-y-2">
-						<div className="p-4 rounded-full bg-warning/10 w-fit mx-auto">
-							<Clock className="h-10 w-10 text-warning" />
-						</div>
-						<h1 className="font-gaming text-2xl font-bold">
-							{t("waitingPayment")}
-						</h1>
-						<p className="text-muted-foreground">
-							{t("transferInfo")}
-						</p>
-					</div>
+					{/* Status Header */}
+					<Card
+						className={`border-2 ${isSuccess ? "border-green-500/20 bg-green-500/5" : isCancelled ? "border-red-500/20 bg-red-500/5" : "border-yellow-500/20 bg-yellow-500/5"}`}
+					>
+						<CardContent className="pt-6 pb-6 text-center space-y-4">
+							<div
+								className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto ${isSuccess ? "bg-green-500/10 text-green-500" : isCancelled ? "bg-red-500/10 text-red-500" : "bg-yellow-500/10 text-yellow-500"}`}
+							>
+								{isSuccess ? (
+									<CheckCircle className="h-10 w-10" />
+								) : isCancelled ? (
+									<AlertTriangle className="h-10 w-10" />
+								) : (
+									<Loader2 className="h-10 w-10 animate-spin" />
+								)}
+							</div>
 
-					{/* Order Info */}
-					<div className="p-6 rounded-xl bg-card border border-border space-y-4">
-						<div className="flex justify-between items-center">
-							<span className="text-muted-foreground">
-								{t("orderId")}
-							</span>
-							<div className="flex items-center gap-2">
-								<span className="font-mono font-semibold">
-									{order.id}
-								</span>
-								<Button
-									variant="ghost"
-									size="icon"
-									className="h-8 w-8"
-									onClick={() => copyToClipboard(order.id)}
+							<div>
+								<h1
+									className={`font-gaming text-2xl font-bold mb-2 ${isSuccess ? "text-green-500" : isCancelled ? "text-red-500" : "text-yellow-500"}`}
 								>
-									<Copy className="h-4 w-4" />
-								</Button>
+									{isSuccess
+										? t("paymentSuccess")
+										: isCancelled
+											? "Giao dịch thất bại"
+											: "Đang xử lý"}
+								</h1>
+								<p className="text-muted-foreground">
+									{isSuccess
+										? "Giao dịch đã được xác nhận. Tiền đã được trừ từ ví của bạn."
+										: isCancelled
+											? "Đơn hàng đã bị hủy hoặc hoàn tiền."
+											: "Hệ thống đang xử lý đơn hàng của bạn."}
+								</p>
 							</div>
-						</div>
-						<div className="flex justify-between items-center">
-							<span className="text-muted-foreground">
-								{t("accGameLabel")}
-							</span>
-							<span className="font-semibold">
-								{order.account?.title}
-							</span>
-						</div>
-						<div className="flex justify-between items-center">
-							<span className="text-muted-foreground">
-								{t("totalAmount")}
-							</span>
-							<span className="font-gaming text-xl font-bold text-primary">
-								{formatCurrency(order.total_price)}
-							</span>
-						</div>
-					</div>
+						</CardContent>
+					</Card>
 
-					{/* QR Code */}
-					<div className="p-6 rounded-xl bg-card border border-border space-y-4">
-						<h3 className="font-gaming font-semibold text-center">
-							{t("scanQRTitle")}
-						</h3>
-						<div className="aspect-square max-w-[260px] mx-auto bg-white p-3 rounded-xl border">
-							<img
-								src={qrImg}
-								alt="VietQR Thanh Toán"
-								className="w-full h-full object-contain"
-							/>
-						</div>
-						<p className="text-sm text-muted-foreground text-center">
-							{t("orTransfer")}
-						</p>
-					</div>
+					{/* Order Details Receipt */}
+					<Card>
+						<CardContent className="p-6 space-y-6">
+							<h3 className="font-semibold text-lg flex items-center gap-2">
+								<ShoppingBag className="h-5 w-5 text-primary" />
+								Chi tiết đơn hàng
+							</h3>
 
-					{/* Transfer Info */}
-					<div className="p-6 rounded-xl bg-card border border-border space-y-4">
-						<h3 className="font-gaming font-semibold">
-							{t("transferDetails")}
-						</h3>
-
-						<div className="space-y-3">
-							<div className="flex justify-between items-center p-3 rounded-lg bg-secondary">
-								<span className="text-muted-foreground">
-									{t("bank")}
-								</span>
-								<div className="flex items-center gap-2">
-									<span className="font-mono font-semibold">
-										BIDV
-									</span>
+							{/* Product Info */}
+							<div className="flex gap-4 p-4 rounded-lg bg-secondary/30">
+								<div className="w-16 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0">
+									{currentOrder.account?.thumbnail ||
+									currentOrder.account?.images?.[0] ? (
+										<img
+											src={
+												currentOrder.account
+													.thumbnail ||
+												currentOrder.account.images[0]
+											}
+											alt="Thumbnail"
+											className="w-full h-full object-cover"
+										/>
+									) : (
+										<div className="w-full h-full flex items-center justify-center">
+											<Package className="h-8 w-8 text-muted-foreground" />
+										</div>
+									)}
 								</div>
-							</div>
-							<div className="flex justify-between items-center p-3 rounded-lg bg-secondary">
-								<span className="text-muted-foreground">
-									{t("accountNumber")}
-								</span>
-								<div className="flex items-center gap-2">
-									<span className="font-mono font-semibold">
-										0368 142 412
-									</span>
-									<Button
-										variant="ghost"
-										size="icon"
-										className="h-8 w-8"
-										onClick={() =>
-											copyToClipboard("0368142412")
-										}
-									>
-										<Copy className="h-4 w-4" />
-									</Button>
+								<div className="flex-1 min-w-0">
+									<h4 className="font-semibold truncate">
+										{currentOrder.account?.title ||
+											"Account Game"}
+									</h4>
+									<div className="flex items-center gap-2 mt-1">
+										<Badge
+											variant="outline"
+											className="text-xs"
+										>
+											{currentOrder.account?.category
+												?.name ||
+												getGameName(
+													currentOrder.account
+														?.category_id,
+												)}
+										</Badge>
+										<span className="text-xs text-muted-foreground">
+											MS: {currentOrder.account_id}
+										</span>
+									</div>
 								</div>
 							</div>
 
-							<div className="flex justify-between items-center p-3 rounded-lg bg-secondary">
-								<span className="text-muted-foreground">
-									{t("accountName")}
-								</span>
-								<span className="font-semibold">LE VAN DAT</span>
-							</div>
-
-							<div className="flex justify-between items-center p-3 rounded-lg bg-primary/10 border border-primary/30">
-								<span className="text-muted-foreground">
-									{t("transferContent")}
-								</span>
-								<div className="flex items-center gap-2">
-									<span className="font-mono font-bold text-primary">
-										{transferContent}
+							{/* Transaction Info Grid */}
+							<div className="grid gap-4 py-4 border-t border-b border-border">
+								<div className="flex justify-between items-center">
+									<span className="text-sm text-muted-foreground flex items-center gap-2">
+										<Package className="h-4 w-4" /> Mã đơn
+										hàng
 									</span>
-									<Button
-										variant="ghost"
-										size="icon"
-										className="h-8 w-8"
-										onClick={() =>
-											copyToClipboard(transferContent)
-										}
-									>
-										<Copy className="h-4 w-4" />
-									</Button>
+									<div className="flex items-center gap-2">
+										<span className="font-mono font-medium">
+											{currentOrder.id}
+										</span>
+										<Button
+											variant="ghost"
+											size="icon"
+											className="h-6 w-6"
+											onClick={() =>
+												copyToClipboard(
+													currentOrder.id.toString(),
+												)
+											}
+										>
+											<Copy className="h-3 w-3" />
+										</Button>
+									</div>
+								</div>
+
+								<div className="flex justify-between items-center">
+									<span className="text-sm text-muted-foreground flex items-center gap-2">
+										<Calendar className="h-4 w-4" /> Thời
+										gian
+									</span>
+									<span className="text-sm">
+										{formatDateTime(
+											currentOrder.created_at,
+										)}
+									</span>
+								</div>
+
+								<div className="flex justify-between items-center">
+									<span className="text-sm text-muted-foreground flex items-center gap-2">
+										<Wallet className="h-4 w-4" /> Phương
+										thức
+									</span>
+									<span className="text-sm font-medium">
+										Ví tài khoản
+									</span>
 								</div>
 							</div>
-						</div>
-					</div>
 
-					{/* Notice */}
-					<div className="p-4 rounded-xl bg-warning/10 border border-warning/30 flex gap-3">
-						<AlertCircle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
-						<div className="space-y-1">
-							<p className="font-semibold text-warning">
-								{t("importantNote")}
-							</p>
-							<p className="text-sm text-muted-foreground">
-								{t("paymentNotice")}
-							</p>
-						</div>
-					</div>
+							{/* Total */}
+							<div className="flex justify-between items-center">
+								<span className="font-semibold">
+									Tổng thanh toán
+								</span>
+								<span className="font-gaming text-xl font-bold text-primary">
+									{formatCurrency(currentOrder.total_price)}
+								</span>
+							</div>
+						</CardContent>
+					</Card>
 
 					{/* Actions */}
-					<div className="flex gap-4">
-						<Link to="/orders" className="flex-1">
-							<Button variant="outline" className="w-full">
+					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+						<Link to="/orders">
+							<Button variant="outline" className="w-full h-12">
 								{t("viewOrders")}
 							</Button>
 						</Link>
-						<Link to="/accounts" className="flex-1">
-							<Button className="btn-gaming w-full">
-								{t("continueShopping")}
+
+						{isSuccess && (
+							<Link to={`/orders`}>
+								{" "}
+								<Button className="btn-gaming w-full h-12 gap-2">
+									<Package className="h-5 w-5" />
+									Nhận tài khoản ngay
+								</Button>
+							</Link>
+						)}
+
+						{!isSuccess && (
+							<Button variant="secondary" className="w-full h-12">
+								Liên hệ hỗ trợ
 							</Button>
-						</Link>
+						)}
 					</div>
 				</motion.div>
 			</div>

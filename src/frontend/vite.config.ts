@@ -3,15 +3,41 @@ import path from "path";
 import react from "@vitejs/plugin-react";
 
 // https://vite.dev/config/
-export default defineConfig({
-	plugins: [react()],
-	resolve: {
-		alias: {
-			"@": path.resolve(__dirname, "./src"),
+export default defineConfig(({ mode }) => {
+	return {
+		plugins: [react()],
+		resolve: {
+			alias: { "@": path.resolve(__dirname, "./src") },
 		},
-	},
-	server: {
-		allowedHosts: ["test.tadeldev.site", "tiencotruong.com"],
-		host: true,
-	},
+		build: {
+			minify: "esbuild",
+			drop: ["console", "debugger"],
+			cssCodeSplit: true,
+			sourcemap: false,
+			chunkSizeWarningLimit: 1500,
+			rollupOptions: {
+				output: {
+					manualChunks: {
+						vendor: ["react", "react-dom"],
+					},
+				},
+			},
+		},
+		server: {
+			proxy:
+				mode === "development"
+					? {
+							"/v1": {
+								target: "http://localhost:3000",
+								changeOrigin: true,
+							},
+						}
+					: undefined,
+			allowedHosts: [
+				"test.tadeldev.site",
+				"tiencotruong.com",
+				"staging.tadeldev.site",
+			],
+		},
+	};
 });

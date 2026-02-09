@@ -5,16 +5,15 @@ import (
 	"tradeplay/common"
 	"tradeplay/services/auth/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) VerifyEmailHandler() func(*gin.Context) {
+func (api *api) VerifyEmailHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var data entity.VerifyEmailData
 
 		if err := c.ShouldBindJSON(&data); err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
@@ -23,6 +22,6 @@ func (api *api) VerifyEmailHandler() func(*gin.Context) {
 			return
 		}
 
-		c.JSON(http.StatusOK, core.ResponseData(true))
+		c.JSON(http.StatusOK, common.ResponseData(true))
 	}
 }

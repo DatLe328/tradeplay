@@ -5,23 +5,23 @@ import (
 	"strconv"
 	"tradeplay/common"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) DeleteAccountHandler() func(*gin.Context) {
+func (api *api) DeleteAccountHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
+
 		if err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
-		if err := api.business.DeleteAccount(c.Request.Context(), id); err != nil {
+		if err := api.business.DeleteAccount(c.Request.Context(), int32(id)); err != nil {
 			common.WriteErrorResponse(c, err)
 			return
 		}
 
-		c.JSON(http.StatusOK, core.ResponseData(true))
+		c.JSON(http.StatusOK, common.ResponseData(true))
 	}
 }

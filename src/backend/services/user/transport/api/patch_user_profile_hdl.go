@@ -2,18 +2,18 @@ package api
 
 import (
 	"net/http"
+	"tradeplay/common"
 	"tradeplay/services/user/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) PatchUserProfileHandler() func(*gin.Context) {
+func (api *api) PatchUserProfileHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		requester := c.MustGet(core.KeyRequester).(core.Requester)
-		ctx := core.ContextWithRequester(c.Request.Context(), requester)
+		requester := c.MustGet(common.KeyRequester).(common.Requester)
+		ctx := common.ContextWithRequester(c.Request.Context(), requester)
 
-		var data entity.UserDataPatch
+		var data entity.UserUpdateDTO
 
 		if err := c.ShouldBind(&data); err != nil {
 			panic(err)
@@ -23,6 +23,6 @@ func (api *api) PatchUserProfileHandler() func(*gin.Context) {
 			panic(err)
 		}
 
-		c.JSON(http.StatusOK, core.ResponseData(true))
+		c.JSON(http.StatusOK, common.ResponseData(true))
 	}
 }

@@ -2,27 +2,26 @@ package business
 
 import (
 	"context"
+	"tradeplay/common"
 	"tradeplay/services/user/entity"
-
-	"github.com/DatLe328/service-context/core"
 )
 
 func (biz *business) PatchUserProfile(
 	ctx context.Context,
-	data *entity.UserDataPatch,
+	data *entity.UserUpdateDTO,
 ) error {
 	if err := data.Validate(); err != nil {
-		return core.ErrInvalidRequest(err)
+		return common.ErrInvalidRequest(err)
 	}
 
-	requester := core.GetRequester(ctx)
+	requester := common.GetRequester(ctx)
 
-	uid, _ := core.FromBase58(requester.GetSubject())
-	requesterID := int(uid.GetLocalID())
+	uid, _ := common.FromBase58(requester.GetSubject())
+	requesterID := int32(uid.GetLocalID())
 
 	updates := data.ToUpdateMap()
 	if err := biz.repo.PatchUserByID(ctx, requesterID, updates); err != nil {
-		return core.ErrCannotUpdateEntity(entity.User{}.TableName(), err)
+		return common.ErrCannotUpdateEntity(entity.User{}.TableName(), err)
 	}
 
 	return nil

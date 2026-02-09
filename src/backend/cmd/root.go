@@ -1,23 +1,25 @@
 package cmd
 
 import (
-	"fmt"
 	"log"
-	"net/http"
-	"time"
+	"os"
+	"os/signal"
+	"syscall"
 	"tradeplay/common"
+	"tradeplay/components/cronc"
 	"tradeplay/components/emailc"
+	"tradeplay/components/ginc"
+	sctxMdw "tradeplay/components/ginc/middleware"
+	"tradeplay/components/gormc"
+	"tradeplay/components/jwtc"
+	"tradeplay/components/redisc"
+	sctx "tradeplay/components/service-context"
 	upload "tradeplay/components/uploadc"
 	"tradeplay/composer"
 	"tradeplay/middleware"
 	authBusiness "tradeplay/services/auth/business"
 	userRepository "tradeplay/services/user/repository/mysql"
 
-	sctx "github.com/DatLe328/service-context"
-	"github.com/DatLe328/service-context/component/ginc"
-	sctxMdw "github.com/DatLe328/service-context/component/ginc/middleware"
-	"github.com/DatLe328/service-context/component/gormc"
-	"github.com/DatLe328/service-context/component/jwtc"
 	"github.com/gin-gonic/gin"
 )
 
@@ -30,29 +32,33 @@ func newServiceCtx() sctx.ServiceContext {
 		sctx.WithComponent(gormc.NewGormDB(common.KeyCompMySQL, "")),
 		sctx.WithComponent(upload.NewUploadComponent(common.KeyCompUpload)),
 		sctx.WithComponent(emailc.NewEmailProvider(common.KeyCompEmail)),
+		sctx.WithComponent(redisc.NewRedis(common.KeyCompRedis)),
+		sctx.WithComponent(cronc.NewCronComponent()),
 	)
 }
 
 func setupRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
-	db := serviceCtx.MustGet(common.KeyCompMySQL).(common.GormComponent)
-	authBusiness := authBusiness.NewBusiness(nil, nil, serviceCtx.MustGet(common.KeyCompJWT).(common.JWTProvider), nil, nil)
-	userRepo := userRepository.NewMySQLRepository(db.GetDB())
+	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
+	authBusiness := authBusiness.NewAuthBusiness(
+		nil, nil, nil, nil, serviceCtx.MustGet(common.KeyCompJWT).(common.JWTProvider), nil, nil, redisComp)
 	requireAuthMdw := middleware.RequireAuth(authBusiness)
-	identifyMdw := middleware.IdentifyAdmin(userRepo)
 	captchaMdw := middleware.VerifyTurnstile()
 
 	userAPI := composer.ComposeUserAPIService(serviceCtx)
 	authAPI := composer.ComposeAuthAPIService(serviceCtx)
 	accountAPI := composer.ComposeAccountAPIService(serviceCtx)
 	orderAPI := composer.ComposeOrderAPIService(serviceCtx)
+	walletAPI := composer.ComposeWalletAPIService(serviceCtx)
+	notificationAPI := composer.ComposeNotificationService(serviceCtx)
 
 	csrfProtection := middleware.CSRFProtection()
 	csrfValidate := middleware.ValidateCSRFToken()
 
-	v1 := router.Group("/v1",
-		middleware.RateLimitMiddleware(5, 10),
-		csrfProtection,
-	)
+	authRateLimit := middleware.RateLimitMiddleware(serviceCtx, 30, 10)
+	orderRateLimit := middleware.RateLimitMiddleware(serviceCtx, 50, 10)
+	browsingRateLimit := middleware.RateLimitMiddleware(serviceCtx, 200, 60)
+
+	v1 := router.Group("/v1", browsingRateLimit, csrfProtection)
 
 	user := v1.Group("/user")
 	{
@@ -60,47 +66,76 @@ func setupRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 		user.PATCH("/me", requireAuthMdw, csrfValidate, userAPI.PatchUserProfileHandler())
 	}
 
-	auth := v1.Group("/auth")
+	auth := v1.Group("/auth", authRateLimit)
 	{
 		auth.POST("/authenticate", captchaMdw, authAPI.LoginHdl())
 		auth.POST("/register", captchaMdw, authAPI.RegisterHdl())
-		auth.POST("/verify", csrfValidate, authAPI.VerifyEmailHandler())
+		auth.POST("/verify", authAPI.VerifyEmailHandler())
 		auth.POST("/forgot-password", captchaMdw, authAPI.ForgotPasswordHandler())
 		auth.POST("/reset-password", authAPI.ResetPasswordHandler())
+
 		auth.GET("/google/login", authAPI.GoogleLoginHdl())
 		auth.GET("/google/callback", authAPI.GoogleCallbackHdl())
-		auth.POST("/refresh-token", csrfValidate, authAPI.RefreshTokenHandler())
-		auth.POST("/logout", csrfValidate, authAPI.LogoutHdl())
+
+		auth.POST("/refresh-token", authAPI.RefreshTokenHandler())
+		auth.POST("/logout", authAPI.LogoutHdl())
 		auth.PATCH("/change-password", requireAuthMdw, csrfValidate, authAPI.ChangePasswordHandler())
 	}
 
 	account := v1.Group("/accounts", csrfValidate)
 	{
-		account.GET("", accountAPI.ListAccountHandler())
+		account.GET("", accountAPI.FindAccountsHandler())
 		account.GET("/:id", accountAPI.GetAccountHandler())
+		account.GET("/:id/credentials", requireAuthMdw, accountAPI.GetAccountCredentialsHandler())
 	}
 
-	orders := v1.Group("/orders", requireAuthMdw, csrfValidate)
+	orders := v1.Group("/orders", requireAuthMdw, csrfValidate, orderRateLimit)
 	{
-		orders.GET("", identifyMdw, orderAPI.ListOrderHandler())
+		orders.GET("", orderAPI.FindOrdersHandler())
 		orders.GET("/:id", orderAPI.GetOrderHandler())
 		orders.POST("", orderAPI.CreateOrderHandler())
 	}
+
+	wallets := v1.Group("/wallets", requireAuthMdw, csrfValidate)
+	{
+		wallets.GET("/me", walletAPI.GetMeHandler())
+	}
+
+	notifications := v1.Group("/notifications", requireAuthMdw, csrfValidate)
+	{
+		notifications.GET("", notificationAPI.ListNotificationsHandler())
+		notifications.GET("/unread/count", notificationAPI.GetUnreadCountHandler())
+		notifications.GET("/:id", notificationAPI.GetNotificationHandler())
+		notifications.PATCH("/:id/read", notificationAPI.MarkAsReadHandler())
+		notifications.POST("/read-all", notificationAPI.MarkAllAsReadHandler())
+		notifications.DELETE("/:id", notificationAPI.DeleteNotificationHandler())
+	}
+}
+
+func setupWebhook(serviceCtx sctx.ServiceContext, router *gin.Engine) {
+	paymentAPI := composer.ComposePaymentAPIService(serviceCtx)
+
+	v1 := router.Group("/v1",
+		middleware.RateLimitMiddleware(serviceCtx, 120, 60),
+	)
+	v1.POST("/webhook/sepay", paymentAPI.HandleSepayWebhook)
 }
 
 func setupAdminRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	db := serviceCtx.MustGet(common.KeyCompMySQL).(common.GormComponent)
-	authBusiness := authBusiness.NewBusiness(nil, nil, serviceCtx.MustGet(common.KeyCompJWT).(common.JWTProvider), nil, nil)
+	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
+	authBusiness := authBusiness.NewAuthBusiness(
+		nil, nil, nil, nil, serviceCtx.MustGet(common.KeyCompJWT).(common.JWTProvider), nil, nil, redisComp)
 	userRepo := userRepository.NewMySQLRepository(db.GetDB())
 	requireAuthMdw := middleware.RequireAuth(authBusiness)
-	requireAdminMdw := middleware.RequireAdmin(userRepo)
+	requireAdminMdw := middleware.RequireAdmin(serviceCtx, userRepo)
 	csrfProtection := middleware.CSRFProtection()
 	csrfValidate := middleware.ValidateCSRFToken()
 
-	adminAPI := composer.ComposeAdminAPIService(serviceCtx)
 	uploadAPI := composer.ComposeUploadAPIService(serviceCtx)
+	auditAPI := composer.ComposeAuditAPIService(serviceCtx)
 
-	v1Admin := router.Group("/v1", middleware.RateLimitMiddleware(50, 300))
+	v1Admin := router.Group("/v1/admin", middleware.RateLimitMiddleware(serviceCtx, 1000, 60))
 	v1Admin.Use(requireAuthMdw, requireAdminMdw, csrfProtection)
 
 	accountAPI := composer.ComposeAccountAPIService(serviceCtx)
@@ -111,19 +146,20 @@ func setupAdminRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 		account.POST("", accountAPI.CreateAccountHandler())
 		account.PATCH("/:id", accountAPI.UpdateAccountHandler())
 		account.DELETE("/:id", accountAPI.DeleteAccountHandler())
+		account.GET("/:id/credentials", accountAPI.AdminGetAccountCredentialsHandler())
 	}
 
 	orders := v1Admin.Group("/orders", csrfValidate)
 	{
+		orders.GET("", orderAPI.FindOrdersAdminHandler())
 		orders.PATCH("/:id", orderAPI.UpdateOrderStatusHandler())
 	}
 
-	admin := v1Admin.Group("/admin", csrfValidate)
+	admin := v1Admin.Group("", csrfValidate)
 	{
-		admin.GET("/stats", adminAPI.GetStatsHandler())
 		admin.POST("/upload/presign", uploadAPI.GeneratePresignedURLHandler())
+		admin.GET("/audit-logs", auditAPI.ListAuditLogsHandler())
 	}
-
 }
 
 func Execute() {
@@ -134,28 +170,28 @@ func Execute() {
 	}
 	defer serviceCtx.Stop()
 
+	composer.RunNotificationWorker(serviceCtx)
+	composer.RunAuditWorker(serviceCtx)
+
 	ginComp := serviceCtx.MustGet(common.KeyCompGIN).(common.GinEngine)
 	router := ginComp.GetRouter()
 
 	router.Use(gin.Recovery(), gin.Logger(), sctxMdw.Recovery(serviceCtx))
 	router.Use(middleware.Cors())
 	router.Use(middleware.SecurityHeaders())
+	router.Use(
+		middleware.MaintenanceSensitiveOnly(serviceCtx),
+	)
 
 	setupRoute(serviceCtx, router)
 	setupAdminRoute(serviceCtx, router)
+	setupWebhook(serviceCtx, router)
 
-	s := &http.Server{
-		Addr:           fmt.Sprintf(":%d", ginComp.GetPort()),
-		Handler:        router,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		IdleTimeout:    60 * time.Second,
-		MaxHeaderBytes: 1 << 20,
-	}
+	ginComp.Run()
 
-	fmt.Printf("Server is running on port %d with Timeouts configured...\n", ginComp.GetPort())
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
 
-	if err := s.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalln(err)
-	}
+	log.Println("Shutting down application...")
 }

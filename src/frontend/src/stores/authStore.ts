@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { type User } from "@/types";
 import { authService } from "@/services/authService";
+import { IDLE_TIMEOUT } from "@/hooks/useIdleTimeout";
 
 interface AuthStore {
 	user: User | null;
@@ -17,7 +18,7 @@ interface AuthStore {
 		email: string,
 		password: string,
 		firstName: string,
-        lastName: string,
+		lastName: string,
 		captchaToken: string
 	) => Promise<boolean>;
 	logout: () => void;
@@ -44,11 +45,6 @@ export const useAuthStore = create<AuthStore>()(
 
 			setCSRFToken: (token: string | null) => {
 				set({ csrfToken: token });
-				if (token) {
-					localStorage.setItem("csrf_token", token);
-				} else {
-					localStorage.removeItem("csrf_token");
-				}
 			},
 			changePassword: async (oldPassword, newPassword) => {
 				set({ isLoading: true });
@@ -65,21 +61,21 @@ export const useAuthStore = create<AuthStore>()(
 				}
 			},
 			updateProfile: async (data) => {
-                set({ isLoading: true });
-                try {
-                    await authService.updateProfile(data);
+				set({ isLoading: true });
+				try {
+					await authService.updateProfile(data);
 
-                    const freshUser = await authService.getMe();
+					const freshUser = await authService.getMe();
 
-                    set({ user: freshUser });
-                    
-                    return true;
-                } catch (error) {
-                    throw error;
-                } finally {
-                    set({ isLoading: false });
-                }
-            },
+					set({ user: freshUser });
+
+					return true;
+				} catch (error) {
+					throw error;
+				} finally {
+					set({ isLoading: false });
+				}
+			},
 
 			login: async (
 				email: string,
@@ -98,7 +94,6 @@ export const useAuthStore = create<AuthStore>()(
 						const data = res.data as any;
 						if (data?.csrf_token) {
 							set({ csrfToken: data.csrf_token });
-							localStorage.setItem("csrf_token", data.csrf_token);
 						}
 					}
 
@@ -136,7 +131,6 @@ export const useAuthStore = create<AuthStore>()(
 						const data = res.data as any;
 						if (data?.csrf_token) {
 							set({ csrfToken: data.csrf_token });
-							localStorage.setItem("csrf_token", data.csrf_token);
 						}
 					}
 
@@ -155,8 +149,6 @@ export const useAuthStore = create<AuthStore>()(
 					// console.error("Logout error:", error);
 				} finally {
 					localStorage.removeItem("lastActivity");
-					localStorage.removeItem("csrf_token");
-
 					set({
 						user: null,
 						isAuthenticated: false,
@@ -179,7 +171,6 @@ export const useAuthStore = create<AuthStore>()(
 					set({ user, isAuthenticated: true });
 				} catch (error) {
 					localStorage.removeItem("lastActivity");
-					localStorage.removeItem("csrf_token");
 					set({
 						user: null,
 						isAuthenticated: false,
@@ -188,12 +179,30 @@ export const useAuthStore = create<AuthStore>()(
 				}
 			},
 		}),
+
 		{
 			name: "auth-storage",
 			partialize: (state) => ({
 				user: state.user,
 				isAuthenticated: state.isAuthenticated,
 			}),
+			onRehydrateStorage: () => (state) => {
+				const lastActivity = localStorage.getItem("lastActivity");
+
+				if (lastActivity) {
+					const idleTime = Date.now() - parseInt(lastActivity);
+
+					if (idleTime > IDLE_TIMEOUT) {
+						console.log("Session expired on startup (Rehydrate)");
+
+						state?.logout();
+					}
+				} else {
+					if (state?.isAuthenticated) {
+						state.logout();
+					}
+				}
+			},
 		}
 	)
 );

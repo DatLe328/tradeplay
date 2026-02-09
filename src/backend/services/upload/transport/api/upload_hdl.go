@@ -8,7 +8,6 @@ import (
 	"time"
 	"tradeplay/common"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -23,12 +22,12 @@ func (a *api) GeneratePresignedURLHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req presignRequest
 		if err := c.ShouldBindJSON(&req); err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
-		const MAX_UPLOAD_SIZE = 10 * 1024 * 1024
+		const MAX_UPLOAD_SIZE = 100 * 1024 * 1024
 		if req.Size > MAX_UPLOAD_SIZE {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(
 				fmt.Errorf("file size %d bytes exceeds limit of %d bytes", req.Size, MAX_UPLOAD_SIZE),
 			))
 			return
@@ -40,7 +39,7 @@ func (a *api) GeneratePresignedURLHandler() gin.HandlerFunc {
 			".mp4": true, ".mov": true, ".avi": true, ".webm": true,
 		}
 		if !allowedExts[ext] {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(
 				fmt.Errorf("file type %s is not allowed", ext),
 			))
 			return
@@ -51,17 +50,17 @@ func (a *api) GeneratePresignedURLHandler() gin.HandlerFunc {
 			contentType = "application/octet-stream"
 		}
 
-		configComp := c.MustGet(common.KeyComConf).(common.ConfigComponent)
+		configComp := a.serviceCtx.MustGet(common.KeyCompConf).(common.ConfigComponent)
 		prefix := configComp.S3Prefix()
 
 		key := fmt.Sprintf("%s%s%s", prefix, uuid.New().String(), ext)
 
 		result, err := a.uploadComp.GeneratePresignedURL(c.Request.Context(), key, contentType, 15*time.Minute, req.Size)
 		if err != nil {
-			common.WriteErrorResponse(c, core.ErrInternal(err))
+			common.WriteErrorResponse(c, common.ErrInternal(err))
 			return
 		}
 
-		c.JSON(http.StatusOK, core.ResponseData(result))
+		c.JSON(http.StatusOK, common.ResponseData(result))
 	}
 }

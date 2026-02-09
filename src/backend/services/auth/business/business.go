@@ -4,61 +4,89 @@ import (
 	"context"
 	"tradeplay/common"
 	"tradeplay/components/emailc"
+	auditEntity "tradeplay/services/audit/entity"
 	authEntity "tradeplay/services/auth/entity"
 	userEntity "tradeplay/services/user/entity"
+	walletEntity "tradeplay/services/wallet/entity"
 )
 
-type Hasher interface {
+type hasher interface {
 	HashPassword(salt, password string) (string, error)
 	CompareHashPassword(hashedPassword, salt, password string) bool
 }
 
-type AuthRepository interface {
-	AddAuth(ctx context.Context, data *authEntity.Auth) error
-	GetAuth(ctx context.Context, email string) (*authEntity.Auth, error)
-	FindAuthByUserID(ctx context.Context, userId int) (*authEntity.Auth, error)
-	CreateVerifyCode(ctx context.Context, data *authEntity.VerifyCode) error
-	FindVerifyCode(ctx context.Context, email, code, typeCode string) (*authEntity.VerifyCode, error)
+type authRepository interface {
+	// Auth related methods
+	// Reader
+	GetAuthByEmail(ctx context.Context, email string) (*authEntity.Auth, error)
+	GetAuthByUserID(ctx context.Context, userID int32) (*authEntity.Auth, error)
+	GetAuthByGoogleID(ctx context.Context, googleID string) (*authEntity.Auth, error)
+	GetAuthByEmailAndType(ctx context.Context, email string, authType authEntity.AuthType) (*authEntity.Auth, error)
+
+	CreateAuth(ctx context.Context, data *authEntity.Auth) error
+	CreateUserAndAuthGoogle(ctx context.Context, user *userEntity.User, auth *authEntity.Auth) error
 	UpdateAuthStatus(ctx context.Context, email string, status authEntity.AuthStatus) error
 	UpdateAuth(ctx context.Context, data *authEntity.Auth) error
-	DeleteVerifyCode(ctx context.Context, id int) error
 
-	CreateUserAndAuthGoogle(ctx context.Context, user *userEntity.User, auth *authEntity.Auth) error
+	VerifyUserTransaction(ctx context.Context, email string, userID int32) error
 
-	FindAuthByGoogleIDOrEmail(ctx context.Context, googleID, email string) (*authEntity.Auth, error)
-	UpdateAuthGoogleID(ctx context.Context, id int, googleID string) error
-
+	// Token
 	CreateUserToken(ctx context.Context, data *authEntity.UserToken) error
-	FindUserToken(ctx context.Context, tokenID string) (*authEntity.UserToken, error)
+	GetUserToken(ctx context.Context, tokenID string) (*authEntity.UserToken, error)
+	RevokeUserToken(ctx context.Context, tokenID string) error
+	RevokeAllUserTokens(ctx context.Context, userID int32) error
 	DeleteUserToken(ctx context.Context, tokenID string) error
-	DeleteExpiredTokens(ctx context.Context, userId int) error
+	DeleteExpiredTokens(ctx context.Context, userId int32) error
+
+	// Verify Code
+	CreateVerifyCode(ctx context.Context, data *authEntity.VerifyCode) error
+	GetAvailableVerifyCode(ctx context.Context, email, code string, verifyType authEntity.VerifyType) (*authEntity.VerifyCode, error)
+	MarkCodeAsUsed(ctx context.Context, id int32) error
 }
 
-type UserRepository interface {
-	CreateUser(ctx context.Context, data *userEntity.UserDataCreation) (newId int, err error)
-	GetUserByID(ctx context.Context, id int) (*userEntity.User, error)
+type userBusiness interface {
+	CreateUser(ctx context.Context, data *userEntity.UserCreateDTO) (newUserID int32, err error)
+	GetUserByID(ctx context.Context, id int32) (*userEntity.User, error)
+}
+
+type walletBusiness interface {
+	CreateWallet(ctx context.Context, userID int32) error
+	GetUserWallet(ctx context.Context, userID int32) (*walletEntity.Wallet, error)
+}
+
+type auditRepository interface {
+	PushAuditLog(ctx context.Context, entry *auditEntity.AuditLog)
 }
 
 type business struct {
-	authRepository AuthRepository
-	userRepository UserRepository
-	jwtProvider    common.JWTProvider
-	hasher         Hasher
-	emailProvider  emailc.EmailProvider
+	authRepository  authRepository
+	userBusiness    userBusiness
+	walletBusiness  walletBusiness
+	auditRepository auditRepository
+	jwtProvider     common.JWTProvider
+	hasher          hasher
+	emailProvider   emailc.EmailProvider
+	redis           common.RedisComponent
 }
 
-func NewBusiness(
-	authRepository AuthRepository,
-	userRepository UserRepository,
+func NewAuthBusiness(
+	authRepository authRepository,
+	userBusiness userBusiness,
+	walletBusiness walletBusiness,
+	auditRepository auditRepository,
 	jwtProvider common.JWTProvider,
-	hasher Hasher,
+	hasher hasher,
 	emailProvider emailc.EmailProvider,
+	redis common.RedisComponent,
 ) *business {
 	return &business{
-		authRepository: authRepository,
-		userRepository: userRepository,
-		jwtProvider:    jwtProvider,
-		hasher:         hasher,
-		emailProvider:  emailProvider,
+		authRepository:  authRepository,
+		userBusiness:    userBusiness,
+		walletBusiness:  walletBusiness,
+		auditRepository: auditRepository,
+		jwtProvider:     jwtProvider,
+		hasher:          hasher,
+		emailProvider:   emailProvider,
+		redis:           redis,
 	}
 }

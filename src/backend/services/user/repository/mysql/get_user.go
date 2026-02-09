@@ -3,23 +3,23 @@ package mysql
 import (
 	"context"
 	"errors"
+	"tradeplay/common"
 	authEntity "tradeplay/services/auth/entity"
 	userEntity "tradeplay/services/user/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"gorm.io/gorm"
 )
 
-func (repo *mysqlRepo) GetUserByID(ctx context.Context, id int) (*userEntity.User, error) {
+func (repo *mysqlRepo) GetUserByID(ctx context.Context, id int32) (*userEntity.User, error) {
 	var data userEntity.User
 
 	if err := repo.db.Table(data.TableName()).
 		Where("id = ?", id).
 		First(&data).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, core.ErrEntityNotFound(data.TableName(), err)
+			return nil, common.ErrEntityNotFound(data.TableName(), err)
 		}
-		return nil, core.ErrDB(err)
+		return nil, common.ErrDB(err)
 	}
 	var email string
 	authTmp := new(authEntity.Auth)

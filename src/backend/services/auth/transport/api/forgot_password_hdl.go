@@ -5,17 +5,16 @@ import (
 	"tradeplay/common"
 	"tradeplay/services/auth/entity"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) ForgotPasswordHandler() func(*gin.Context) {
+func (api *api) ForgotPasswordHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var data struct {
 			Email string `json:"email"`
 		}
 		if err := c.ShouldBindJSON(&data); err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
@@ -23,15 +22,15 @@ func (api *api) ForgotPasswordHandler() func(*gin.Context) {
 			common.WriteErrorResponse(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, core.ResponseData(true))
+		c.JSON(http.StatusOK, common.ResponseData(true))
 	}
 }
 
-func (api *api) ResetPasswordHandler() func(*gin.Context) {
+func (api *api) ResetPasswordHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var data entity.ResetPasswordData
 		if err := c.ShouldBindJSON(&data); err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
@@ -39,6 +38,6 @@ func (api *api) ResetPasswordHandler() func(*gin.Context) {
 			common.WriteErrorResponse(c, err)
 			return
 		}
-		c.JSON(http.StatusOK, core.ResponseData(true))
+		c.JSON(http.StatusOK, common.ResponseData(true))
 	}
 }

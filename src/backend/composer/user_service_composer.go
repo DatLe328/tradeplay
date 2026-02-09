@@ -6,21 +6,24 @@ import (
 	"tradeplay/services/user/repository/mysql"
 	"tradeplay/services/user/transport/api"
 
-	sctx "github.com/DatLe328/service-context"
+	sctx "tradeplay/components/service-context"
+
 	"github.com/gin-gonic/gin"
 )
 
 type UserService interface {
-	GetUserProfileHandler() func(*gin.Context)
-	PatchUserProfileHandler() func(*gin.Context)
+	GetUserProfileHandler() gin.HandlerFunc
+	PatchUserProfileHandler() gin.HandlerFunc
 }
 
 func ComposeUserAPIService(serviceCtx sctx.ServiceContext) UserService {
 	db := serviceCtx.MustGet(common.KeyCompMySQL).(common.GormComponent)
 
-	useRepo := mysql.NewMySQLRepository(db.GetDB())
-	biz := business.NewUserBusiness(useRepo)
-	userService := api.NewUserAPI(biz)
+	userRepository := mysql.NewMySQLRepository(db.GetDB())
+
+	userBusiness := business.NewUserBusiness(userRepository)
+
+	userService := api.NewUserAPI(userBusiness)
 
 	return userService
 }

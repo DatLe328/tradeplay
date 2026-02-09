@@ -2,90 +2,126 @@ package business
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"time"
 	"tradeplay/common"
+	auditEntity "tradeplay/services/audit/entity"
 	"tradeplay/services/auth/entity"
 	authEntity "tradeplay/services/auth/entity"
 	userEntity "tradeplay/services/user/entity"
-
-	"github.com/DatLe328/service-context/core"
 )
 
-func (biz *business) Register(ctx context.Context, data *authEntity.AuthRegister) error {
+func (biz *business) Register(ctx context.Context, data *authEntity.AuthRegisterDTO) error {
 	if err := data.Validate(); err != nil {
-		return core.ErrInvalidRequest(err)
+		return common.ErrInvalidRequest(err)
 	}
 
-	auth, err := biz.authRepository.GetAuth(ctx, data.Email)
+	salt, err := common.GenSalt(common.DefaultSaltLength)
+	if err != nil {
+		return common.ErrInternal(err)
+	}
+	hashedPassword, err := biz.hasher.HashPassword(salt, data.Password)
+	if err != nil {
+		return common.ErrInternal(err)
+	}
 
-	if err == nil {
-		if auth.Status != authEntity.AuthStatusInactive {
-			return core.ErrInvalidRequest(authEntity.ErrEmailHasExisted)
+	authEmail, err := biz.authRepository.GetAuthByEmailAndType(ctx, data.Email, entity.AuthTypeEmailPassword)
+	var userID int32
+
+	if err == nil && authEmail != nil {
+		if authEmail.Status == authEntity.AuthStatusVerified || authEmail.Status == authEntity.AuthStatusSuspended {
+			biz.auditRepository.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+				Action:     common.ActionRegisterFailed,
+				Payload:    auditEntity.JSONMap{"email": data.Email},
+				StatusCode: 400,
+				ErrorMsg:   "Email already exists",
+				Method:     "POST",
+				Path:       "/auth/register",
+			})
+			return common.ErrInvalidRequest(authEntity.ErrEmailHasExisted)
 		}
 
-		salt, err := core.GenSalt(16)
-		if err != nil {
-			return core.ErrInternal(err)
-		}
-		hashedPassword, err := biz.hasher.HashPassword(salt, data.Password)
-		if err != nil {
-			return core.ErrInternal(err)
+		authEmail.Password = &hashedPassword
+		authEmail.Salt = &salt
+		if err := biz.authRepository.UpdateAuth(ctx, authEmail); err != nil {
+			return common.ErrInternal(err)
 		}
 
-		auth.Password = &hashedPassword
-		auth.Salt = &salt
-
-		if err := biz.authRepository.UpdateAuth(ctx, auth); err != nil {
-			return core.ErrInternal(err)
-		}
 	} else {
-		dto := userEntity.NewUserForCreation(data.FirstName, data.LastName)
-		userId, err := biz.userRepository.CreateUser(ctx, dto)
-		if err != nil {
-			return core.ErrInternal(err)
+		authGoogle, errG := biz.authRepository.GetAuthByEmailAndType(ctx, data.Email, entity.AuthTypeGoogle)
+
+		if errG == nil && authGoogle != nil {
+			userID = authGoogle.UserID
+		} else {
+			dto := userEntity.NewUserCreateDTO(data.FirstName, data.LastName)
+			newUserId, err := biz.userBusiness.CreateUser(ctx, dto)
+			if err != nil {
+				return common.ErrInternal(err)
+			}
+			userID = newUserId
+
+			if errCreate := biz.walletBusiness.CreateWallet(ctx, userID); errCreate != nil {
+				biz.auditRepository.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+					UserId:     userID,
+					Action:     common.ActionCreateWalletFailed,
+					StatusCode: 500,
+					ErrorMsg:   errCreate.Error(),
+					Method:     "POST",
+				})
+				log.Printf("[WARNING] Register: Failed to create wallet for user %d: %v\n", userID, errCreate)
+			}
 		}
 
-		salt, err := core.GenSalt(16)
-		if err != nil {
-			return core.ErrInternal(err)
-		}
+		newAuth := authEntity.NewAuthWithEmailPassword(userID, data.Email, hashedPassword, salt)
+		newAuth.Status = authEntity.AuthStatusUnverified
 
-		hashedPassword, err := biz.hasher.HashPassword(salt, data.Password)
-		if err != nil {
-			return core.ErrInternal(err)
-		}
-
-		newAuth := authEntity.NewAuthWithEmailPassword(userId, data.Email, hashedPassword, salt)
-		newAuth.Status = authEntity.AuthStatusInactive
-
-		if err := biz.authRepository.AddAuth(ctx, newAuth); err != nil {
-			return core.ErrInternal(err)
+		if err := biz.authRepository.CreateAuth(ctx, newAuth); err != nil {
+			return common.ErrInternal(err)
 		}
 	}
 
 	otp, err := common.GenOTP(6)
 	if err != nil {
-		return core.ErrInternal(err)
+		return common.ErrInternal(err)
 	}
 
-	verifyCode := &authEntity.VerifyCode{
-		SQLModel:  core.NewSQLModel(),
-		Email:     data.Email,
-		Code:      otp,
-		Type:      entity.RegisterVerify,
-		ExpiredAt: time.Now().Add(15 * time.Minute),
-	}
+	verifyCode := authEntity.NewVerifyCode(
+		data.Email,
+		otp,
+		authEntity.RegisterVerify,
+		time.Now().Add(5*time.Minute),
+	)
 
 	if err := biz.authRepository.CreateVerifyCode(ctx, verifyCode); err != nil {
-		return core.ErrInternal(err)
+		return common.ErrInternal(err)
+	}
+	biz.auditRepository.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+		UserId:     userID,
+		Action:     common.ActionRegisterSuccess,
+		Payload:    auditEntity.JSONMap{"email": data.Email, "first_name": data.FirstName},
+		StatusCode: 201,
+		Method:     "POST",
+		Path:       "/auth/register",
+	})
+
+	notificationPayload := map[string]interface{}{
+		"type":      "REGISTER_OTP",
+		"email":     data.Email,
+		"otp_code":  otp,
+		"subject":   "Mã xác thực tài khoản TienCoTruong",
+		"timestamp": time.Now().Unix(),
 	}
 
-	go func() {
-		subject := "Mã xác thực tài khoản TradePlay"
-		content := fmt.Sprintf("<h1>Xin chào,</h1><p>Mã xác thực của bạn là: <b style='font-size: 20px'>%s</b></p><p>Mã có hiệu lực trong 15 phút.</p>", otp)
-		_ = biz.emailProvider.SendEmail([]string{data.Email}, subject, content)
-	}()
+	if err := biz.redis.Produce(ctx, "notification_stream", notificationPayload); err != nil {
+		biz.auditRepository.PushAuditLog(context.Background(), &auditEntity.AuditLog{
+			UserId:     userID,
+			Action:     common.ActionPushNotificationFailed,
+			StatusCode: 500,
+			ErrorMsg:   err.Error(),
+			Method:     "POST",
+		})
+		log.Printf("[ERROR] Failed to push notification to Redis Stream: %v", err)
+	}
 
 	return nil
 }

@@ -5,17 +5,18 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"tradeplay/common"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type AuthClient interface {
 	IntrospectToken(ctx context.Context, accessToken string) (*jwt.RegisteredClaims, error)
+	IsTokenRevoked(ctx context.Context, tokenID string) bool
 }
 
-func RequireAuth(ac AuthClient) func(*gin.Context) {
+func RequireAuth(ac AuthClient) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token, err := extractTokenFromHeaderString(c.GetHeader("Authorization"))
 
@@ -28,20 +29,25 @@ func RequireAuth(ac AuthClient) func(*gin.Context) {
 		}
 
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, core.ErrUnauthorized(err, "missing access token", "unauthorized"))
+			c.AbortWithStatusJSON(http.StatusUnauthorized, common.ErrUnauthorized(err, "missing access token"))
 			return
 		}
 
 		claims, err := ac.IntrospectToken(c.Request.Context(), token)
 		if err != nil {
-			c.AbortWithStatusJSON(http.StatusUnauthorized, core.ErrUnauthorized(err, err.Error(), "unauthorized"))
+			c.AbortWithStatusJSON(http.StatusUnauthorized, common.ErrUnauthorized(err, err.Error()))
+			return
+		}
+
+		if ac.IsTokenRevoked(c.Request.Context(), claims.ID) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, common.ErrUnauthorized(errors.New("token revoked"), "token is no longer valid"))
 			return
 		}
 
 		sub := claims.Subject
 		tid := claims.ID
 
-		c.Set(core.KeyRequester, core.NewRequester(sub, tid))
+		c.Set(common.KeyRequester, common.NewRequester(sub, tid))
 		c.Next()
 	}
 }

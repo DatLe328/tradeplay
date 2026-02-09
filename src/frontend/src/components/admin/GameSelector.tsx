@@ -7,16 +7,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { getAvailableGames } from '@/types/gameSchemas';
+import { GameList } from '@/constants/enums'; 
 
 interface GameSelectorProps {
   value: string;
-  onChange: (gameName: string) => void;
+  onChange: (categoryId: string) => void;
   disabled?: boolean;
 }
 
 export function GameSelector({ value, onChange, disabled }: GameSelectorProps) {
-  const availableGames = getAvailableGames();
 
   return (
     <div className="space-y-2">
@@ -24,14 +23,15 @@ export function GameSelector({ value, onChange, disabled }: GameSelectorProps) {
         <Gamepad2 className="h-4 w-4 text-primary" />
         Chọn Game <span className="text-destructive">*</span>
       </Label>
+      
       <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Chọn game..." />
         </SelectTrigger>
         <SelectContent>
-          {availableGames.map((game) => (
-            <SelectItem key={game} value={game}>
-              {game}
+          {GameList.map((game) => (
+            <SelectItem key={game.id} value={game.id.toString()}>
+              {game.name}
             </SelectItem>
           ))}
         </SelectContent>

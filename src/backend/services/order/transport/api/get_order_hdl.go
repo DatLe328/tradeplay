@@ -6,33 +6,32 @@ import (
 	"net/http"
 	"tradeplay/common"
 
-	"github.com/DatLe328/service-context/core"
 	"github.com/gin-gonic/gin"
 )
 
-func (api *api) GetOrderHandler() func(*gin.Context) {
+func (api *api) GetOrderHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uidStr := c.Param("id")
-		uid, err := core.FromBase58(uidStr)
+		uid, err := common.FromBase58(uidStr)
 		if err != nil {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(err))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 		id := int(uid.GetLocalID())
 
-		requester, exists := c.Get(core.KeyRequester)
+		requester, exists := c.Get(common.KeyRequester)
 		if !exists {
-			common.WriteErrorResponse(c, core.ErrInvalidRequest(errors.New("unthorized")))
+			common.WriteErrorResponse(c, common.ErrInvalidRequest(errors.New("unthorized")))
 			return
 		}
-		ctx := context.WithValue(c.Request.Context(), core.KeyRequester, requester)
+		ctx := context.WithValue(c.Request.Context(), common.KeyRequester, requester)
 
-		data, err := api.business.GetOrder(ctx, id)
+		data, err := api.business.GetOrder(ctx, int32(id))
 		if err != nil {
 			common.WriteErrorResponse(c, err)
 			return
 		}
 
-		c.JSON(http.StatusOK, core.ResponseData(data))
+		c.JSON(http.StatusOK, common.ResponseData(data))
 	}
 }

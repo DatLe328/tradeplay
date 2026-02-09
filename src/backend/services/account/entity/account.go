@@ -2,49 +2,50 @@ package entity
 
 import (
 	"tradeplay/common"
-
-	"github.com/DatLe328/service-context/core"
 )
 
-type AccountStatus string
+type AccountStatus int
 
 const (
-	AccountStatusAvailable AccountStatus = "available"
-	AccountStatusReserved  AccountStatus = "reserved"
-	AccountStatusSold      AccountStatus = "sold"
-	AccountStatusDeleted   AccountStatus = "deleted"
+	AccountStatusDraft AccountStatus = iota
+	AccountStatusAvailable
+	AccountStatusReserved
+	AccountStatusSold
+	AccountStatusDeleted
 )
 
 type Account struct {
-	core.SQLModel
-	OwnerId int              `json:"-" gorm:"column:owner_id;"`
-	User    *core.SimpleUser `json:"user" gorm:"preload:false;foreignKey:OwnerId"`
-	FakeId  int              `json:"id" gorm:"-"`
+	common.SQLModel
+	OwnerId int32              `json:"-" gorm:"column:owner_id;"`
+	User    *common.SimpleUser `json:"user" gorm:"preload:false;foreignKey:OwnerId"`
 
-	GameName      string   `json:"game_name" gorm:"column:game_name"`
-	Title         string   `json:"title" gorm:"column:title"`
-	Description   string   `json:"description" gorm:"column:description;type:text"`
-	Price         float64  `json:"price" gorm:"column:price"`
-	OriginalPrice *float64 `json:"original_price" gorm:"column:original_price"`
-	Thumbnail     string   `json:"thumbnail" gorm:"column:thumbnail"`
+	CategoryId int32     `json:"category_id" gorm:"column:category_id;"`
+	Category   *Category `json:"category" gorm:"foreignKey:CategoryId"`
 
-	Images []string `json:"images" gorm:"column:images;type:json;serializer:json"`
+	FakeId        int32  `json:"id" gorm:"-"`
+	Title         string `json:"title" gorm:"column:title"`
+	Description   string `json:"description" gorm:"column:description;type:text"`
+	Price         int64  `json:"price" gorm:"column:price"`
+	OriginalPrice *int64 `json:"original_price" gorm:"column:original_price"`
+	Thumbnail     string `json:"thumbnail" gorm:"column:thumbnail"`
 
-	Rank       string                 `json:"rank" gorm:"column:rank"`
-	Level      int                    `json:"level" gorm:"column:level"`
-	Server     string                 `json:"server" gorm:"column:server"`
+	Images []string `json:"images" gorm:"column:images;serializer:json"`
+
 	Attributes map[string]interface{} `json:"attributes" gorm:"column:attributes;type:json;serializer:json"`
 	Features   []string               `json:"features" gorm:"column:features;type:json;serializer:json"`
 
-	Status AccountStatus `json:"status" gorm:"column:status;type:enum('available','reserved','sold','deleted');default:'available';index"`
+	Status    AccountStatus `json:"status" gorm:"column:status;default:0;index"`
+	ViewCount int           `json:"view_count" gorm:"column:view_count;default:0"`
+
+	Version int `json:"version" gorm:"column:version;default:0"`
+
+	Info *AccountInfo `json:"info,omitempty" gorm:"foreignKey:AccountId"`
 }
 
 func (Account) TableName() string { return "accounts" }
 
 func (a *Account) Mask() {
-	// a.FakeId = common.MaskID(a.Id, common.AccountIdOffset)
-	a.FakeId = a.Id
-
+	a.FakeId = a.ID
 	if a.User != nil {
 		a.User.Mask(common.MaskTypeUser)
 	}
