@@ -28,3 +28,11 @@ coverage
 .DS_Store
 *.log
 README.md
+
+# Test files
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+src/test
+vitest.config.ts
