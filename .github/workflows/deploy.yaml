@@ -32,7 +32,9 @@ jobs:
           context: ./src/backend
           file: ./src/backend/Dockerfile
           push: true
-          tags: ${{ env.BACKEND_IMAGE }}:production
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
           cache-from: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache
           cache-to: type=inline
 
@@ -42,7 +44,9 @@ jobs:
           context: ./src/frontend
           file: ./src/frontend/Dockerfile
           push: true
-          tags: ${{ env.FRONTEND_IMAGE }}:production
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
           cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE }}:buildcache
           cache-to: type=inline
 
