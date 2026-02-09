@@ -1,0 +1,129 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: tradeplay-mysql
+    restart: unless-stopped
+    ports:
+      - "1705:3306"
+    env_file:
+      - .env.development
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ../../src/backend/database/migrations/004_init.sql:/docker-entrypoint-initdb.d/init.sql
+    command:
+      - --innodb-buffer-pool-size=256M
+      - --innodb-log-buffer-size=8M
+      - --max-connections=30
+      - --thread-cache-size=8
+      - --table-open-cache=200
+      - --performance-schema=OFF
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p12345"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - tradeplay-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.4"
+          memory: 270M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:alpine
+    container_name: tradeplay-redis
+    restart: unless-stopped
+    command: /bin/sh -c "redis-server --requirepass $$REDIS_PASS"
+    env_file:
+      - .env.development
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - tradeplay-network
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 50M
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "$$REDIS_PASS", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  tradeplay-backend:
+    image: tradeplay-backend:staging
+    container_name: tradeplay-backend
+    ports:
+      - "8090:8090"
+    env_file:
+      - .env.development
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - tradeplay-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.4"
+          memory: 100M
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  tradeplay-frontend:
+    image: tradeplay-frontend:staging
+    container_name: tradeplay-frontend
+    networks:
+      - tradeplay-network
+    depends_on:
+      - tradeplay-backend
+    restart: unless-stopped
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: tradeplay-tunnel
+    restart: unless-stopped
+    command: >
+      tunnel run
+    env_file:
+      - .env.development
+    networks:
+      - tradeplay-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  tradeplay-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.24.0.0/16
+          gateway: 172.24.0.1
