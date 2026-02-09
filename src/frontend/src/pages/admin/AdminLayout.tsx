@@ -6,7 +6,6 @@ import {
 	ChevronLeft,
 	Moon,
 	Sun,
-	ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/authStore";
