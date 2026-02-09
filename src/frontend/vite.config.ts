@@ -36,6 +36,7 @@ export default defineConfig(({ mode }) => {
 			allowedHosts: [
 				"test.tadeldev.site",
 				"tiencotruong.com",
+				"test.tiencotruong.com",
 				"staging.tadeldev.site",
 			],
 		},
