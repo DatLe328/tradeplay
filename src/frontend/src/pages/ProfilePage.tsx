@@ -80,21 +80,21 @@ export default function ProfilePage() {
 				phone_number: phoneNumber,
 			});
 			toast({
-				title: t("updateSuccess"),
-				description: t("updateSuccessDesc"),
+				title: t("profilePage.updateSuccess"),
+				description: t("profilePage.updateSuccessDesc"),
 			});
 		} catch (error: any) {
 			const msg = (error.message || "").toLowerCase();
-			let description = t("genericError");
+			let description = t("profilePage.genericError");
 
 			if (msg.includes("phone")) {
-				description = t("invalidPhone");
+				description = t("profilePage.invalidPhone");
 			} else if (msg.includes("name")) {
-				description = t("invalidName");
+				description = t("profilePage.invalidName");
 			}
 
 			toast({
-				title: t("updateError"),
+				title: t("profilePage.updateError"),
 				description: description,
 				variant: "destructive",
 			});
@@ -108,16 +108,16 @@ export default function ProfilePage() {
 
 		if (newPassword.length < 8 || newPassword.length > 30) {
 			toast({
-				title: t("error"),
-				description: t("passwordLengthError"),
+				title: t("profilePage.error"),
+				description: t("profilePage.passwordLengthError"),
 				variant: "destructive",
 			});
 			return;
 		}
 		if (newPassword !== confirmPassword) {
 			toast({
-				title: t("error"),
-				description: t("passwordMatchError"),
+				title: t("profilePage.error"),
+				description: t("profilePage.passwordMatchError"),
 				variant: "destructive",
 			});
 			return;
@@ -128,8 +128,8 @@ export default function ProfilePage() {
 			await changePassword(oldPassword, newPassword);
 
 			toast({
-				title: t("success"),
-				description: t("changePasswordSuccess"),
+				title: t("profilePage.success"),
+				description: t("profilePage.changePasswordSuccess"),
 			});
 
 			setOldPassword("");
@@ -138,7 +138,7 @@ export default function ProfilePage() {
 			setIsPasswordDialogOpen(false);
 		} catch (error: any) {
 			const msg = (error.message || "").toLowerCase();
-			let description = t("genericError");
+			let description = t("profilePage.genericError");
 
 			if (
 				msg.includes("password") &&
@@ -146,17 +146,17 @@ export default function ProfilePage() {
 					msg.includes("incorrect") ||
 					msg.includes("invalid"))
 			) {
-				description = t("oldPasswordIncorrect");
+				description = t("profilePage.oldPasswordIncorrect");
 			} else if (msg.includes("too short") || msg.includes("min")) {
-				description = t("newPasswordTooShort");
+				description = t("profilePage.newPasswordTooShort");
 			} else if (msg.includes("too long") || msg.includes("max")) {
-				description = t("passwordLengthError");
+				description = t("profilePage.newPasswordTooLong");
 			} else if (msg.includes("same") || msg.includes("identical")) {
-				description = t("newPasswordSameAsOld");
+				description = t("profilePage.newPasswordSameAsOld");
 			}
 
 			toast({
-				title: t("changePasswordFailed"),
+				title: t("profilePage.changePasswordFailed"),
 				description: description,
 				variant: "destructive",
 			});
@@ -180,8 +180,7 @@ export default function ProfilePage() {
 						onClick={() => navigate(-1)}
 						className="mb-6 gap-2"
 					>
-						<ArrowLeft className="h-4 w-4" />{" "}
-						{t("back")}
+						<ArrowLeft className="h-4 w-4" /> {t("profilePage.back")}
 					</Button>
 
 					<Card className="border-2 border-primary/20 bg-card/50 backdrop-blur-sm shadow-xl">
@@ -190,10 +189,10 @@ export default function ProfilePage() {
 								<User className="h-12 w-12 text-primary" />
 							</div>
 							<CardTitle className="text-2xl font-gaming text-gradient uppercase tracking-wide">
-								{t("myProfile")}
+								{t("profilePage.myProfile")}
 							</CardTitle>
 							<CardDescription>
-								{t("manageProfile")}
+								{t("profilePage.manageProfile")}
 							</CardDescription>
 						</CardHeader>
 
@@ -209,7 +208,7 @@ export default function ProfilePage() {
 											className="flex items-center gap-2"
 										>
 											<Type className="h-4 w-4" />
-											{t("firstName")}
+											{t("profilePage.firstName")}
 										</Label>
 										<Input
 											id="firstName"
@@ -226,7 +225,7 @@ export default function ProfilePage() {
 											className="flex items-center gap-2"
 										>
 											<Type className="h-4 w-4" />
-											{t("lastName")}
+											{t("profilePage.lastName")}
 										</Label>
 										<Input
 											id="lastName"
@@ -245,7 +244,7 @@ export default function ProfilePage() {
 										className="flex items-center gap-2"
 									>
 										<Phone className="h-4 w-4" />
-										{t("phone")}
+										{t("profilePage.phone")}
 									</Label>
 									<Input
 										id="phone"
@@ -254,8 +253,8 @@ export default function ProfilePage() {
 											setPhoneNumber(
 												e.target.value.replace(
 													/[^0-9]/g,
-													""
-												)
+													"",
+												),
 											)
 										}
 										className="bg-background/50"
@@ -268,7 +267,7 @@ export default function ProfilePage() {
 										className="flex items-center gap-2"
 									>
 										<Mail className="h-4 w-4" />
-										{t("email")}
+										{t("profilePage.email")}
 									</Label>
 									<Input
 										id="email"
@@ -287,8 +286,8 @@ export default function ProfilePage() {
 									>
 										<Save className="h-4 w-4" />
 										{isProfileLoading
-											? t("saving")
-											: t("saveInfo")}
+											? t("profilePage.saving")
+											: t("profilePage.saveInfo")}
 									</Button>
 
 									<Dialog
@@ -302,16 +301,16 @@ export default function ProfilePage() {
 												className="flex-1 gap-2 border-primary/20 hover:bg-primary/5"
 											>
 												<KeyRound className="h-4 w-4" />
-												{t("changePassword")}
+												{t("profilePage.changePassword")}
 											</Button>
 										</DialogTrigger>
 										<DialogContent className="sm:max-w-[425px]">
 											<DialogHeader>
 												<DialogTitle>
-													{t("changePassword")}
+													{t("profilePage.changePassword")}
 												</DialogTitle>
 												<DialogDescription>
-													{t("manageProfile")}
+													{t("profilePage.manageProfile")}
 												</DialogDescription>
 											</DialogHeader>
 											<form
@@ -321,7 +320,7 @@ export default function ProfilePage() {
 												{/* Old password */}
 												<div className="space-y-2">
 													<Label htmlFor="oldPass">
-														{t("oldPassword")}
+														{t("profilePage.oldPassword")}
 													</Label>
 													<div className="relative">
 														<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -336,7 +335,7 @@ export default function ProfilePage() {
 															onChange={(e) =>
 																setOldPassword(
 																	e.target
-																		.value
+																		.value,
 																)
 															}
 															className="pl-10 pr-10"
@@ -346,7 +345,7 @@ export default function ProfilePage() {
 															type="button"
 															onClick={() =>
 																setShowOldPass(
-																	!showOldPass
+																	!showOldPass,
 																)
 															}
 															tabIndex={-1}
@@ -364,7 +363,7 @@ export default function ProfilePage() {
 												{/* New password */}
 												<div className="space-y-2">
 													<Label htmlFor="newPass">
-														{t("newPassword")}
+														{t("profilePage.newPassword")}
 													</Label>
 													<div className="relative">
 														<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -379,7 +378,7 @@ export default function ProfilePage() {
 															onChange={(e) =>
 																setNewPassword(
 																	e.target
-																		.value
+																		.value,
 																)
 															}
 															className="pl-10 pr-10"
@@ -391,7 +390,7 @@ export default function ProfilePage() {
 															type="button"
 															onClick={() =>
 																setShowNewPass(
-																	!showNewPass
+																	!showNewPass,
 																)
 															}
 															tabIndex={-1}
@@ -409,7 +408,9 @@ export default function ProfilePage() {
 												{/* Confirm password */}
 												<div className="space-y-2">
 													<Label htmlFor="confirmPass">
-														{t("confirmNewPassword")}
+														{t(
+															"profilePage.confirmNewPassword",
+														)}
 													</Label>
 													<div className="relative">
 														<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -426,7 +427,7 @@ export default function ProfilePage() {
 															onChange={(e) =>
 																setConfirmPassword(
 																	e.target
-																		.value
+																		.value,
 																)
 															}
 															className="pl-10 pr-10"
@@ -438,7 +439,7 @@ export default function ProfilePage() {
 															type="button"
 															onClick={() =>
 																setShowConfirmPass(
-																	!showConfirmPass
+																	!showConfirmPass,
 																)
 															}
 															tabIndex={-1}
@@ -459,11 +460,11 @@ export default function ProfilePage() {
 														variant="ghost"
 														onClick={() =>
 															setIsPasswordDialogOpen(
-																false
+																false,
 															)
 														}
 													>
-														{t("cancel")}
+														{t("profilePage.cancel")}
 													</Button>
 													<Button
 														type="submit"
@@ -472,8 +473,8 @@ export default function ProfilePage() {
 														}
 													>
 														{isPasswordLoading
-															? t("processing")
-															: t("confirm")}
+															? t("profilePage.processing")
+															: t("profilePage.confirm")}
 													</Button>
 												</div>
 											</form>

@@ -22,39 +22,39 @@ export default function GuidePage() {
 		{
 			step: 1,
 			icon: Search,
-			title: t("step1Title"),
-			description: t("step1Desc"),
-			tips: tArray("step1Tips"),
+			title: t("guidePage.step1Title"),
+			description: t("guidePage.step1Desc"),
+			tips: tArray("guidePage.step1Tips"),
 		},
 		{
 			step: 2,
 			icon: MousePointer,
-			title: t("step2Title"),
-			description: t("step2Desc"),
-			tips: tArray("step2Tips"),
+			title: t("guidePage.step2Title"),
+			description: t("guidePage.step2Desc"),
+			tips: tArray("guidePage.step2Tips"),
 		},
 		{
 			step: 3,
 			icon: CreditCard,
-			title: t("step3Title"),
-			description: t("step3Desc"),
-			tips: tArray("step3Tips"),
+			title: t("guidePage.step3Title"),
+			description: t("guidePage.step3Desc"),
+			tips: tArray("guidePage.step3Tips"),
 		},
 		{
 			step: 4,
 			icon: CheckCircle,
-			title: t("step4Title"),
-			description: t("step4Desc"),
-			tips: tArray("step4Tips"),
+			title: t("guidePage.step4Title"),
+			description: t("guidePage.step4Desc"),
+			tips: tArray("guidePage.step4Tips"),
 		},
 	];
 
 	const paymentMethods = [
 		{
-			name: t("bankTransfer"),
-			description: t("bankTransferDesc"),
+			name: t("guidePage.bankTransfer"),
+			description: t("guidePage.bankTransferDesc"),
 		},
-		{ name: t("momo"), description: t("momoDesc") },
+		{ name: t("guidePage.momo"), description: t("guidePage.momoDesc") },
 	];
 
 	return (
@@ -72,13 +72,13 @@ export default function GuidePage() {
 				>
 					<Badge className="mb-4 bg-primary/20 text-primary border-primary/30">
 						<Sparkles className="h-3 w-3 mr-1" />
-						{t("guideHeader")}
+						{t("guidePage.guideHeader")}
 					</Badge>
 					<h1 className="text-3xl md:text-4xl font-gaming font-bold text-gradient mb-4">
-						{t("guideTitle")}
+						{t("guidePage.guideTitle")}
 					</h1>
 					<p className="text-muted-foreground max-w-2xl mx-auto">
-						{t("guideDesc")}
+						{t("guidePage.guideDesc")}
 					</p>
 				</motion.div>
 
@@ -106,7 +106,7 @@ export default function GuidePage() {
 													variant="outline"
 													className="bg-primary/10 text-primary border-primary/30"
 												>
-													{t("step")} {item.step}
+													{t("guidePage.step")} {item.step}
 												</Badge>
 											</div>
 											<CardTitle className="text-xl font-gaming">
@@ -122,7 +122,7 @@ export default function GuidePage() {
 									{item.tips && item.tips.length > 0 && (
 										<div className="bg-muted/50 rounded-xl p-4">
 											<p className="text-sm font-medium mb-2 flex items-center gap-2">
-												{t("tips")}
+												{t("guidePage.tips")}
 											</p>
 											<ul className="space-y-1">
 												{item.tips.map((tip, i) => (
@@ -154,7 +154,7 @@ export default function GuidePage() {
 					<Card className="border-2 border-primary/20">
 						<CardHeader>
 							<CardTitle className="text-xl font-gaming flex items-center gap-2">
-								{t("paymentMethods")}
+								{t("guidePage.paymentMethods")}
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -197,20 +197,20 @@ export default function GuidePage() {
 								</div>
 								<div className="flex-1">
 									<h3 className="text-lg font-gaming font-bold mb-2">
-										{t("needSupport")}
+										{t("guidePage.needSupport")}
 									</h3>
 									<p className="text-muted-foreground text-sm">
-										{t("supportDesc")}
+										{t("guidePage.supportDesc")}
 									</p>
 								</div>
 								<div className="flex gap-2">
 									<Badge className="bg-primary/20 text-primary border-primary/30">
 										<Clock className="h-3 w-3 mr-1" />
-										{t("support247")}
+										{t("guidePage.support247")}
 									</Badge>
 									<Badge className="bg-green-500/20 text-green-600 border-green-500/30">
 										<ShieldCheck className="h-3 w-3 mr-1" />
-										{t("reliable")}
+										{t("guidePage.reliable")}
 									</Badge>
 								</div>
 							</div>

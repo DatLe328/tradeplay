@@ -42,7 +42,7 @@ export default function AuthPage() {
 	useEffect(() => {
 		localStorage.removeItem("auth-storage");
 		localStorage.removeItem("lastActivity");
-        localStorage.removeItem("csrf_token"); 
+		localStorage.removeItem("csrf_token");
 	}, []);
 
 	const handleGoogleLogin = () => {
@@ -63,7 +63,7 @@ export default function AuthPage() {
 		if (!isDev && !captchaToken) {
 			toast({
 				title: "Xác thực thất bại",
-				description: t("captchaError"),
+				description: t("authPage.captchaError"),
 				variant: "destructive",
 			});
 			return;
@@ -94,18 +94,18 @@ export default function AuthPage() {
 				const success = await login(
 					formData.email,
 					formData.password,
-					captchaToken
+					captchaToken,
 				);
 				if (success) {
 					toast({
-						title: t("loginSuccess"),
-						description: t("welcomeBack"),
+						title: t("authPage.loginSuccess"),
+						description: t("authPage.welcomeBack"),
 					});
 					navigate("/");
 				} else {
 					toast({
-						title: t("loginFailed"),
-						description: t("wrongCredentials"),
+						title: t("authPage.loginFailed"),
+						description: t("authPage.wrongCredentials"),
 						variant: "destructive",
 					});
 					setCaptchaToken("");
@@ -117,20 +117,20 @@ export default function AuthPage() {
 					formData.password,
 					formData.firstName,
 					formData.lastName,
-					captchaToken
+					captchaToken,
 				);
 				if (success) {
 					toast({
-						title: t("registerSuccess"),
-						description: t("accountCreated"),
+						title: t("authPage.registerSuccess"),
+						description: t("authPage.accountCreated"),
 					});
 					navigate("/verify-email", {
 						state: { email: formData.email },
 					});
 				} else {
 					toast({
-						title: t("registerFailed"),
-						description: t("emailUsed"),
+						title: t("authPage.registerFailed"),
+						description: t("authPage.emailUsed"),
 						variant: "destructive",
 					});
 					setCaptchaToken("");
@@ -157,7 +157,7 @@ export default function AuthPage() {
 					className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
 				>
 					<ArrowLeft className="h-4 w-4" />
-					{t("backToHome")}
+					{t("authPage.backToHome")}
 				</Link>
 
 				<div className="p-8 rounded-2xl bg-card border border-border shadow-lg">
@@ -171,10 +171,10 @@ export default function AuthPage() {
 							</div>
 						</Link>
 						<h1 className="font-gaming text-2xl font-bold">
-							{isLogin ? t("loginTitle") : t("registerTitle")}
+							{isLogin ? t("authPage.loginTitle") : t("authPage.registerTitle")}
 						</h1>
 						<p className="text-muted-foreground mt-2">
-							{isLogin ? t("loginDesc") : t("registerDesc")}
+							{isLogin ? t("authPage.loginDesc") : t("authPage.registerDesc")}
 						</p>
 					</div>
 
@@ -183,14 +183,14 @@ export default function AuthPage() {
 							<div className="grid grid-cols-2 gap-4">
 								<div className="space-y-2">
 									<Label htmlFor="firstName">
-										{t("firstName")}
+										{t("authPage.firstName")}
 									</Label>
 									<div className="relative">
 										<Type className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 										<Input
 											id="firstName"
 											type="text"
-											placeholder="Nguyễn"
+											placeholder={t("authPage.firstNamePlaceholder")}
 											value={formData.firstName}
 											onChange={(e) =>
 												setFormData({
@@ -206,14 +206,14 @@ export default function AuthPage() {
 								</div>
 								<div className="space-y-2">
 									<Label htmlFor="lastName">
-										{t("lastName")}
+										{t("authPage.lastName")}
 									</Label>
 									<div className="relative">
 										<Type className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 										<Input
 											id="lastName"
 											type="text"
-											placeholder="Văn A"
+											placeholder={t("authPage.lastNamePlaceholder")}
 											value={formData.lastName}
 											onChange={(e) =>
 												setFormData({
@@ -230,7 +230,7 @@ export default function AuthPage() {
 						)}
 
 						<div className="space-y-2">
-							<Label htmlFor="email">Email</Label>
+							<Label htmlFor="email">{t("authPage.email")}</Label>
 							<div className="relative">
 								<Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 								<Input
@@ -253,14 +253,14 @@ export default function AuthPage() {
 
 						<div className="space-y-2">
 							<Label htmlFor="password">
-								{t("enterPassword")}
+								{t("authPage.enterPassword")}
 							</Label>
 							<div className="relative">
 								<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 								<Input
 									id="password"
 									type={showPassword ? "text" : "password"}
-									placeholder={t('enterPassword')}
+									placeholder={t("authPage.enterPassword")}
 									value={formData.password}
 									onChange={(e) =>
 										setFormData({
@@ -293,7 +293,7 @@ export default function AuthPage() {
 						{!isLogin && (
 							<div className="space-y-2">
 								<Label htmlFor="confirmPassword">
-									{t("confirmPassword")}
+									{t("authPage.confirmPassword")}
 								</Label>
 								<div className="relative">
 									<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -304,7 +304,7 @@ export default function AuthPage() {
 												? "text"
 												: "password"
 										}
-										placeholder={t("confirmPassword")}
+										placeholder={t("authPage.confirmPassword")}
 										value={formData.confirmPassword}
 										onChange={(e) =>
 											setFormData({
@@ -321,7 +321,7 @@ export default function AuthPage() {
 										type="button"
 										onClick={() =>
 											setShowConfirmPassword(
-												!showConfirmPassword
+												!showConfirmPassword,
 											)
 										}
 										tabIndex={-1}
@@ -359,10 +359,10 @@ export default function AuthPage() {
 							disabled={isLoading}
 						>
 							{isLoading
-								? t("processing")
+								? t("authPage.processing")
 								: isLogin
-								? t("loginTitle")
-								: t("registerTitle")}
+									? t("authPage.loginTitle")
+									: t("authPage.registerTitle")}
 						</Button>
 					</form>
 
@@ -373,7 +373,7 @@ export default function AuthPage() {
 								to="/forgot-password"
 								className="text-sm text-primary hover:underline"
 							>
-								{t('forgotPassword')}
+								{t("authPage.forgotPassword")}
 							</Link>
 						</div>
 					)}
@@ -384,7 +384,7 @@ export default function AuthPage() {
 							</div>
 							<div className="relative flex justify-center text-xs uppercase">
 								<span className="bg-background px-2 text-muted-foreground">
-									{t('orContinueWith')}
+									{t("authPage.orContinueWith")}
 								</span>
 							</div>
 						</div>
@@ -419,13 +419,13 @@ export default function AuthPage() {
 
 					<div className="mt-6 text-center">
 						<p className="text-muted-foreground">
-							{isLogin ? t('noAccount') : t('hasAccount')}
+							{isLogin ? t("authPage.noAccount") : t("authPage.hasAccount")}
 							<button
 								type="button"
 								onClick={toggleMode}
 								className="text-primary font-semibold ml-2 hover:underline"
 							>
-								{isLogin ? t('registerNow') : t('loginTitle')}
+								{isLogin ? t("authPage.registerNow") : t("authPage.loginTitle")}
 							</button>
 						</p>
 					</div>

@@ -3,6 +3,7 @@ package gormc
 import (
 	"os"
 	"testing"
+
 	sctx "tradeplay/components/service-context"
 )
 
@@ -59,5 +60,34 @@ func TestGormDB_InsertFind_Success(t *testing.T) {
 	var found TestUser
 	if err := db.First(&found, "name = ?", "dat").Error; err != nil {
 		t.Fatal(err)
+	}
+}
+
+func Test_gormDB_Activate(t *testing.T) {
+	tests := []struct {
+		name string // description of this test case
+		// Named input parameters for receiver constructor.
+		id     string
+		prefix string
+		// Named input parameters for target function.
+		serviceCtx sctx.ServiceContext
+		wantErr    bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gdb := NewGormDB(tt.id, tt.prefix)
+			gotErr := gdb.Activate(tt.serviceCtx)
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("Activate() failed: %v", gotErr)
+				}
+				return
+			}
+			if tt.wantErr {
+				t.Fatal("Activate() succeeded unexpectedly")
+			}
+		})
 	}
 }

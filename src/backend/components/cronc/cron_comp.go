@@ -9,7 +9,7 @@ import (
 
 	sctx "tradeplay/components/service-context"
 
-	"tradeplay/components/service-context/logger"
+	"tradeplay/components/logger"
 
 	"github.com/robfig/cron/v3"
 	"gorm.io/gorm"

@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 	"tradeplay/common"
+	sctx "tradeplay/components/service-context"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,9 +20,9 @@ type turnstileResponse struct {
 	ErrorCodes  []string `json:"error-codes"`
 }
 
-func VerifyTurnstile() gin.HandlerFunc {
+func VerifyTurnstile(serviceCtx sctx.ServiceContext) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if os.Getenv("APP_ENV") == "dev" {
+		if serviceCtx.EnvName() == sctx.DevEnv {
 			c.Next()
 			return
 		}

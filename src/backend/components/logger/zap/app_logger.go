@@ -3,7 +3,7 @@ package zaplogger
 import (
 	"errors"
 	"flag"
-	"tradeplay/components/service-context/logger"
+	"tradeplay/components/logger"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"

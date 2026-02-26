@@ -1,0 +1,32 @@
+basePath: /v1
+host: localhost:8080
+info:
+  contact:
+    email: support@tradeplay.com
+    name: API Support
+  description: TradePlay API Documentation
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: TradePlay API
+  version: "1.0"
+paths:
+  /v1/user/me:
+    get:
+      consumes:
+      - application/json
+      description: Trả về thông tin chi tiết của user đang đăng nhập
+      produces:
+      - application/json
+      responses: {}
+      summary: Lấy thông tin cá nhân
+      tags:
+      - user
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

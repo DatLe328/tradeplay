@@ -1,4 +1,4 @@
-import { Sparkles, Mail, Phone, MapPin, Heart } from "lucide-react";
+import { Sparkles, Instagram, Phone, MapPin, Heart } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "@/stores/languageStore";
 
@@ -19,14 +19,14 @@ export function Footer() {
 							</span>
 						</Link>
 						<p className="text-sm text-muted-foreground">
-							{t("footerDesc")}
+							{t("footer.description")}
 						</p>
 					</div>
 
 					{/* Quick Links */}
 					<div className="space-y-4">
 						<h4 className="font-gaming font-semibold text-foreground flex items-center gap-2">
-							{t("quickLinks")}
+							{t("footer.quickLinks")}
 						</h4>
 						<ul className="space-y-2">
 							<li>
@@ -34,7 +34,7 @@ export function Footer() {
 									to="/"
 									className="text-sm text-muted-foreground hover:text-primary transition-colors"
 								>
-									{t("homeLink")}
+									{t("footer.homeLink")}
 								</Link>
 							</li>
 							<li>
@@ -42,7 +42,7 @@ export function Footer() {
 									to="/accounts"
 									className="text-sm text-muted-foreground hover:text-primary transition-colors"
 								>
-									{t("accountsLink")}
+									{t("footer.accountsLink")}
 								</Link>
 							</li>
 							<li>
@@ -50,7 +50,7 @@ export function Footer() {
 									to="/guide"
 									className="text-sm text-muted-foreground hover:text-primary transition-colors"
 								>
-									{t("guideLink")}
+									{t("footer.guideLink")}
 								</Link>
 							</li>
 							<li>
@@ -58,7 +58,7 @@ export function Footer() {
 									to="/warranty"
 									className="text-sm text-muted-foreground hover:text-primary transition-colors"
 								>
-									{t("warrantyLink")}
+									{t("footer.warrantyLink")}
 								</Link>
 							</li>
 						</ul>
@@ -67,14 +67,14 @@ export function Footer() {
 					{/* Categories */}
 					<div className="space-y-4">
 						<h4 className="font-gaming font-semibold text-foreground flex items-center gap-2">
-							{t("hotCategories")}
+							{t("footer.hotCategories")}
 						</h4>
 						<ul className="space-y-2">
 							<li className="text-sm text-muted-foreground">
-								{t("categoryService1")}
+								{t("footer.categoryService1")}
 							</li>
 							<li className="text-sm text-muted-foreground">
-								{t("categoryService2")}
+								{t("footer.categoryService2")}
 							</li>
 						</ul>
 					</div>
@@ -82,16 +82,16 @@ export function Footer() {
 					{/* Contact */}
 					<div className="space-y-4">
 						<h4 className="font-gaming font-semibold text-foreground flex items-center gap-2">
-							{t("contactLabel")}
+							{t("footer.contactLabel")}
 						</h4>
 						<ul className="space-y-3">
 							<li className="flex items-center gap-2 text-sm text-muted-foreground">
-								<Mail className="h-4 w-4 text-primary" />
-								tien9a51011@gmail.com
+								<Instagram className="h-4 w-4 text-primary" />
+								@leminhtien95
 							</li>
 							<li className="flex items-center gap-2 text-sm text-muted-foreground">
 								<Phone className="h-4 w-4 text-primary" />
-								0333 423 113
+								Zalo: 0333 423 113
 							</li>
 							<li className="flex items-center gap-2 text-sm text-muted-foreground">
 								<MapPin className="h-4 w-4 text-primary" />
@@ -103,11 +103,13 @@ export function Footer() {
 
 				<div className="mt-8 pt-8 border-t-2 border-primary/20 text-center space-y-2">
 					<p className="text-sm text-muted-foreground flex items-center justify-center gap-2">
-						{t("madeWith")}{" "}
+						{t("footer.madeWith")}{" "}
 						<Heart className="h-4 w-4 text-primary fill-primary animate-pulse" />{" "}
-						{t("by")} © 2026
+						{t("footer.by")} © 2026
 					</p>
-					<p className="text-xs text-muted-foreground/60">{import.meta.env.VITE_APP_VERSION}</p>
+					<p className="text-xs text-muted-foreground/60">
+						{import.meta.env.VITE_APP_VERSION}
+					</p>
 				</div>
 			</div>
 		</footer>

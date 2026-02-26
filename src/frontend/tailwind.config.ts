@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'sans-serif'],
-        gaming: ['Orbitron', 'sans-serif'],
+        sans: ['Nunito', 'sans-serif'],
+        gaming: ['Fredoka One', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

@@ -7,9 +7,9 @@ import (
 	"os"
 	"strings"
 
-	"tradeplay/components/service-context/logger"
+	"tradeplay/components/logger"
 
-	zaplogger "tradeplay/components/service-context/logger/zap"
+	zaplogger "tradeplay/components/logger/zap"
 
 	"github.com/joho/godotenv"
 )

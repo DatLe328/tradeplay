@@ -156,10 +156,10 @@ export default function AccountsPage() {
 					className="mb-8"
 				>
 					<h1 className="font-gaming text-3xl md:text-4xl font-bold mb-2">
-						{t("accountsList")}{" "}
-						<span className="text-gradient">{t("accGame")}</span>
+						{t("accountPage.accountsList")}{" "}
+						<span className="text-gradient">{t("accountPage.accGame")}</span>
 					</h1>
-					<p className="text-muted-foreground">{t("accountsDesc")}</p>
+					<p className="text-muted-foreground">{t("accountPage.accountsDesc")}</p>
 				</motion.div>
 
 				{/* Filters */}
@@ -177,11 +177,11 @@ export default function AccountsPage() {
 
 				{/* Results count */}
 				<div className="mb-6 text-muted-foreground">
-					{t("found")}{" "}
+					{t("accountPage.found")}{" "}
 					<span className="text-primary font-semibold">
 						{isLoading ? "..." : totalItems}
 					</span>{" "}
-					{t("accGameCount")}
+					{t("accountPage.accGameCount")}
 				</div>
 
 				{/* Content */}
@@ -257,10 +257,10 @@ export default function AccountsPage() {
 							<Gamepad2 className="h-12 w-12 text-muted-foreground" />
 						</div>
 						<h3 className="font-gaming text-xl font-semibold mb-2">
-							{t("noAccountsFound")}
+							{t("accountPage.noAccountsFound")}
 						</h3>
 						<p className="text-muted-foreground">
-							{t("tryChangeFilter")}
+							{t("accountPage.tryChangeFilter")}
 						</p>
 					</motion.div>
 				)}

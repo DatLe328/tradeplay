@@ -37,7 +37,7 @@ export default function PaymentPage() {
 	const copyToClipboard = (text: string) => {
 		navigator.clipboard.writeText(text);
 		toast({
-			title: t("copied"),
+			title: t("paymentPage.copied"),
 			description: text,
 		});
 	};
@@ -48,7 +48,7 @@ export default function PaymentPage() {
 				<div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
 					<Loader2 className="h-10 w-10 animate-spin text-primary" />
 					<p className="text-muted-foreground animate-pulse">
-						Đang kiểm tra trạng thái giao dịch...
+						{t("paymentPage.processing")}
 					</p>
 				</div>
 			</Layout>
@@ -63,10 +63,10 @@ export default function PaymentPage() {
 						<Package className="h-12 w-12 text-muted-foreground" />
 					</div>
 					<h1 className="font-gaming text-2xl font-bold mb-4">
-						{t("orderNotFound")}
+						{t("paymentPage.orderNotFound")}
 					</h1>
 					<Link to="/accounts">
-						<Button variant="outline">{t("backToList")}</Button>
+						<Button variant="outline">{t("paymentPage.backToList")}</Button>
 					</Link>
 				</div>
 			</Layout>
@@ -93,7 +93,7 @@ export default function PaymentPage() {
 					<Link to="/accounts">
 						<Button variant="ghost" className="gap-2">
 							<ArrowLeft className="h-4 w-4" />
-							{t("continueShopping")}
+							{t("paymentPage.continueShopping")}
 						</Button>
 					</Link>
 				</motion.div>
@@ -125,17 +125,17 @@ export default function PaymentPage() {
 									className={`font-gaming text-2xl font-bold mb-2 ${isSuccess ? "text-green-500" : isCancelled ? "text-red-500" : "text-yellow-500"}`}
 								>
 									{isSuccess
-										? t("paymentSuccess")
+										? t("paymentPage.paymentSuccess")
 										: isCancelled
-											? "Giao dịch thất bại"
-											: "Đang xử lý"}
+											? t("paymentPage.paymentFailed")
+											: t("paymentPage.processing")}
 								</h1>
 								<p className="text-muted-foreground">
 									{isSuccess
-										? "Giao dịch đã được xác nhận. Tiền đã được trừ từ ví của bạn."
+										? t("paymentPage.paymentSuccessDesc")
 										: isCancelled
-											? "Đơn hàng đã bị hủy hoặc hoàn tiền."
-											: "Hệ thống đang xử lý đơn hàng của bạn."}
+											? t("paymentPage.paymentFailedDesc")
+											: t("paymentPage.processingDesc")}
 								</p>
 							</div>
 						</CardContent>
@@ -146,7 +146,7 @@ export default function PaymentPage() {
 						<CardContent className="p-6 space-y-6">
 							<h3 className="font-semibold text-lg flex items-center gap-2">
 								<ShoppingBag className="h-5 w-5 text-primary" />
-								Chi tiết đơn hàng
+								{t("paymentPage.orderDetails")}
 							</h3>
 
 							{/* Product Info */}
@@ -258,7 +258,7 @@ export default function PaymentPage() {
 					<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 						<Link to="/orders">
 							<Button variant="outline" className="w-full h-12">
-								{t("viewOrders")}
+								{t("paymentPage.viewOrders")}
 							</Button>
 						</Link>
 

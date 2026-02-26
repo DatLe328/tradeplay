@@ -1,7 +1,7 @@
 package zaplogger
 
 import (
-	"tradeplay/components/service-context/logger"
+	"tradeplay/components/logger"
 
 	"go.uber.org/zap"
 )

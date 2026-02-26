@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 	"tradeplay/common"
+	sctx "tradeplay/components/service-context"
 
 	"github.com/gin-gonic/gin"
 )
@@ -111,14 +112,15 @@ func ValidateCSRFToken() gin.HandlerFunc {
 	}
 }
 
-func CSRFProtection() gin.HandlerFunc {
+func CSRFProtection(serviceCtx sctx.ServiceContext) gin.HandlerFunc {
 	allowedOrigins := strings.Split(os.Getenv("FRONTEND_ORIGINS"), ",")
 
 	return func(c *gin.Context) {
-		if os.Getenv("APP_ENV") == "dev" {
+		if serviceCtx.EnvName() == sctx.DevEnv {
 			c.Next()
 			return
 		}
+
 		if c.Request.Method == "POST" || c.Request.Method == "PUT" ||
 			c.Request.Method == "DELETE" || c.Request.Method == "PATCH" {
 

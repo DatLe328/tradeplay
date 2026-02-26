@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"tradeplay/components/logger"
 	sctx "tradeplay/components/service-context"
-	"tradeplay/components/service-context/logger"
 
 	"github.com/gin-gonic/gin"
 )
