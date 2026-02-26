@@ -106,9 +106,9 @@ jobs:
         id: set-env
         run: |
           if [ "${{ github.ref_name }}" == "main" ]; then
-            echo "COMPOSE_FILE=docker-compose.prd.yaml" >> $GITHUB_OUTPUT
+            echo "COMPOSE_FILE=docker-compose.prd.yal" >> $GITHUB_OUTPUT
           else
-            echo "COMPOSE_FILE=docker-compose.stg.yaml" >> $GITHUB_OUTPUT
+            echo "COMPOSE_FILE=docker-compose.stg.yal" >> $GITHUB_OUTPUT
           fi
 
       - name: Copy docker folder to VPS
@@ -128,12 +128,6 @@ jobs:
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
             cd ~/app
-            
-            # Create .env if not exists
-            if [ ! -f .env ]; then
-              touch .env
-              echo "⚠️  Please configure .env manually on the server"
-            fi
             
             # Login to Docker
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
