@@ -30,7 +30,7 @@ import { useTranslation } from "@/stores/languageStore";
 import {
 	OrderStatus,
 	OrderType,
-	OrderStatusLabel,
+	OrderStatusLabelKey,
 	getGameName,
 } from "@/constants/enums";
 import { useToast } from "@/hooks/use-toast";
@@ -111,7 +111,7 @@ export default function OrdersPage() {
 		if (isAuthenticated) {
 			loadOrders(currentPage);
 		}
-	}, [isAuthenticated, currentPage, activeTab, filterStatus]); // Thêm activeTab vào dependency
+	}, [isAuthenticated, currentPage, activeTab, filterStatus]);
 
 	const loadOrders = async (page: number) => {
 		setIsLoading(true);
@@ -142,7 +142,7 @@ export default function OrdersPage() {
 	};
 
 	const getStatusLabel = (status: number) => {
-		return OrderStatusLabel[status] || t("ordersPage.unknown");
+		return OrderStatusLabelKey[status] || t("ordersPage.unknown");
 	};
 
 	const handleTabChange = (tab: "accounts" | "deposits") => {
@@ -263,7 +263,7 @@ export default function OrdersPage() {
 								<SelectItem value="all">
 									Tất cả trạng thái
 								</SelectItem>
-								{Object.entries(OrderStatusLabel).map(
+								{Object.entries(OrderStatusLabelKey).map(
 									([key, label]) => (
 										<SelectItem key={key} value={key}>
 											{label}

@@ -41,7 +41,7 @@ func newServiceCtx() sctx.ServiceContext {
 	)
 }
 
-func setupRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
+func setupRoute(serviceCtx sctx.ServiceContext, router *gin.RouterGroup) {
 	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
 	authBusiness := authBusiness.NewAuthBusiness(
 		nil, nil, nil, nil, serviceCtx.MustGet(common.KeyCompJWT).(common.JWTProvider), nil, nil, redisComp)
@@ -116,7 +116,7 @@ func setupRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	}
 }
 
-func setupWebhook(serviceCtx sctx.ServiceContext, router *gin.Engine) {
+func setupWebhook(serviceCtx sctx.ServiceContext, router *gin.RouterGroup) {
 	paymentAPI := composer.ComposePaymentAPIService(serviceCtx)
 
 	v1 := router.Group("/v1",
@@ -125,7 +125,7 @@ func setupWebhook(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	v1.POST("/webhook/sepay", paymentAPI.HandleSepayWebhook)
 }
 
-func setupAdminRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
+func setupAdminRoute(serviceCtx sctx.ServiceContext, router *gin.RouterGroup) {
 	db := serviceCtx.MustGet(common.KeyCompMySQL).(common.GormComponent)
 	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
 	authBusiness := authBusiness.NewAuthBusiness(
@@ -166,7 +166,7 @@ func setupAdminRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	}
 }
 
-func setupSwagger(serviceCtx sctx.ServiceContext, router *gin.Engine) {
+func setupSwagger(serviceCtx sctx.ServiceContext, router *gin.RouterGroup) {
 	if serviceCtx.EnvName() != sctx.DevEnv {
 		log.Println("Swagger UI is only enabled in development environment")
 		return
@@ -196,10 +196,11 @@ func Execute() {
 		middleware.MaintenanceSensitiveOnly(serviceCtx),
 	)
 
-	setupRoute(serviceCtx, router)
-	setupAdminRoute(serviceCtx, router)
-	setupWebhook(serviceCtx, router)
-	setupSwagger(serviceCtx, router)
+	apiGroup := router.Group("/api")
+	setupRoute(serviceCtx, apiGroup)
+	setupAdminRoute(serviceCtx, apiGroup)
+	setupWebhook(serviceCtx, apiGroup)
+	setupSwagger(serviceCtx, apiGroup)
 
 	ginComp.Run()
 

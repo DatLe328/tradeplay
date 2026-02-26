@@ -1,12 +1,9 @@
-import type { translations } from "@/stores/languageStore-old";
-
 export const SystemRole = {
   User: 0,
   Admin: 1,
 } as const;
 
 export type SystemRole = typeof SystemRole[keyof typeof SystemRole];
-
 
 export const AccountStatus = {
   Draft: 0,
@@ -16,9 +13,7 @@ export const AccountStatus = {
   Deleted: 4,
 } as const;
 
-export type AccountStatus =
-  typeof AccountStatus[keyof typeof AccountStatus];
-
+export type AccountStatus = typeof AccountStatus[keyof typeof AccountStatus];
 
 export const OrderStatus = {
   Pending: 0,
@@ -28,38 +23,47 @@ export const OrderStatus = {
   Refunded: 4,
 } as const;
 
-export type OrderStatus =
-  typeof OrderStatus[keyof typeof OrderStatus];
-
+export type OrderStatus = typeof OrderStatus[keyof typeof OrderStatus];
 
 export const OrderType = {
   BuyAcc: 0,
   Deposit: 1,
 } as const;
 
-export type OrderType =
-  typeof OrderType[keyof typeof OrderType];
+export type OrderType = typeof OrderType[keyof typeof OrderType];
 
-
-export const AccountStatusLabelKey: Record<number, keyof typeof translations.vi> = {
-  [AccountStatus.Draft]: "statusDraft",
-  [AccountStatus.Available]: "statusAvailable",
-  [AccountStatus.Reserved]: "statusReserved",
-  [AccountStatus.Sold]: "statusSold",
-  [AccountStatus.Deleted]: "statusDeleted",
+export const AccountStatusLabelKey: Record<number, string> = {
+  [AccountStatus.Draft]: "account.status.draft",
+  [AccountStatus.Available]: "account.status.available",
+  [AccountStatus.Reserved]: "account.status.reserved",
+  [AccountStatus.Sold]: "account.status.sold",
+  [AccountStatus.Deleted]: "account.status.deleted",
 };
 
-export const OrderStatusLabel: Record<number, string> = {
-  [OrderStatus.Pending]: "Chờ thanh toán",
-  [OrderStatus.Paid]: "Đã thanh toán",
-  [OrderStatus.Completed]: "Hoàn thành",
-  [OrderStatus.Cancelled]: "Đã hủy",
-  [OrderStatus.Refunded]: "Đã hoàn tiền",
+export const OrderStatusLabelKey: Record<number, string> = {
+  [OrderStatus.Pending]: "ordersPage.statusPending",
+  [OrderStatus.Paid]: "ordersPage.statusPaid",
+  [OrderStatus.Completed]: "ordersPage.statusCompleted",
+  [OrderStatus.Cancelled]: "ordersPage.statusCancelled",
+  [OrderStatus.Refunded]: "ordersPage.statusRefunded",
 };
 
-export const SystemRoleLabel: Record<number, string> = {
-  [SystemRole.User]: "Người dùng",
-  [SystemRole.Admin]: "Quản trị viên",
+export const NotificationType = {
+  OrderStatus: 0,
+  AccountSold: 1,
+  Promotion: 2,
+  System: 3,
+  Message: 4,
+} as const;
+
+export type NotificationType = typeof NotificationType[keyof typeof NotificationType];
+
+export const NotificationTypeLabelKey: Record<number, string> = {
+  [NotificationType.OrderStatus]: "notification.orderStatus",
+  [NotificationType.AccountSold]: "notification.accountSold",
+  [NotificationType.Promotion]: "notification.promotion",
+  [NotificationType.System]: "notification.system",
+  [NotificationType.Message]: "notification.message",
 };
 
 export const GameID = {
@@ -78,20 +82,3 @@ export const getGameName = (id: number | undefined): string => {
   return game ? game.name : "Game khác";
 };
 
-export const NotificationType = {
-  OrderStatus: 0,
-  AccountSold: 1,
-  Promotion: 2,
-  System: 3,
-  Message: 4,
-} as const;
-
-export type NotificationType = typeof NotificationType[keyof typeof NotificationType];
-
-export const NotificationTypeLabel: Record<number, string> = {
-  [NotificationType.OrderStatus]: "Trạng thái đơn hàng",
-  [NotificationType.AccountSold]: "Tài khoản đã bán",
-  [NotificationType.Promotion]: "Khuyến mãi",
-  [NotificationType.System]: "Hệ thống",
-  [NotificationType.Message]: "Tin nhắn",
-};
