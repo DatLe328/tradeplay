@@ -28,7 +28,7 @@ export default defineConfig(({ mode }) => {
 				mode === "development"
 					? {
 							"/v1": {
-								target: "http://localhost:3000",
+								target: "http://tradeplay-backend:8090",
 								changeOrigin: true,
 							},
 						}

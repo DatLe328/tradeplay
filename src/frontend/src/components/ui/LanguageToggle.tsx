@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useLanguageStore } from '@/stores/languageStore-old';
+import { useLanguageStore } from '@/stores/languageStore';
 import { Button } from '@/components/ui/button';
 
 export function LanguageToggle() {

@@ -1,0 +1,62 @@
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: tradeplay-mysql
+    restart: unless-stopped
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d:ro
+      - ./docker/mysql/init.d:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p12345"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - tradeplay-network
+
+  redis:
+    image: redis:alpine
+    container_name: tradeplay-redis
+    restart: unless-stopped
+    command: /bin/sh -c "redis-server --requirepass $$REDIS_PASS"
+    volumes:
+      - redis_data:/data
+    networks:
+      - tradeplay-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "$$REDIS_PASS", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    container_name: tradeplay-backend
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - tradeplay-network
+    restart: unless-stopped
+
+  frontend:
+    container_name: tradeplay-frontend
+    networks:
+      - tradeplay-network
+    restart: unless-stopped
+
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  tradeplay-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.24.0.0/16
+          gateway: 172.24.0.1

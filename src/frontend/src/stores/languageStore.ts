@@ -1,9 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import vi from "@/locales/vi.json";
+import en from "@/locales/en.json";
 
 type Language = "vi" | "en";
-const translations: Partial<Record<Language, any>> = { vi };
+const translations: Partial<Record<Language, any>> = { vi, en };
 
 const getNestedValue = (obj: any, path: string) => {
   if (!obj || !path) return undefined;
