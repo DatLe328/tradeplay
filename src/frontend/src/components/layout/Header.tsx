@@ -33,10 +33,10 @@ import { useWalletStore } from "@/stores/walletStore";
 import { SystemRole } from "@/constants/enums";
 
 const navLinks = [
-	{ to: "/", labelKey: "navHome" },
-	{ to: "/accounts", labelKey: "navAccounts" },
-	{ to: "/guide", labelKey: "navGuide" },
-	{ to: "/warranty", labelKey: "navWarranty" },
+	{ to: "/", labelKey: "header.home" },
+	{ to: "/accounts", labelKey: "header.accounts" },
+	{ to: "/guide", labelKey: "header.guide" },
+	{ to: "/warranty", labelKey: "header.warranty" },
 ];
 
 export function Header() {
@@ -93,7 +93,7 @@ export function Header() {
 										: "text-muted-foreground hover:text-foreground hover:bg-secondary"
 								}`}
 							>
-								{t("navAdmin")}
+								{"Admin"}
 							</Link>
 						)}
 					</nav>
@@ -149,7 +149,7 @@ export function Header() {
 										>
 											<div className="flex flex-col items-end pl-2 border-r border-border/50 pr-3 leading-tight">
 												<span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">
-													{t("balance")}
+													{t("header.balance")}
 												</span>
 												<span className="text-sm font-bold text-primary">
 													{formatCurrency(balance)}
@@ -196,7 +196,7 @@ export function Header() {
 												<div className="flex items-center gap-2">
 													<Wallet className="h-4 w-4 text-primary" />
 													<span>
-														{t("deposit")}
+														{t("header.deposit")}
 													</span>
 												</div>
 												<Plus className="h-3 w-3 text-primary" />
@@ -209,7 +209,7 @@ export function Header() {
 												className="flex items-center gap-2 cursor-pointer"
 											>
 												<UserCircle className="h-4 w-4" />
-												{t("profile")}
+												{t("header.profile")}
 											</Link>
 										</DropdownMenuItem>
 
@@ -219,7 +219,7 @@ export function Header() {
 												className="flex items-center gap-2 cursor-pointer"
 											>
 												<ShoppingBag className="h-4 w-4" />
-												{t("orders")}
+												{t("header.orders")}
 											</Link>
 										</DropdownMenuItem>
 
@@ -230,7 +230,7 @@ export function Header() {
 											className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/5"
 										>
 											<LogOut className="h-4 w-4" />
-											{t("logout")}
+											{t("header.logout")}
 										</DropdownMenuItem>
 									</DropdownMenuContent>
 								</DropdownMenu>
@@ -238,7 +238,7 @@ export function Header() {
 						) : (
 							<Link to="/auth" className="hidden md:block">
 								<Button className="btn-gaming">
-									{t("login")}
+									{t("header.login")}
 								</Button>
 							</Link>
 						)}
@@ -258,7 +258,7 @@ export function Header() {
 											</div>
 											<div className="text-left">
 												<p className="text-[10px] text-muted-foreground leading-tight">
-													{t("balance")}
+													{t("header.balance")}
 												</p>
 												<p className="text-xs font-bold text-primary leading-tight">
 													{formatCurrency(balance)}
@@ -293,7 +293,7 @@ export function Header() {
 												<div className="flex items-center gap-2">
 													<Wallet className="h-4 w-4 text-primary" />
 													<span>
-														{t("deposit")}
+														{t("header.deposit")}
 													</span>
 												</div>
 												<Plus className="h-3 w-3 text-primary" />
@@ -306,7 +306,7 @@ export function Header() {
 												className="flex items-center gap-2 cursor-pointer"
 											>
 												<UserCircle className="h-4 w-4" />
-												{t("profile")}
+												{t("header.profile")}
 											</Link>
 										</DropdownMenuItem>
 										<DropdownMenuItem asChild>
@@ -315,7 +315,7 @@ export function Header() {
 												className="flex items-center gap-2 cursor-pointer"
 											>
 												<ShoppingBag className="h-4 w-4" />
-												{t("orders")}
+												{t("header.orders")}
 											</Link>
 										</DropdownMenuItem>
 										<DropdownMenuSeparator />
@@ -324,7 +324,7 @@ export function Header() {
 											className="flex items-center gap-2 cursor-pointer text-destructive focus:text-destructive"
 										>
 											<LogOut className="h-4 w-4" />
-											{t("logout")}
+											{t("header.logout")}
 										</DropdownMenuItem>
 									</DropdownMenuContent>
 								</DropdownMenu>
@@ -390,7 +390,7 @@ export function Header() {
 										onClick={() => setMobileMenuOpen(false)}
 										className="block px-4 py-3 rounded-xl font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary/50"
 									>
-										{t("navAdmin")}
+										{t("header.admin")}
 									</Link>
 								)}
 
@@ -404,7 +404,7 @@ export function Header() {
 											}
 										>
 											<Button className="btn-gaming w-full">
-												{t("login")}
+												{t("header.login")}
 											</Button>
 										</Link>
 									</div>
@@ -465,34 +465,6 @@ export function Header() {
 													className="overflow-hidden"
 												>
 													<div className="pl-6 space-y-1 mt-1">
-														{/* Mobile Balance */}
-														{/* <div className="px-4 py-2.5 rounded-xl bg-primary/5">
-															<div className="flex items-center gap-2 text-xs text-muted-foreground mb-1">
-																<Wallet className="h-3.5 w-3.5 text-primary" />
-																<span>
-																	{t("balance")}
-																</span>
-															</div>
-															<div className="flex items-center justify-between">
-																<span className="text-base font-bold text-primary">
-																	{formatCurrency(balance)}
-																</span>
-																<Link
-																	to="/deposit"
-																	onClick={() =>
-																		setMobileMenuOpen(false)
-																	}
-																>
-																	<Button
-																		size="icon"
-																		variant="ghost"
-																		className="h-6 w-6 rounded-full bg-primary/10 hover:bg-primary/20"
-																	>
-																		<Plus className="h-3 w-3 text-primary" />
-																	</Button>
-																</Link>
-															</div>
-														</div> */}
 														<Link
 															to="/profile"
 															onClick={() =>
@@ -503,7 +475,7 @@ export function Header() {
 															className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/50"
 														>
 															<UserCircle className="h-4 w-4" />
-															{t("profile")}
+															{t("header.profile")}
 														</Link>
 														<Link
 															to="/orders"
@@ -515,7 +487,7 @@ export function Header() {
 															className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-muted-foreground hover:text-foreground hover:bg-secondary/50"
 														>
 															<ShoppingBag className="h-4 w-4" />
-															{t("orders")}
+															{t("header.orders")}
 														</Link>
 														<button
 															onClick={() => {
@@ -527,7 +499,7 @@ export function Header() {
 															className="flex items-center gap-2 w-full px-4 py-2.5 rounded-xl text-destructive hover:bg-destructive/10"
 														>
 															<LogOut className="h-4 w-4" />
-															{t("logout")}
+															{t("header.logout")}
 														</button>
 													</div>
 												</motion.div>

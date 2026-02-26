@@ -36,8 +36,8 @@ export default function ForgotPasswordPage() {
 
 		if (!isDev && !captchaToken) {
 			toast({
-				title: t("notVerified"),
-				description: t("captchaError"),
+				title: t("forgotPasswordPage.notVerified"),
+				description: t("forgotPasswordPage.captchaError"),
 				variant: "destructive",
 			});
 			return;
@@ -51,18 +51,18 @@ export default function ForgotPasswordPage() {
 					method: "POST",
 					data: JSON.stringify({ email }),
 				},
-				captchaToken
+				captchaToken,
 			);
 
 			toast({
-				title: t("otpSent"),
-				description: t("otpSentDesc"),
+				title: t("forgotPasswordPage.otpSent"),
+				description: t("forgotPasswordPage.otpSentDesc"),
 			});
 			setStep(2);
 		} catch (error: any) {
 			toast({
-				title: t("error"),
-				description: error.message || t("emailNotFound"),
+				title: t("forgotPasswordPage.error"),
+				description: error.message || t("forgotPasswordPage.emailNotFound"),
 				variant: "destructive",
 			});
 			setCaptchaToken("");
@@ -77,8 +77,8 @@ export default function ForgotPasswordPage() {
 
 		if (newPassword.length < 8 || newPassword.length > 30) {
 			toast({
-				title: t("error"),
-				description: t("passwordLengthError"),
+				title: t("forgotPasswordPage.error"),
+				description: t("forgotPasswordPage.passwordLengthError"),
 				variant: "destructive",
 			});
 			return;
@@ -86,8 +86,8 @@ export default function ForgotPasswordPage() {
 
 		if (newPassword !== confirmPassword) {
 			toast({
-				title: t("error"),
-				description: t("passwordMatchError"),
+				title: t("forgotPasswordPage.error"),
+				description: t("forgotPasswordPage.passwordMatchError"),
 				variant: "destructive",
 			});
 			return;
@@ -104,14 +104,14 @@ export default function ForgotPasswordPage() {
 				}),
 			});
 			toast({
-				title: t("success"),
-				description: t("resetPasswordSuccess"),
+				title: t("forgotPasswordPage.success"),
+				description: t("forgotPasswordPage.resetPasswordSuccess"),
 			});
 			navigate("/auth");
 		} catch (error: any) {
 			toast({
-				title: t("error"),
-				description: error.message || t("otpIncorrect"),
+				title: t("forgotPasswordPage.error"),
+				description: error.message || t("forgotPasswordPage.otpIncorrect"),
 				variant: "destructive",
 			});
 		} finally {
@@ -135,7 +135,7 @@ export default function ForgotPasswordPage() {
 					className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
 				>
 					<ArrowLeft className="h-4 w-4" />
-					{t("backToLogin")}
+					{t("forgotPasswordPage.backToLogin")}
 				</Link>
 
 				<div className="p-8 rounded-2xl bg-card border border-border shadow-lg">
@@ -144,12 +144,12 @@ export default function ForgotPasswordPage() {
 							<KeyRound className="h-6 w-6 text-primary" />
 						</div>
 						<h1 className="font-gaming text-2xl font-bold">
-							{t("forgotPasswordTitle")}
+							{t("forgotPasswordPage.forgotPasswordTitle")}
 						</h1>
 						<p className="text-muted-foreground mt-2 text-sm">
 							{step === 1
-								? t("forgotPasswordStep1")
-								: `${t("forgotPasswordStep2")} ${email}`}
+								? t("forgotPasswordPage.forgotPasswordStep1")
+								: `${t("forgotPasswordPage.forgotPasswordStep2")} ${email}`}
 						</p>
 					</div>
 
@@ -160,7 +160,7 @@ export default function ForgotPasswordPage() {
 									<Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 									<Input
 										type="email"
-										placeholder={t("yourEmail")}
+										placeholder={t("forgotPasswordPage.yourEmail")}
 										value={email}
 										onChange={(e) =>
 											setEmail(e.target.value)
@@ -192,7 +192,7 @@ export default function ForgotPasswordPage() {
 								className="w-full btn-gaming py-6"
 								disabled={isLoading}
 							>
-								{isLoading ? t("sending") : t("sendOtp")}
+								{isLoading ? t("forgotPasswordPage.sending") : t("forgotPasswordPage.sendOtp")}
 							</Button>
 						</form>
 					) : (
@@ -202,7 +202,7 @@ export default function ForgotPasswordPage() {
 						>
 							<div className="space-y-2">
 								<Label className="text-sm font-medium">
-									{t("otpPlaceholder") || "OTP Code"}
+									{t("forgotPasswordPage.otpPlaceholder") || "OTP Code"}
 								</Label>
 								<Input
 									type="text"
@@ -223,7 +223,7 @@ export default function ForgotPasswordPage() {
 										type={
 											showPassword ? "text" : "password"
 										}
-										placeholder={t("newPassword")}
+										placeholder={t("forgotPasswordPage.newPassword")}
 										value={newPassword}
 										onChange={(e) =>
 											setNewPassword(e.target.value)
@@ -238,7 +238,7 @@ export default function ForgotPasswordPage() {
 										onClick={() =>
 											setShowPassword(!showPassword)
 										}
-										tabIndex={-1} 
+										tabIndex={-1}
 										className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground focus:outline-none"
 									>
 										{showPassword ? (
@@ -259,7 +259,7 @@ export default function ForgotPasswordPage() {
 												? "text"
 												: "password"
 										}
-										placeholder={t("confirmNewPassword")}
+										placeholder={t("forgotPasswordPage.confirmNewPassword")}
 										value={confirmPassword}
 										onChange={(e) =>
 											setConfirmPassword(e.target.value)
@@ -273,7 +273,7 @@ export default function ForgotPasswordPage() {
 										type="button"
 										onClick={() =>
 											setShowConfirmPassword(
-												!showConfirmPassword
+												!showConfirmPassword,
 											)
 										}
 										tabIndex={-1}
@@ -293,7 +293,9 @@ export default function ForgotPasswordPage() {
 								disabled={isLoading}
 								type="submit"
 							>
-								{isLoading ? t("processing") : t("resetPassword")}
+								{isLoading
+									? t("forgotPasswordPage.processing")
+									: t("forgotPasswordPage.resetPassword")}
 							</Button>
 
 							<div className="text-center">
@@ -303,7 +305,7 @@ export default function ForgotPasswordPage() {
 									className="text-xs text-muted-foreground hover:underline"
 									tabIndex={-1}
 								>
-									{t("resendOrChangeEmail")}
+									{t("forgotPasswordPage.resendOrChangeEmail")}
 								</button>
 							</div>
 						</form>

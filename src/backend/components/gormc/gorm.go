@@ -5,9 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"time"
+
 	"tradeplay/components/gormc/dialets"
+	"tradeplay/components/logger"
 	sctx "tradeplay/components/service-context"
-	"tradeplay/components/service-context/logger"
 
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"
@@ -106,13 +107,12 @@ func (gdb *gormDB) Activate(serviceCtx sctx.ServiceContext) error {
 	dbType := getDBType(gdb.dbType)
 
 	if dbType == GormDBTypeNotSupported {
-		return errors.New("Database type not supported")
+		return errors.New("database type not supported")
 	}
 
-	gdb.logger.Info("Connecting to database...")
+	gdb.logger.Info("connecting to database...")
 
 	conn, err := gdb.getDBConn(dbType)
-
 	if err != nil {
 		gdb.logger.Error("cannot connect to database", err.Error())
 		return err
@@ -129,7 +129,6 @@ func (gdb *gormDB) Stop() error {
 	}
 
 	sqlDB, err := gdb.db.DB()
-
 	if err != nil {
 		return err
 	}

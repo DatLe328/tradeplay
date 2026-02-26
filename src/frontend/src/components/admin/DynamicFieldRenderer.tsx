@@ -1,8 +1,9 @@
-import { X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
 	Select,
 	SelectContent,
@@ -19,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { type GameFieldSchema } from "@/types/gameSchemas";
 import { useState } from "react";
 import { ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface DynamicFieldRendererProps {
 	field: GameFieldSchema;
@@ -125,14 +127,12 @@ export function DynamicFieldRenderer({
 			const selectedValues = (value as string[]) || [];
 			return (
 				<div className="space-y-2">
-					{/* Label giữ nguyên */}
 					<Popover open={open} onOpenChange={setOpen}>
 						<PopoverTrigger asChild>
 							<Button
 								variant="outline"
 								role="combobox"
 								aria-expanded={open}
-								// Thay đổi: min-h-[44px] để chuẩn touch target
 								className="w-full justify-between h-auto min-h-[44px] px-3 py-2"
 							>
 								<span className="text-muted-foreground whitespace-normal text-left">
@@ -143,12 +143,61 @@ export function DynamicFieldRenderer({
 								<ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
 							</Button>
 						</PopoverTrigger>
-						{/* Popover content width dynamic */}
 						<PopoverContent
 							className="w-[var(--radix-popover-trigger-width)] p-0"
 							align="start"
 						>
-							{/* ... giữ nguyên logic bên trong */}
+							<ScrollArea className="h-60">
+								<div className="p-2 space-y-1">
+									{field.options?.map((option) => {
+										const isSelected =
+											selectedValues.includes(option);
+										return (
+											<button
+												key={option}
+												type="button"
+												onClick={() => {
+													if (isSelected) {
+														onChange(
+															field.key,
+															selectedValues.filter(
+																(v) =>
+																	v !==
+																	option,
+															),
+														);
+													} else {
+														onChange(field.key, [
+															...selectedValues,
+															option,
+														]);
+													}
+												}}
+												className={cn(
+													"w-full flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-colors text-left",
+													isSelected
+														? "bg-primary/10 text-primary"
+														: "hover:bg-secondary",
+												)}
+											>
+												<div
+													className={cn(
+														"h-4 w-4 rounded border flex items-center justify-center",
+														isSelected
+															? "bg-primary border-primary"
+															: "border-muted-foreground",
+													)}
+												>
+													{isSelected && (
+														<Check className="h-3 w-3 text-primary-foreground" />
+													)}
+												</div>
+												{option}
+											</button>
+										);
+									})}
+								</div>
+							</ScrollArea>
 						</PopoverContent>
 					</Popover>
 
@@ -162,7 +211,6 @@ export function DynamicFieldRenderer({
 									className="gap-1 pl-2 pr-1 py-1 text-sm"
 								>
 									{item}
-									{/* Tăng vùng bấm cho nút xóa tag */}
 									<button
 										type="button"
 										onClick={() =>

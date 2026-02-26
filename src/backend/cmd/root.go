@@ -16,9 +16,13 @@ import (
 	sctx "tradeplay/components/service-context"
 	upload "tradeplay/components/uploadc"
 	"tradeplay/composer"
+	_ "tradeplay/docs"
 	"tradeplay/middleware"
 	authBusiness "tradeplay/services/auth/business"
 	userRepository "tradeplay/services/user/repository/mysql"
+
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,7 +46,7 @@ func setupRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	authBusiness := authBusiness.NewAuthBusiness(
 		nil, nil, nil, nil, serviceCtx.MustGet(common.KeyCompJWT).(common.JWTProvider), nil, nil, redisComp)
 	requireAuthMdw := middleware.RequireAuth(authBusiness)
-	captchaMdw := middleware.VerifyTurnstile()
+	captchaMdw := middleware.VerifyTurnstile(serviceCtx)
 
 	userAPI := composer.ComposeUserAPIService(serviceCtx)
 	authAPI := composer.ComposeAuthAPIService(serviceCtx)
@@ -51,7 +55,7 @@ func setupRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	walletAPI := composer.ComposeWalletAPIService(serviceCtx)
 	notificationAPI := composer.ComposeNotificationService(serviceCtx)
 
-	csrfProtection := middleware.CSRFProtection()
+	csrfProtection := middleware.CSRFProtection(serviceCtx)
 	csrfValidate := middleware.ValidateCSRFToken()
 
 	authRateLimit := middleware.RateLimitMiddleware(serviceCtx, 30, 10)
@@ -129,7 +133,7 @@ func setupAdminRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	userRepo := userRepository.NewMySQLRepository(db.GetDB())
 	requireAuthMdw := middleware.RequireAuth(authBusiness)
 	requireAdminMdw := middleware.RequireAdmin(serviceCtx, userRepo)
-	csrfProtection := middleware.CSRFProtection()
+	csrfProtection := middleware.CSRFProtection(serviceCtx)
 	csrfValidate := middleware.ValidateCSRFToken()
 
 	uploadAPI := composer.ComposeUploadAPIService(serviceCtx)
@@ -162,6 +166,15 @@ func setupAdminRoute(serviceCtx sctx.ServiceContext, router *gin.Engine) {
 	}
 }
 
+func setupSwagger(serviceCtx sctx.ServiceContext, router *gin.Engine) {
+	if serviceCtx.EnvName() != sctx.DevEnv {
+		log.Println("Swagger UI is only enabled in development environment")
+		return
+	}
+	swagger := router.Group("/swagger")
+	swagger.GET("/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+}
+
 func Execute() {
 	serviceCtx := newServiceCtx()
 
@@ -177,7 +190,7 @@ func Execute() {
 	router := ginComp.GetRouter()
 
 	router.Use(gin.Recovery(), gin.Logger(), sctxMdw.Recovery(serviceCtx))
-	router.Use(middleware.Cors())
+	router.Use(middleware.Cors(serviceCtx))
 	router.Use(middleware.SecurityHeaders())
 	router.Use(
 		middleware.MaintenanceSensitiveOnly(serviceCtx),
@@ -186,6 +199,7 @@ func Execute() {
 	setupRoute(serviceCtx, router)
 	setupAdminRoute(serviceCtx, router)
 	setupWebhook(serviceCtx, router)
+	setupSwagger(serviceCtx, router)
 
 	ginComp.Run()
 

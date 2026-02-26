@@ -106,7 +106,7 @@ export default function DepositPage() {
 						toast({
 							title: t("success"),
 							description:
-								t("depositSuccessDesc") ||
+								t("depositPage.depositSuccessDesc") ||
 								"Nạp tiền thành công!",
 							className: "bg-green-500 text-white border-none",
 						});
@@ -182,8 +182,8 @@ export default function DepositPage() {
 		} catch (error) {
 			console.error("Lỗi tạo đơn nạp:", error);
 			toast({
-				title: t("error"),
-				description: t("createOrderFailed"),
+				title: "Lỗi",
+				description: t("depositPage.createOrderFailed"),
 				variant: "destructive",
 			});
 		} finally {
@@ -200,22 +200,22 @@ export default function DepositPage() {
 	const paymentMethods = [
 		{
 			id: "bank_transfer",
-			name: t("bankTransfer"),
+			name: t("depositPage.bankTransfer"),
 			icon: Building2,
-			description: t("depositBankTransferDesc"),
+			description: t("depositPage.depositBankTransferDesc"),
 		},
 		{
 			id: "momo",
 			name: "MoMo",
 			icon: Wallet,
-			description: t("depositMomoDesc"),
+			description: t("depositPage.depositMomoDesc"),
 			disabled: true,
 		},
 		{
 			id: "card",
-			name: t("phoneScratchCard"),
+			name: t("depositPage.phoneScratchCard"),
 			icon: CreditCard,
-			description: t("phoneScratchCardDesc"),
+			description: t("depositPage.depositPhoneScratchCardDesc"),
 			disabled: true,
 		},
 	];
@@ -240,10 +240,10 @@ export default function DepositPage() {
 					{/* --- HEADER --- */}
 					<div className="text-center mb-8">
 						<h1 className="text-3xl font-bold font-gaming text-gradient mb-2">
-							{t("deposit")}
+							{t("depositPage.deposit")}
 						</h1>
 						<p className="text-muted-foreground">
-							{t("depositSubtitle")}
+							{t("depositPage.depositSubtitle")}
 						</p>
 					</div>
 
@@ -257,7 +257,7 @@ export default function DepositPage() {
 									</div>
 									<div>
 										<p className="text-sm text-muted-foreground">
-											{t("currentBalance")}
+											{t("depositPage.currentBalance")}
 										</p>
 										<div className="flex items-center gap-2">
 											<p className="text-2xl font-bold text-primary">
@@ -276,7 +276,7 @@ export default function DepositPage() {
 					{/* --- PAYMENT METHODS GRID (EXPANDABLE) --- */}
 					<div className="mb-8">
 						<h2 className="text-xl font-semibold mb-4">
-							{t("selectPaymentMethod")}
+							{t("depositPage.selectPaymentMethod")}
 						</h2>
 
 						{/* Grid Container */}
@@ -319,7 +319,7 @@ export default function DepositPage() {
 													)}
 													{method.disabled && (
 														<span className="text-xs text-orange-500 font-bold bg-orange-100 px-2 py-0.5 rounded-full mt-1 inline-block">
-															{t("comingSoon")}
+															{t("depositPage.comingSoon")}
 														</span>
 													)}
 												</div>
@@ -356,7 +356,7 @@ export default function DepositPage() {
 																		className="text-base font-medium"
 																	>
 																		{t(
-																			"enterAmount",
+																			"depositPage.enterAmount",
 																		)}
 																	</Label>
 																	<div className="relative">
@@ -386,7 +386,7 @@ export default function DepositPage() {
 																			<p className="text-sm text-destructive flex items-center gap-1 animate-pulse">
 																				<AlertCircle className="h-4 w-4" />
 																				{t(
-																					"minAmountError",
+																					"depositPage.minAmountError",
 																				) ||
 																					"Số tiền nạp tối thiểu là 10.000đ"}
 																			</p>
@@ -409,7 +409,7 @@ export default function DepositPage() {
 																	<div className="p-4 bg-secondary/50 rounded-lg border border-secondary flex justify-between items-center">
 																		<span className="text-muted-foreground font-medium">
 																			{t(
-																				"depositAmount",
+																				"depositPage.depositAmount",
 																			)}
 																			:
 																		</span>
@@ -437,7 +437,7 @@ export default function DepositPage() {
 																			<QrCode className="h-5 w-5 mr-2" />
 																		)}
 																		{t(
-																			"generateQR",
+																			"depositPage.generateQR",
 																		)}
 																	</Button>
 																</div>
@@ -460,11 +460,11 @@ export default function DepositPage() {
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2">
 							<QrCode className="h-5 w-5" />
-							{t("scanQRToPay")}
+							{t("depositPage.scanQRToPay")}
 						</DialogTitle>
 						<DialogDescription>
-							{t("qrExpiredDesc")
-								? t("qrExpiredDesc").replace(
+							{t("depositPage.qrExpiredDesc")
+								? t("depositPage.qrExpiredDesc").replace(
 										"hết hạn",
 										"bên dưới",
 									)
@@ -500,7 +500,7 @@ export default function DepositPage() {
 								<div className="w-full space-y-2 text-sm">
 									<div className="flex justify-between p-2 bg-secondary/50 rounded">
 										<span className="text-muted-foreground">
-											{t("amount")}:
+											{t("depositPage.amount")}:
 										</span>
 										<span className="font-semibold">
 											{formatCurrency(amount)}
@@ -508,7 +508,7 @@ export default function DepositPage() {
 									</div>
 									<div className="flex justify-between p-2 bg-secondary/50 rounded">
 										<span className="text-muted-foreground">
-											{t("transactionCode")}:
+											{t("depositPage.transactionCode")}:
 										</span>
 										<span className="font-mono font-bold text-lg text-primary select-all">
 											{transactionCode}
@@ -526,16 +526,16 @@ export default function DepositPage() {
 									<AlertCircle className="h-12 w-12 text-destructive" />
 								</div>
 								<h3 className="text-lg font-semibold">
-									{t("qrExpired")}
+									{t("depositPage.qrExpired")}
 								</h3>
 								<p className="text-sm text-muted-foreground text-center">
-									{t("qrExpiredDesc")}
+									{t("depositPage.qrExpiredDesc")}
 								</p>
 								<Button
 									onClick={handleGenerateQR}
 									className="btn-gaming"
 								>
-									{t("generateNewQR")}
+									{t("depositPage.generateNewQR")}
 								</Button>
 							</div>
 						)}
@@ -544,7 +544,7 @@ export default function DepositPage() {
 					{!qrExpired && (
 						<div className="flex justify-center">
 							<Button variant="outline" onClick={handleCloseQR}>
-								{t("cancel")}
+								{t("depositPage.cancel")}
 							</Button>
 						</div>
 					)}

@@ -3,17 +3,18 @@ package middleware
 import (
 	"os"
 	"strings"
+	sctx "tradeplay/components/service-context"
 
 	"github.com/gin-gonic/gin"
 )
 
-func Cors() gin.HandlerFunc {
+func Cors(serviceCtx sctx.ServiceContext) gin.HandlerFunc {
 	allowedOrigins := strings.Split(os.Getenv("FRONTEND_ORIGINS"), ",")
 
 	return func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
 
-		if os.Getenv("APP_ENV") == "dev" {
+		if serviceCtx.EnvName() == sctx.DevEnv {
 			// In dev mode, allow the requesting origin (not wildcard for credentials)
 			if origin != "" {
 				c.Header("Access-Control-Allow-Origin", origin)

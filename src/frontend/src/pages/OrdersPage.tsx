@@ -142,7 +142,7 @@ export default function OrdersPage() {
 	};
 
 	const getStatusLabel = (status: number) => {
-		return OrderStatusLabel[status] || t("unknown");
+		return OrderStatusLabel[status] || t("ordersPage.unknown");
 	};
 
 	const handleTabChange = (tab: "accounts" | "deposits") => {
@@ -194,13 +194,13 @@ export default function OrdersPage() {
 						<Package className="h-12 w-12 text-muted-foreground" />
 					</div>
 					<h1 className="font-gaming text-2xl font-bold mb-4">
-						{t("loginToViewOrders")}
+						{t("ordersPage.loginToViewOrders")}
 					</h1>
 					<p className="text-muted-foreground mb-6">
-						{t("loginToViewOrdersDesc")}
+						{t("ordersPage.loginToViewOrdersDesc")}
 					</p>
 					<Link to="/auth">
-						<Button className="btn-gaming">{t("loginNow")}</Button>
+						<Button className="btn-gaming">{t("ordersPage.loginNow")}</Button>
 					</Link>
 				</div>
 			</Layout>
@@ -216,10 +216,10 @@ export default function OrdersPage() {
 					className="mb-6"
 				>
 					<h1 className="font-gaming text-3xl md:text-4xl font-bold mb-2">
-						{t("myOrders")}{" "}
-						<span className="text-gradient">{t("ofMe")}</span>
+						{t("ordersPage.myOrders")}{" "}
+						<span className="text-gradient">{t("ordersPage.ofMe")}</span>
 					</h1>
-					<p className="text-muted-foreground">{t("trackOrders")}</p>
+					<p className="text-muted-foreground">{t("ordersPage.trackOrders")}</p>
 				</motion.div>
 
 				<div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -235,7 +235,7 @@ export default function OrdersPage() {
 							)}
 						>
 							<History className="h-4 w-4" />
-							Lịch sử mua Acc
+							{t("ordersPage.accountHistory")}
 						</button>
 						<button
 							onClick={() => handleTabChange("deposits")}
@@ -247,7 +247,7 @@ export default function OrdersPage() {
 							)}
 						>
 							<CreditCard className="h-4 w-4" />
-							Lịch sử nạp tiền
+							{t("ordersPage.depositHistory")}
 						</button>
 					</div>
 
@@ -373,7 +373,7 @@ export default function OrdersPage() {
 														: order.account
 																?.title ||
 															t(
-																"accountNotFound",
+																"ordersPage.accountNotFound",
 															)}
 												</h3>
 
@@ -404,7 +404,7 @@ export default function OrdersPage() {
 																size="sm"
 																className="btn-gaming h-8"
 															>
-																{t("pay")}
+																{t("ordersPage.pay")}
 															</Button>
 														</Link>
 													)}
@@ -487,13 +487,13 @@ export default function OrdersPage() {
 						</div>
 						<h3 className="font-gaming text-xl font-semibold mb-2">
 							{activeTab === "deposits"
-								? "Chưa có giao dịch nạp tiền"
-								: "Chưa mua tài khoản nào"}
+								? t("ordersPage.noDeposits")
+								: t("ordersPage.noOrders")}
 						</h3>
 						<p className="text-muted-foreground mb-6 max-w-sm mx-auto">
 							{activeTab === "deposits"
-								? "Bạn chưa thực hiện giao dịch nạp tiền nào vào hệ thống."
-								: "Bạn chưa mua tài khoản nào. Hãy khám phá kho game ngay!"}
+								? t("ordersPage.noDepositsDesc")
+								: t("ordersPage.noOrdersDesc")}
 						</p>
 
 						{filterStatus !== "all" ? (
@@ -501,17 +501,19 @@ export default function OrdersPage() {
 								variant="outline"
 								onClick={() => setFilterStatus("all")}
 							>
-								Xóa bộ lọc trạng thái
+								{t("ordersPage.clearFilters")}
 							</Button>
 						) : activeTab === "accounts" ? (
 							<Link to="/accounts">
 								<Button className="btn-gaming">
-									{t("viewAccGame")}
+									{t("ordersPage.viewAccGame")}
 								</Button>
 							</Link>
 						) : (
 							<Link to="/profile">
-								<Button variant="outline">Nạp tiền ngay</Button>
+								<Button variant="outline">
+									{t("ordersPage.topUpNow")}
+								</Button>
 							</Link>
 						)}
 					</motion.div>
@@ -523,17 +525,19 @@ export default function OrdersPage() {
 					<DialogHeader>
 						<DialogTitle className="flex items-center gap-2">
 							<Lock className="h-5 w-5 text-primary" />
-							Thông tin tài khoản
+							{t("ordersPage.accountCredentials")}
 						</DialogTitle>
 						<DialogDescription>
-							Vui lòng bảo mật thông tin này.
+							{t("ordersPage.accountCredentialsDesc")}
 						</DialogDescription>
 					</DialogHeader>
 
 					{selectedCreds && (
 						<div className="space-y-4 py-2">
 							<div className="space-y-2">
-								<Label>Tài khoản / Email</Label>
+								<Label>
+									{t("ordersPage.username")}
+									</Label>
 								<div className="flex gap-2">
 									<Input
 										readOnly
@@ -578,9 +582,7 @@ export default function OrdersPage() {
 
 							{selectedCreds.extra_data && (
 								<div className="space-y-2">
-									<Label>
-										Thông tin thêm (2FA/Email backup)
-									</Label>
+									<Label>{t("ordersPage.extraData")}</Label>
 									<div className="p-3 rounded-md bg-secondary/50 border border-border text-sm font-mono break-all">
 										{selectedCreds.extra_data}
 									</div>
@@ -594,7 +596,7 @@ export default function OrdersPage() {
 											)
 										}
 									>
-										Sao chép toàn bộ
+										<Copy className="h-4 w-4" />
 									</Button>
 								</div>
 							)}

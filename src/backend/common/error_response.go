@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -27,13 +26,8 @@ func WriteErrorResponse(c *gin.Context, err error) {
 		message = err.Error()
 	}
 
-	isDebug := os.Getenv("APP_ENV") == "dev"
-
 	if statusCode == http.StatusInternalServerError {
 		log.Printf("[INTERNAL ERROR] %v\n", err)
-		if !isDebug {
-			message = "An internal server error occurred. Please try again later."
-		}
 	}
 
 	c.JSON(statusCode, gin.H{

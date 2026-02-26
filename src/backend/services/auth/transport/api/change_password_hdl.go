@@ -8,6 +8,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// GetUserProfileHandler
+// @Summary      Lấy thông tin cá nhân
+// @Description  Trả về thông tin chi tiết của user đang đăng nhập
+// @Tags         user
+// @Accept       json
+// @Produce      json
+// @Router       /v1/user/me [get]
 func (api *api) ChangePasswordHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var data entity.ChangePasswordDTO

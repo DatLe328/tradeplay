@@ -93,7 +93,7 @@ export default function AccountDetailPage() {
 									<X className="h-4 w-4" />
 								)}
 								<span className="text-sm">
-									{value ? t("yes") : t("no")}
+									{value ? t("common.yes") : t("common.no")}
 								</span>
 							</div>
 						) : isArray ? (
@@ -128,7 +128,7 @@ export default function AccountDetailPage() {
 				setAccount(res.data);
 			} catch (error) {
 				toast({
-					title: t("error"),
+					title: "Lỗi",
 					description: "Không thể tải thông tin tài khoản",
 					variant: "destructive",
 				});
@@ -162,7 +162,7 @@ export default function AccountDetailPage() {
 				<div className="container mx-auto px-4 py-20 text-center space-y-4">
 					<AlertCircle className="h-16 w-16 text-muted-foreground mx-auto" />
 					<h1 className="font-gaming text-2xl font-bold">
-						{t("accountNotFound")}
+						{t("accountDetailsPage.accountNotFound")}
 					</h1>
 					<p className="text-muted-foreground">
 						Tài khoản không tồn tại hoặc đã bị xóa
@@ -170,7 +170,7 @@ export default function AccountDetailPage() {
 					<Link to="/accounts">
 						<Button variant="outline" className="gap-2">
 							<ArrowLeft className="h-4 w-4" />
-							{t("backToList")}
+							{t("accountDetailsPage.backToList")}
 						</Button>
 					</Link>
 				</div>
@@ -231,8 +231,8 @@ export default function AccountDetailPage() {
 
 		if (!isAuthenticated) {
 			toast({
-				title: t("loginRequired"),
-				description: t("loginToBuy"),
+				title: t("accountDetailsPage.loginRequired"),
+				description: t("accountDetailsPage.loginToBuy"),
 				variant: "destructive",
 			});
 			navigate("/auth");
@@ -251,16 +251,16 @@ export default function AccountDetailPage() {
 			const order = await createOrder(account.id);
 			if (order && order.id) {
 				toast({
-					title: t("orderCreated"),
-					description: `${t("orderCreated")}: ${order.id}`,
+					title: t("accountDetailsPage.orderCreated"),
+					description: `${t("accountDetailsPage.orderCreated")}: ${order.id}`,
 				});
 				setShowBuyModal(false);
 				navigate(`/payment/${order.id}`);
 			} else {
 				setIsSubmitting(false);
 				toast({
-					title: t("error"),
-					description: t("orderFailed"),
+					title: t("accountDetailsPage.orderFailedTitle"),
+					description: t("accountDetailsPage.orderFailedDescription"),
 					variant: "destructive",
 				});
 			}
@@ -310,9 +310,9 @@ export default function AccountDetailPage() {
 						>
 							<ArrowLeft className="h-4 w-4" />
 							<span className="hidden sm:inline">
-								{t("back")}
+								{t("accountDetailsPage.backToList")}
 							</span>
-							<span className="sm:hidden">Quay lại</span>
+							<span className="sm:hidden">{t("accountDetailsPage.backToListShort")}</span>
 						</Button>
 					</Link>
 				</motion.div>
@@ -334,7 +334,7 @@ export default function AccountDetailPage() {
 						<div className="space-y-4">
 							<h3 className="font-gaming font-semibold text-lg md:text-xl flex items-center gap-2">
 								<Info className="h-5 w-5 text-primary" />
-								<span>{t("description")}</span>
+								<span>{t("accountDetailsPage.description")}</span>
 							</h3>
 							<div className="p-4 md:p-5 rounded-xl bg-secondary/20 border border-border/50 hover:border-border transition-colors">
 								<p className="text-muted-foreground leading-relaxed whitespace-pre-line text-sm md:text-base">
@@ -348,7 +348,7 @@ export default function AccountDetailPage() {
 							<div className="space-y-4">
 								<h3 className="font-gaming font-semibold text-lg md:text-xl flex items-center gap-2">
 									<Sparkles className="h-5 w-5 text-primary" />
-									<span>{t("highlights")}</span>
+									<span>{t("accountDetailsPage.highlights")}</span>
 								</h3>
 								<ul className="grid sm:grid-cols-2 gap-3">
 									{account.features.map((feature, index) => (
@@ -412,7 +412,7 @@ export default function AccountDetailPage() {
 							<div className="space-y-4 pt-2">
 								<h3 className="font-gaming font-semibold text-lg md:text-xl flex items-center gap-2">
 									<Sparkles className="h-5 w-5 text-primary" />
-									<span>{t("accountInfomation")}</span>
+									<span>{t("accountDetailsPage.information")}</span>
 								</h3>
 
 								<div className="grid grid-cols-2 gap-3">
@@ -431,7 +431,7 @@ export default function AccountDetailPage() {
 						<div className="p-5 md:p-6 rounded-xl bg-gradient-to-br from-card to-card/50 border border-border shadow-lg space-y-5 lg:sticky lg:top-24">
 							<div className="space-y-2">
 								<p className="text-xs md:text-sm text-muted-foreground font-medium">
-									Giá bán
+									{t("accountDetailsPage.price")}
 								</p>
 								<div className="flex items-baseline gap-3 flex-wrap">
 									<span className="font-gaming text-3xl md:text-4xl font-bold text-primary">
@@ -475,12 +475,12 @@ export default function AccountDetailPage() {
 									{isOrderLoading ? (
 										<>
 											<Loader2 className="h-5 w-5 animate-spin" />
-											<span>{t("processing")}</span>
+											<span>{t("accountDetailsPage.processing")}</span>
 										</>
 									) : (
 										<>
 											<ShoppingCart className="h-5 w-5" />
-											<span>{t("buyNow")}</span>
+											<span>{t("accountDetailsPage.buyNow")}</span>
 										</>
 									)}
 								</Button>
@@ -499,18 +499,18 @@ export default function AccountDetailPage() {
 							<div className="space-y-2 pt-2 border-t border-border/50">
 								<div className="flex items-center gap-2 text-xs text-muted-foreground">
 									<Zap className="h-4 w-4 text-green-500 shrink-0" />
-									<span>Giao dịch tự động 24/7</span>
+									<span>{t("accountDetailsPage.trustBadge1")}</span>
 								</div>
 								<div className="flex items-center gap-2 text-xs text-muted-foreground">
 									<Shield className="h-4 w-4 text-blue-500 shrink-0" />
 									<span>
-										Bảo hành uy tín - Hỗ trợ tận tâm
+										{t("accountDetailsPage.trustBadge2")}
 									</span>
 								</div>
 								<div className="flex items-center gap-2 text-xs text-muted-foreground">
 									<Clock className="h-4 w-4 text-orange-500 shrink-0" />
 									<span>
-										Muốn đặt cọc? Liên hệ Zalo/Instagram
+										{t("accountDetailsPage.trustBadge3")}
 									</span>
 								</div>
 							</div>
@@ -524,10 +524,10 @@ export default function AccountDetailPage() {
 				<DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
 					<DialogHeader>
 						<DialogTitle className="text-lg md:text-xl">
-							Xác nhận mua tài khoản
+							{t("accountDetailsPage.confirmPurchase")}
 						</DialogTitle>
 						<DialogDescription className="text-sm">
-							Vui lòng kiểm tra kỹ thông tin trước khi thanh toán.
+							{t("accountDetailsPage.confirmPurchaseDescription")}
 						</DialogDescription>
 					</DialogHeader>
 
@@ -573,7 +573,7 @@ export default function AccountDetailPage() {
 						<div className="space-y-3 p-4 rounded-lg bg-muted/30 border border-border/50">
 							<div className="flex justify-between items-center text-sm">
 								<span className="text-muted-foreground">
-									Số dư hiện tại:
+									{t("accountDetailsPage.yourBalance")}
 								</span>
 								<span className="font-semibold">
 									{formatCurrency(balance)}
@@ -581,7 +581,7 @@ export default function AccountDetailPage() {
 							</div>
 							<div className="flex justify-between items-center text-sm">
 								<span className="text-muted-foreground">
-									Giá tài khoản:
+									{t("accountDetailsPage.priceToPay")}
 								</span>
 								<span className="font-semibold text-primary">
 									-{formatCurrency(account.price)}
@@ -589,7 +589,7 @@ export default function AccountDetailPage() {
 							</div>
 							<div className="border-t border-border/50 pt-3 flex justify-between items-center">
 								<span className="font-medium text-sm md:text-base">
-									Số dư sau khi mua:
+									{t("accountDetailsPage.balanceAfterPurchase")}
 								</span>
 								<span
 									className={cn(
@@ -603,7 +603,7 @@ export default function AccountDetailPage() {
 										? formatCurrency(
 												balance - account.price,
 											)
-										: "Không đủ tiền"}
+										: t("accountDetailsPage.notEnoughBalance")}
 								</span>
 							</div>
 						</div>
@@ -613,11 +613,12 @@ export default function AccountDetailPage() {
 							<div className="flex items-start gap-2 p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-200 dark:border-red-900/20">
 								<AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
 								<span>
-									Bạn còn thiếu{" "}
+									{t("accountDetailsPage.insufficientBalance")}{" "}
 									<b className="font-bold">
 										{formatCurrency(missingAmount)}
 									</b>
-									. Vui lòng nạp thêm tiền để tiếp tục.
+										.{" "}
+									{t("accountDetailsPage.pleaseDeposit")}{" "}
 								</span>
 							</div>
 						)}
@@ -631,7 +632,7 @@ export default function AccountDetailPage() {
 									onClick={() => setShowBuyModal(false)}
 									className="w-full sm:w-auto"
 								>
-									Hủy bỏ
+									{t("accountDetailsPage.cancel")}
 								</Button>
 								<Button
 									className="btn-gaming w-full sm:w-auto"
@@ -641,7 +642,7 @@ export default function AccountDetailPage() {
 									{(isOrderLoading || isSubmitting) && (
 										<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 									)}
-									Xác nhận thanh toán
+									{t("accountDetailsPage.confirmPurchase")}
 								</Button>
 							</>
 						) : (
@@ -651,7 +652,7 @@ export default function AccountDetailPage() {
 									onClick={() => setShowBuyModal(false)}
 									className="w-full sm:w-auto order-2 sm:order-1"
 								>
-									Đóng
+									{t("common.close")}
 								</Button>
 								<Link
 									to="/deposit"
@@ -659,7 +660,7 @@ export default function AccountDetailPage() {
 								>
 									<Button className="w-full bg-green-600 hover:bg-green-700 text-white gap-2">
 										<Wallet className="h-4 w-4" />
-										Nạp tiền ngay
+										{t("accountDetailsPage.depositNow")}
 									</Button>
 								</Link>
 							</>

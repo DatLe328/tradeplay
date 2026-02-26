@@ -21,54 +21,54 @@ export default function WarrantyPage() {
 	const warrantyPolicies = [
 		{
 			icon: ShieldCheck,
-			title: t("warranty24h"),
-			description: t("warranty24hDesc"),
+			title: t("warrantyPage.warranty24h"),
+			description: t("warrantyPage.warranty24hDesc"),
 			highlight: true,
 		},
 		{
 			icon: RefreshCw,
-			title: t("freeExchange"),
-			description: t("freeExchangeDesc"),
+			title: t("warrantyPage.freeExchange"),
+			description: t("warrantyPage.freeExchangeDesc"),
 			highlight: false,
 		},
 		{
 			icon: Clock,
-			title: t("fastSupport"),
-			description: t("fastSupportDesc"),
+			title: t("warrantyPage.fastSupport"),
+			description: t("warrantyPage.fastSupportDesc"),
 			highlight: false,
 		},
 	];
 
 	const coveredCases = [
-		t("covered1"),
-		t("covered2"),
-		t("covered3"),
-		t("covered4"),
+		t("warrantyPage.covered1"),
+		t("warrantyPage.covered2"),
+		t("warrantyPage.covered3"),
+		t("warrantyPage.covered4"),
 	];
 
 	const notCoveredCases = [
-		t("notCovered1"),
-		t("notCovered2"),
-		t("notCovered3"),
-		t("notCovered4"),
-		t("notCovered5"),
+		t("warrantyPage.notCovered1"),
+		t("warrantyPage.notCovered2"),
+		t("warrantyPage.notCovered3"),
+		t("warrantyPage.notCovered4"),
+		t("warrantyPage.notCovered5"),
 	];
 
 	const warrantyProcess = [
 		{
 			step: 1,
-			title: t("processStep1"),
-			description: t("processStep1Desc"),
+			title: t("warrantyPage.processStep1"),
+			description: t("warrantyPage.processStep1Desc"),
 		},
 		{
 			step: 2,
-			title: t("processStep2"),
-			description: t("processStep2Desc"),
+			title: t("warrantyPage.processStep2"),
+			description: t("warrantyPage.processStep2Desc"),
 		},
 		{
 			step: 3,
-			title: t("processStep3"),
-			description: t("processStep3Desc"),
+			title: t("warrantyPage.processStep3"),
+			description: t("warrantyPage.processStep3Desc"),
 		},
 	];
 
@@ -87,13 +87,13 @@ export default function WarrantyPage() {
 				>
 					<Badge className="mb-4 bg-primary/20 text-primary border-primary/30">
 						<ShieldCheck className="h-3 w-3 mr-1" />
-						{t("warrantyHeader")}
+						{t("warrantyPage.warrantyHeader")}
 					</Badge>
 					<h1 className="text-3xl md:text-4xl font-gaming font-bold text-gradient mb-4">
-						{t("warrantyTitle")}
+						{t("warrantyPage.warrantyTitle")}
 					</h1>
 					<p className="text-muted-foreground max-w-2xl mx-auto">
-						{t("warrantyDesc")}
+						{t("warrantyPage.warrantyDesc")}
 					</p>
 				</motion.div>
 
@@ -142,7 +142,7 @@ export default function WarrantyPage() {
 							<CardHeader>
 								<CardTitle className="text-lg font-gaming flex items-center gap-2 text-green-600">
 									<CheckCircle className="h-5 w-5" />
-									{t("coveredCases")}
+									{t("warrantyPage.coveredCases")}
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
@@ -172,7 +172,7 @@ export default function WarrantyPage() {
 							<CardHeader>
 								<CardTitle className="text-lg font-gaming flex items-center gap-2 text-red-600">
 									<XCircle className="h-5 w-5" />
-									{t("notCoveredCases")}
+									{t("warrantyPage.notCoveredCases")}
 								</CardTitle>
 							</CardHeader>
 							<CardContent>
@@ -203,7 +203,7 @@ export default function WarrantyPage() {
 					<Card className="border-2 border-primary/20 mb-8">
 						<CardHeader>
 							<CardTitle className="text-xl font-gaming flex items-center gap-2">
-								{t("warrantyProcess")}
+								{t("warrantyPage.warrantyProcess")}
 							</CardTitle>
 						</CardHeader>
 						<CardContent>
@@ -247,13 +247,13 @@ export default function WarrantyPage() {
 								</div>
 								<div>
 									<h3 className="text-lg font-gaming font-bold mb-2 text-yellow-600">
-										{t("importantNotice")}
+										{t("warrantyPage.importantNotice")}
 									</h3>
 									<ul className="space-y-2 text-sm text-muted-foreground">
-										<li>• {t("notice2")}</li>
-										<li>• {t("notice2")}</li>
-										<li>• {t("notice3")}</li>
-										<li>• {t("notice4")}</li>
+										<li>• {t("warrantyPage.notice2")}</li>
+										<li>• {t("warrantyPage.notice2")}</li>
+										<li>• {t("warrantyPage.notice3")}</li>
+										<li>• {t("warrantyPage.notice4")}</li>
 									</ul>
 								</div>
 							</div>
@@ -276,16 +276,16 @@ export default function WarrantyPage() {
 								</div>
 								<div className="flex-1">
 									<h3 className="text-lg font-gaming font-bold mb-2">
-										{t("requestWarranty")}
+										{t("warrantyPage.requestWarranty")}
 									</h3>
 									<p className="text-muted-foreground text-sm">
-										{t("requestWarrantyDesc")}
+										{t("warrantyPage.requestWarrantyDesc")}
 									</p>
 								</div>
 								<div className="flex gap-2">
 									<Badge className="bg-primary/20 text-primary border-primary/30">
 										<Sparkles className="h-3 w-3 mr-1" />
-										{t("support247")}
+										{t("warrantyPage.support247")}
 									</Badge>
 								</div>
 							</div>

@@ -31,7 +31,7 @@ export function AccountCard({ account, index = 0 }: AccountCardProps) {
 					100,
 			)
 		: 0;
-	const labelKey = AccountStatusLabelKey[account.status];
+	const labelKey = `account.status.${AccountStatusLabelKey[account.status]}`;
 
 	const getStatusColor = (status: number) => {
 		switch (status) {
@@ -148,7 +148,7 @@ export function AccountCard({ account, index = 0 }: AccountCardProps) {
 					<Link to={`/accounts/${account.id}`} className="flex-1">
 						<Button variant="outline" className="w-full gap-2">
 							<Eye className="h-4 w-4" />
-							{t("details")}
+							{t("account.details")}
 						</Button>
 					</Link>
 					{isAvailable ? (

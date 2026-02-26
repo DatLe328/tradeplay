@@ -121,11 +121,11 @@ export function NotificationCenter() {
 
 	const getLabel = (type: number) => {
 		const labels: Record<number, string> = {
-			[NotificationType.OrderStatus]: t("notifOrder") || "Order",
-			[NotificationType.AccountSold]: t("notifSold") || "Sold",
-			[NotificationType.Promotion]: t("notifPromo") || "Promo",
-			[NotificationType.System]: t("notifSystem") || "System",
-			[NotificationType.Message]: t("notifMsg") || "Message",
+			[NotificationType.OrderStatus]: t("notification.notifOrder") || "Order",
+			[NotificationType.AccountSold]: t("notification.notifSold") || "Sold",
+			[NotificationType.Promotion]: t("notification.notifPromo") || "Promo",
+			[NotificationType.System]: t("notification.notifSystem") || "System",
+			[NotificationType.Message]: t("notification.notifMsg") || "Message",
 		};
 		return labels[type] || "Info";
 	};
@@ -170,11 +170,12 @@ export function NotificationCenter() {
 							</div>
 							<div>
 								<h2 className="text-sm font-bold text-foreground">
-									{t("notifications") || "Notifications"}
+									{t("notification.notifications") || "Notifications"}
 								</h2>
 								{unreadCount > 0 && (
 									<p className="text-xs text-muted-foreground">
-										{unreadCount} {t("unreadNotifications") || "unread"}
+										{unreadCount}{" "}
+										{t("notification.unreadNotifications") || "unread"}
 									</p>
 								)}
 							</div>
@@ -184,7 +185,7 @@ export function NotificationCenter() {
 							onClick={() => setOpen(false)}
 							className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 font-semibold uppercase tracking-wider transition-colors group"
 						>
-							{t("viewAll") || "View All"}
+							{t("notification.viewAll") || "View All"}
 							<ExternalLink className="h-3 w-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
 						</Link>
 					</div>
@@ -198,7 +199,7 @@ export function NotificationCenter() {
 								<div className="h-12 w-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin"></div>
 							</div>
 							<p className="text-sm text-muted-foreground animate-pulse">
-								{t("loading") || "Loading..."}
+								{t("notification.loading") || "Loading..."}
 							</p>
 						</div>
 					) : notifications.length === 0 ? (
@@ -207,10 +208,11 @@ export function NotificationCenter() {
 								<Bell className="h-10 w-10 text-muted-foreground stroke-[1.5]" />
 							</div>
 							<h3 className="text-sm font-semibold text-foreground mb-1">
-								{t("noNotifications") || "No notifications yet"}
+								{t("notification.noNotifications") || "No notifications yet"}
 							</h3>
 							<p className="text-xs text-muted-foreground text-center">
-								{t("notificationEmptyDesc") || "You're all caught up! Check back later for updates."}
+								{t("notification.notificationEmptyDesc") ||
+									"You're all caught up! Check back later for updates."}
 							</p>
 						</div>
 					) : (
@@ -221,10 +223,16 @@ export function NotificationCenter() {
 										key={notification.id}
 										layout
 										initial={{ opacity: 0, x: -20 }}
-										animate={{ 
-											opacity: deletingId === notification.id ? 0.5 : 1, 
+										animate={{
+											opacity:
+												deletingId === notification.id
+													? 0.5
+													: 1,
 											x: 0,
-											scale: deletingId === notification.id ? 0.95 : 1
+											scale:
+												deletingId === notification.id
+													? 0.95
+													: 1,
 										}}
 										exit={{ opacity: 0, x: 20, height: 0 }}
 										transition={{ duration: 0.2 }}
@@ -235,7 +243,10 @@ export function NotificationCenter() {
 										}`}
 										onClick={(e) => {
 											if (!notification.is_read) {
-												handleMarkAsRead(e, notification.id);
+												handleMarkAsRead(
+													e,
+													notification.id,
+												);
 											}
 										}}
 									>
@@ -247,11 +258,22 @@ export function NotificationCenter() {
 										<div className="flex items-start gap-3 pl-1">
 											{/* Icon & Type Badge */}
 											<div className="flex-shrink-0">
-												<div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${notificationTypeColors[notification.type]}`}>
+												<div
+													className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-[10px] font-bold uppercase tracking-wider ${notificationTypeColors[notification.type]}`}
+												>
 													<span className="text-sm">
-														{notificationTypeIcons[notification.type]}
+														{
+															notificationTypeIcons[
+																notification
+																	.type
+															]
+														}
 													</span>
-													<span>{getLabel(notification.type)}</span>
+													<span>
+														{getLabel(
+															notification.type,
+														)}
+													</span>
 												</div>
 											</div>
 
@@ -273,19 +295,24 @@ export function NotificationCenter() {
 												<div className="flex items-center justify-between">
 													<span className="text-[10px] text-muted-foreground/70 font-medium flex items-center gap-1">
 														<span className="inline-block w-1 h-1 rounded-full bg-muted-foreground/40"></span>
-														{formatTimeAgo(notification.created_at)}
+														{formatTimeAgo(
+															notification.created_at,
+														)}
 													</span>
 
 													{notification.action_url && (
 														<Link
-															to={notification.action_url}
+															to={
+																notification.action_url
+															}
 															onClick={(e) => {
 																e.stopPropagation();
 																setOpen(false);
 															}}
 															className="text-[10px] text-primary hover:text-primary/80 font-bold uppercase tracking-wider flex items-center gap-1 group/link"
 														>
-															{t("viewDetails") || "Details"}
+															{t("notification.viewDetails") ||
+																"Details"}
 															<ExternalLink className="h-2.5 w-2.5 group-hover/link:translate-x-0.5 transition-transform" />
 														</Link>
 													)}
@@ -299,8 +326,16 @@ export function NotificationCenter() {
 														size="icon"
 														variant="ghost"
 														className="h-7 w-7 rounded-lg hover:bg-primary/10 transition-all hover:scale-110"
-														onClick={(e) => handleMarkAsRead(e, notification.id)}
-														title={t("markAsRead") || "Mark as read"}
+														onClick={(e) =>
+															handleMarkAsRead(
+																e,
+																notification.id,
+															)
+														}
+														title={
+															t("notification.markAsRead") ||
+															"Mark as read"
+														}
 													>
 														<CheckCheck className="h-3.5 w-3.5 text-primary" />
 													</Button>
@@ -309,9 +344,19 @@ export function NotificationCenter() {
 													size="icon"
 													variant="ghost"
 													className="h-7 w-7 rounded-lg hover:bg-destructive/10 text-destructive transition-all hover:scale-110"
-													onClick={(e) => handleDelete(e, notification.id)}
-													disabled={deletingId === notification.id}
-													title={t("delete") || "Delete"}
+													onClick={(e) =>
+														handleDelete(
+															e,
+															notification.id,
+														)
+													}
+													disabled={
+														deletingId ===
+														notification.id
+													}
+													title={
+														t("notification.delete") || "Delete"
+													}
 												>
 													<Trash2 className="h-3.5 w-3.5" />
 												</Button>
@@ -332,7 +377,8 @@ export function NotificationCenter() {
 						className="sticky bottom-0 block py-3.5 text-center text-xs font-bold text-primary bg-gradient-to-r from-primary/5 to-primary/10 hover:from-primary/10 hover:to-primary/15 transition-all border-t border-border/50 backdrop-blur-xl group"
 					>
 						<span className="flex items-center justify-center gap-2">
-							{t("viewAllNotifications") || "See all notifications"}
+							{t("notification.viewAllNotifications") ||
+								"See all notifications"}
 							<ExternalLink className="h-3 w-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
 						</span>
 					</Link>

@@ -13,7 +13,7 @@ export default function VerifyEmailPage() {
 	const navigate = useNavigate();
 	const { toast } = useToast();
 	const { t } = useTranslation();
-	
+
 	const email = location.state?.email;
 
 	const [otp, setOtp] = useState("");
@@ -37,15 +37,15 @@ export default function VerifyEmailPage() {
 			});
 
 			toast({
-				title: t("verifySuccess"),
-				description: t("verifySuccessDesc"),
+				title: t("verifyEmailPage.verifySuccess"),
+				description: t("verifyEmailPage.verifySuccessDesc"),
 			});
 
 			navigate("/auth");
 		} catch (error: any) {
 			toast({
-				title: t("verifyFailed"),
-				description: error.message || t("verifyFailedDesc"),
+				title: t("verifyEmailPage.verifyFailed"),
+				description: error.message || t("verifyEmailPage.verifyFailedDesc"),
 				variant: "destructive",
 			});
 		} finally {
@@ -70,28 +70,38 @@ export default function VerifyEmailPage() {
 					className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground mb-8 transition-colors"
 				>
 					<ArrowLeft className="h-4 w-4" />
-					{t("backToRegister")}
+					{t("verifyEmailPage.backToRegister")}
 				</Link>
 
 				<div className="p-8 rounded-2xl bg-card border border-border shadow-lg text-center">
 					<div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-4">
 						<ShieldCheck className="h-6 w-6 text-primary" />
 					</div>
-					
-					<h1 className="font-gaming text-2xl font-bold mb-2">{t("verifyEmailTitle")}</h1>
+
+					<h1 className="font-gaming text-2xl font-bold mb-2">
+						{t("verifyEmailPage.verifyEmailTitle")}
+					</h1>
 					<p className="text-muted-foreground text-sm mb-6">
-						{t("verifyEmailDesc")}
+						{t("verifyEmailPage.verifyEmailDesc")}
 						<br />
-						<span className="font-medium text-foreground">{email}</span>
+						<span className="font-medium text-foreground">
+							{email}
+						</span>
 					</p>
 
 					<form onSubmit={handleVerify} className="space-y-6">
 						<div className="space-y-2">
 							<Input
 								type="text"
-								placeholder={t("enterOtpPlaceholder")}
+								placeholder={t("verifyEmailPage.enterOtpPlaceholder")}
 								value={otp}
-								onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, "").slice(0, 6))}
+								onChange={(e) =>
+									setOtp(
+										e.target.value
+											.replace(/[^0-9]/g, "")
+											.slice(0, 6),
+									)
+								}
 								className="text-center text-2xl tracking-[0.5em] font-mono h-14"
 								maxLength={6}
 								autoFocus
@@ -103,7 +113,7 @@ export default function VerifyEmailPage() {
 							className="btn-gaming w-full py-6 text-lg"
 							disabled={isLoading || otp.length < 6}
 						>
-							{isLoading ? t("verifying") : t("confirm")}
+							{isLoading ? t("verifyEmailPage.verifying") : t("verifyEmailPage.confirm")}
 						</Button>
 					</form>
 				</div>

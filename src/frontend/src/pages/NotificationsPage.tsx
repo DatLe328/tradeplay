@@ -121,11 +121,11 @@ export function NotificationsPage() {
 
 	const getNotificationLabel = (type: number) => {
 		const labels: Record<number, string> = {
-			[NotificationType.OrderStatus]: t("notifOrder"),
-			[NotificationType.AccountSold]: t("notifSold"),
-			[NotificationType.Promotion]: t("notifPromo"),
-			[NotificationType.System]: t("notifSystem"),
-			[NotificationType.Message]: t("notifMsg"),
+			[NotificationType.OrderStatus]: t("notification.notifOrder"),
+			[NotificationType.AccountSold]: t("notification.notifSold"),
+			[NotificationType.Promotion]: t("notification.notifPromo"),
+			[NotificationType.System]: t("notification.notifSystem"),
+			[NotificationType.Message]: t("notification.notifMsg"),
 		};
 		return labels[type] || "Info";
 	};
@@ -176,14 +176,13 @@ export function NotificationsPage() {
 										<Bell className="h-6 w-6 text-primary" />
 									</div>
 									<h1 className="text-3xl sm:text-4xl font-bold text-foreground">
-										{t("notifications") || "Notifications"}
+										{t("notification.notifications")}
 									</h1>
 								</div>
 								<p className="text-muted-foreground ml-1">
 									{unreadCount > 0
-										? `${unreadCount} ${t("unreadNotifications") || "unread notifications"}`
-										: t("notifSubtitle") ||
-											"You're all caught up!"}
+										? `${unreadCount} ${t("notification.unreadNotifications")}`
+										: t("notification.noNewNotifications")}
 								</p>
 							</div>
 
@@ -195,7 +194,7 @@ export function NotificationsPage() {
 									className="flex items-center gap-2 border-primary/20 hover:bg-primary/5 hover:border-primary/30 transition-all shadow-sm"
 								>
 									<CheckCheck className="h-4 w-4" />
-									{t("markAllRead") || "Mark all as read"}
+									{t("notification.markAllRead")}
 								</Button>
 							)}
 						</div>
@@ -206,10 +205,9 @@ export function NotificationsPage() {
 							<div className="relative flex-1">
 								<Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 								<Input
-									placeholder={
-										t("searchNotifications") ||
-										"Search notifications..."
-									}
+									placeholder={t(
+										"notification.searchNotifications",
+									)}
 									value={searchQuery}
 									onChange={(e) =>
 										setSearchQuery(e.target.value)
@@ -240,7 +238,7 @@ export function NotificationsPage() {
 										}`}
 									>
 										<Filter className="h-4 w-4" />
-										{t("filters") || "Filters"}
+										{t("notification.filters")}
 										{(filterTypes.length > 0 ||
 											showUnreadOnly) && (
 											<span className="ml-1 px-1.5 py-0.5 text-[10px] font-bold bg-primary/20 text-primary rounded-full">
@@ -255,7 +253,7 @@ export function NotificationsPage() {
 									className="w-56"
 								>
 									<div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-										{t("filterByType") || "Filter by type"}
+										{t("notification.filterByType")}
 									</div>
 									<DropdownMenuCheckboxItem
 										checked={filterTypes.includes(
@@ -336,14 +334,13 @@ export function NotificationsPage() {
 									<DropdownMenuSeparator />
 
 									<div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-										{t("filterByStatus") ||
-											"Filter by status"}
+										{t("notification.filterByStatus")}
 									</div>
 									<DropdownMenuCheckboxItem
 										checked={showUnreadOnly}
 										onCheckedChange={setShowUnreadOnly}
 									>
-										{t("unreadOnly") || "Unread only"}
+										{t("notification.unreadOnly")}
 									</DropdownMenuCheckboxItem>
 
 									{hasActiveFilters && (
@@ -359,8 +356,7 @@ export function NotificationsPage() {
 													setSearchQuery("");
 												}}
 											>
-												{t("clearFilters") ||
-													"Clear all filters"}
+												{t("notification.clearFilters")}
 											</Button>
 										</>
 									)}
@@ -372,7 +368,7 @@ export function NotificationsPage() {
 						{hasActiveFilters && (
 							<div className="mt-3 flex items-center gap-2 flex-wrap">
 								<span className="text-xs text-muted-foreground">
-									{t("activeFilters") || "Active filters"}:
+									{t("notification.activeFilters")}:
 								</span>
 								{searchQuery && (
 									<span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">
@@ -385,7 +381,7 @@ export function NotificationsPage() {
 								)}
 								{showUnreadOnly && (
 									<span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">
-										{t("unreadOnly") || "Unread only"}
+										{t("notification.unreadOnly")}
 										<X
 											className="h-3 w-3 cursor-pointer hover:text-primary/70"
 											onClick={() =>
@@ -432,12 +428,14 @@ export function NotificationsPage() {
 											<Search className="h-10 w-10 text-muted-foreground" />
 										</div>
 										<h3 className="text-lg font-semibold text-foreground mb-2">
-											{t("noMatchingNotifications") ||
-												"No matching notifications"}
+											{t(
+												"notification.noMatchingNotifications",
+											)}
 										</h3>
 										<p className="text-sm text-muted-foreground mb-4">
-											{t("tryAdjustingFilters") ||
-												"Try adjusting your search or filters"}
+											{t(
+												"notification.tryAdjustingFilters",
+											)}
 										</p>
 										<Button
 											variant="outline"
@@ -447,8 +445,7 @@ export function NotificationsPage() {
 												setSearchQuery("");
 											}}
 										>
-											{t("clearFilters") ||
-												"Clear all filters"}
+											{t("notification.clearFilters")}
 										</Button>
 									</>
 								) : (
@@ -457,17 +454,16 @@ export function NotificationsPage() {
 											<Sparkles className="h-10 w-10 text-primary" />
 										</div>
 										<h3 className="text-lg font-semibold text-foreground mb-2">
-											{t("noNotifications") ||
-												"No notifications yet"}
+											{t("notification.noNotifications")}
 										</h3>
 										<p className="text-sm text-muted-foreground mb-6">
-											{t("notificationEmptyDesc") ||
-												"You're all caught up! Check back later for updates."}
+											{t(
+												"notification.notificationEmptyDesc",
+											)}
 										</p>
 										<Link to="/">
 											<Button className="btn-gaming">
-												{t("backToHome") ||
-													"Back to home"}
+												{t("notification.backToHome")}
 											</Button>
 										</Link>
 									</>
@@ -565,8 +561,9 @@ export function NotificationsPage() {
 															}
 															className="text-xs text-primary hover:text-primary/80 font-bold uppercase tracking-wider flex items-center gap-1.5 group/link transition-all"
 														>
-															{t("viewDetails") ||
-																"View details"}
+															{t(
+																"notification.viewDetails",
+															)}
 															<span className="group-hover/link:translate-x-1 transition-transform">
 																→
 															</span>
@@ -587,10 +584,9 @@ export function NotificationsPage() {
 																notification.id,
 															)
 														}
-														title={
-															t("markAsRead") ||
-															"Mark as read"
-														}
+														title={t(
+															"notification.markAsRead",
+														)}
 													>
 														<CheckCheck className="h-4 w-4 text-primary" />
 													</Button>
@@ -608,9 +604,9 @@ export function NotificationsPage() {
 														deletingId ===
 														notification.id
 													}
-													title={
-														t("delete") || "Delete"
-													}
+													title={t(
+														"notification.delete",
+													)}
 												>
 													<Trash2 className="h-4 w-4" />
 												</Button>

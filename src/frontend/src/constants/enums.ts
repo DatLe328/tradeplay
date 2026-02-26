@@ -1,4 +1,4 @@
-import type { translations } from "@/stores/languageStore";
+import type { translations } from "@/stores/languageStore-old";
 
 export const SystemRole = {
   User: 0,
@@ -20,7 +20,6 @@ export type AccountStatus =
   typeof AccountStatus[keyof typeof AccountStatus];
 
 
-// Map với Backend: type OrderStatus int
 export const OrderStatus = {
   Pending: 0,
   Paid: 1,
@@ -33,7 +32,6 @@ export type OrderStatus =
   typeof OrderStatus[keyof typeof OrderStatus];
 
 
-// Map với Backend: type OrderType int
 export const OrderType = {
   BuyAcc: 0,
   Deposit: 1,
