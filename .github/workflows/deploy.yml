@@ -111,13 +111,13 @@ jobs:
             echo "COMPOSE_FILE=docker-compose.stg.yml" >> $GITHUB_OUTPUT
           fi
 
-      - name: Copy docker folder to VPS
+      - name: Copy docker folder and compose files to VPS
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
-          source: "docker,${{ steps.set-env.outputs.COMPOSE_FILE }}"
+          source: "docker/**,docker-compose.yml,${{ steps.set-env.outputs.COMPOSE_FILE }}"
           target: "~/app"
 
       - name: Deploy to DigitalOcean
@@ -129,12 +129,12 @@ jobs:
           script: |
             cd ~/app
             
-            # Login to Docker
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             
-            # Pull and restart
-            docker compose -f ${{ steps.set-env.outputs.COMPOSE_FILE }} pull
-            docker compose -f ${{ steps.set-env.outputs.COMPOSE_FILE }} up -d --remove-orphans
+            COMPOSE_FILES="-f docker-compose.yml -f ${{ steps.set-env.outputs.COMPOSE_FILE }}"
             
-            # Cleanup
+            docker compose $COMPOSE_FILES pull
+            docker compose $COMPOSE_FILES up -d --remove-orphans
+            
+            # Cleanup các image cũ để tránh đầy ổ cứng VPS
             docker image prune -af
