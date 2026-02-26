@@ -106,9 +106,9 @@ jobs:
         id: set-env
         run: |
           if [ "${{ github.ref_name }}" == "main" ]; then
-            echo "COMPOSE_FILE=docker-compose.prd.yal" >> $GITHUB_OUTPUT
+            echo "COMPOSE_FILE=docker-compose.prd.yml" >> $GITHUB_OUTPUT
           else
-            echo "COMPOSE_FILE=docker-compose.stg.yal" >> $GITHUB_OUTPUT
+            echo "COMPOSE_FILE=docker-compose.stg.yml" >> $GITHUB_OUTPUT
           fi
 
       - name: Copy docker folder to VPS
