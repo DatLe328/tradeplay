@@ -40,11 +40,11 @@
 	},
 	"account": {
 		"status": {
-			"statusAvailable": "Còn hàng",
-			"statusReserved": "Đã đặt cọc",
-			"statusSold": "Đã bán",
-			"statusDraft": "Bản nháp",
-			"statusDeleted": "Đã xóa"
+			"available": "Còn hàng",
+			"reserved": "Đã đặt cọc",
+			"sold": "Đã bán",
+			"draft": "Bản nháp",
+			"deleted": "Đã xóa"
 		},
 		"details": "Xem chi tiết"
 	},
@@ -364,6 +364,7 @@
 		"tryChangeFilter": "Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm"
 	},
 	"accountDetailsPage": {
+		"discount": "Giảm",
 		"accountNotFound": "Không tìm thấy acc game",
 		"accountInformation": "Thông số tài khoản",
 		"backToList": "Quay lại danh sách",
@@ -424,6 +425,7 @@
 		"noOrders": "Chưa có đơn hàng nào",
 		"noOrdersDesc": "Bạn chưa mua tài khoản nào. Hãy khám phá kho game ngay!",
 		"noDepositsDesc": "Bạn chưa thực hiện giao dịch nạp tiền nào vào hệ thống.",
-		"depositHistory": "Lịch sử nạp tiền"
+		"depositHistory": "Lịch sử nạp tiền",
+		"allStatus": "Tất cả trạng thái"
 	}
 }
