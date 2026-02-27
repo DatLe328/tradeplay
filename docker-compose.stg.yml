@@ -2,6 +2,8 @@ services:
   mysql:
     env_file:
       - .env.staging
+    ports:
+      - "3306:3306"
     deploy:
       resources:
         limits:
@@ -16,6 +18,8 @@ services:
   redis:
     env_file:
       - .env.staging
+    ports:
+      - "6379:6379"
     deploy:
       resources:
         limits:
@@ -29,6 +33,8 @@ services:
 
   backend:
     image: tadel/tradeplay-backend:latest
+    ports:
+      - "8080:8080"
     env_file:
       - .env.staging
     deploy:

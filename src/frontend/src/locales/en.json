@@ -390,6 +390,7 @@
 		"balanceAfterPurchase": "Balance after purchase:",
 		"notEnoughBalance": "Insufficient funds",
 		"insufficientBalance": "Your balance is not enough to buy this account. You are missing ",
+		"information": "Account infomation",
 		"pleaseDeposit": "Please top up to continue.",
 		"depositNow": "Top up now",
 		"cancel": "Cancel",
