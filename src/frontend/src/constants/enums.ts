@@ -33,11 +33,11 @@ export const OrderType = {
 export type OrderType = typeof OrderType[keyof typeof OrderType];
 
 export const AccountStatusLabelKey: Record<number, string> = {
-  [AccountStatus.Draft]: "account.status.draft",
-  [AccountStatus.Available]: "account.status.available",
-  [AccountStatus.Reserved]: "account.status.reserved",
-  [AccountStatus.Sold]: "account.status.sold",
-  [AccountStatus.Deleted]: "account.status.deleted",
+  [AccountStatus.Draft]: "draft",
+  [AccountStatus.Available]: "available",
+  [AccountStatus.Reserved]: "reserved",
+  [AccountStatus.Sold]: "sold",
+  [AccountStatus.Deleted]: "deleted",
 };
 
 export const OrderStatusLabelKey: Record<number, string> = {
