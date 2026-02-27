@@ -38,7 +38,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: 'npm'
           cache-dependency-path: './src/frontend/package-lock.json'
 
@@ -118,7 +118,7 @@ jobs:
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
           source: "docker/**,docker-compose.yml,${{ steps.set-env.outputs.COMPOSE_FILE }}"
-          target: "~/app"
+          target: "~/tradeplay"
 
       - name: Deploy to DigitalOcean
         uses: appleboy/ssh-action@v1.0.3
@@ -127,7 +127,7 @@ jobs:
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
-            cd ~/app
+            cd ~/tradeplay
             
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
             
@@ -136,5 +136,4 @@ jobs:
             docker compose $COMPOSE_FILES pull
             docker compose $COMPOSE_FILES up -d --remove-orphans
             
-            # Cleanup các image cũ để tránh đầy ổ cứng VPS
             docker image prune -af
