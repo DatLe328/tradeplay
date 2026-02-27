@@ -40,11 +40,11 @@
 	},
 	"account": {
 		"status": {
-			"statusAvailable": "In stock",
-			"statusReserved": "Reserved",
-			"statusSold": "Sold",
-			"statusDraft": "Draft",
-			"statusDeleted": "Deleted"
+			"available": "In stock",
+			"reserved": "Reserved",
+			"sold": "Sold",
+			"draft": "Draft",
+			"deleted": "Deleted"
 		},
 		"details": "View details"
 	},
@@ -362,6 +362,7 @@
 		"tryChangeFilter": "Try changing the filters or search keywords"
 	},
 	"accountDetailsPage": {
+		"discount": "Discount",
 		"accountNotFound": "Game account not found",
 		"accountInformation": "Account Specifications",
 		"backToList": "Back to list",
@@ -422,6 +423,7 @@
 		"noOrders": "No orders yet",
 		"noOrdersDesc": "You haven't purchased any accounts yet. Explore our game store now!",
 		"noDepositsDesc": "You haven't made any deposit transactions into the system.",
-		"depositHistory": "Deposit History"
+		"depositHistory": "Deposit History",
+		"allStatus": "All status"
 	}
 }

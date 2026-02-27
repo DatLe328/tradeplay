@@ -142,7 +142,8 @@ export default function OrdersPage() {
 	};
 
 	const getStatusLabel = (status: number) => {
-		return OrderStatusLabelKey[status] || t("ordersPage.unknown");
+		const key = OrderStatusLabelKey[status];
+		return key ? t(key) : t("ordersPage.unknown");
 	};
 
 	const handleTabChange = (tab: "accounts" | "deposits") => {
@@ -200,7 +201,9 @@ export default function OrdersPage() {
 						{t("ordersPage.loginToViewOrdersDesc")}
 					</p>
 					<Link to="/auth">
-						<Button className="btn-gaming">{t("ordersPage.loginNow")}</Button>
+						<Button className="btn-gaming">
+							{t("ordersPage.loginNow")}
+						</Button>
 					</Link>
 				</div>
 			</Layout>
@@ -217,9 +220,13 @@ export default function OrdersPage() {
 				>
 					<h1 className="font-gaming text-3xl md:text-4xl font-bold mb-2">
 						{t("ordersPage.myOrders")}{" "}
-						<span className="text-gradient">{t("ordersPage.ofMe")}</span>
+						<span className="text-gradient">
+							{t("ordersPage.ofMe")}
+						</span>
 					</h1>
-					<p className="text-muted-foreground">{t("ordersPage.trackOrders")}</p>
+					<p className="text-muted-foreground">
+						{t("ordersPage.trackOrders")}
+					</p>
 				</motion.div>
 
 				<div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
@@ -261,7 +268,7 @@ export default function OrdersPage() {
 							</SelectTrigger>
 							<SelectContent>
 								<SelectItem value="all">
-									Tất cả trạng thái
+									{t("ordersPage.allStatus")}
 								</SelectItem>
 								{Object.entries(OrderStatusLabelKey).map(
 									([key, label]) => (
@@ -404,7 +411,9 @@ export default function OrdersPage() {
 																size="sm"
 																className="btn-gaming h-8"
 															>
-																{t("ordersPage.pay")}
+																{t(
+																	"ordersPage.pay",
+																)}
 															</Button>
 														</Link>
 													)}
@@ -535,9 +544,7 @@ export default function OrdersPage() {
 					{selectedCreds && (
 						<div className="space-y-4 py-2">
 							<div className="space-y-2">
-								<Label>
-									{t("ordersPage.username")}
-									</Label>
+								<Label>{t("ordersPage.username")}</Label>
 								<div className="flex gap-2">
 									<Input
 										readOnly
