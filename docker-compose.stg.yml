@@ -1,0 +1,80 @@
+services:
+  mysql:
+    container_name: tradeplay-staging-mysql
+    env_file:
+      - .env.staging
+    ports:
+      - "3306:3306"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.4"
+          memory: 300M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    container_name: tradeplay-staging-redis
+    env_file:
+      - .env.staging
+    ports:
+      - "6380:6379"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 50M
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  backend:
+    container_name: tradeplay-staging-backend
+    image: tadel/tradeplay-backend:latest
+    ports:
+      - "8081:8080"
+    env_file:
+      - .env.staging
+    deploy:
+      resources:
+        limits:
+          cpus: "0.4"
+          memory: 100M
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  frontend:
+    container_name: tradeplay-staging-frontend
+    image: tadel/tradeplay-frontend:latest
+
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: tradeplay-staging-tunnel
+    restart: unless-stopped
+    command: >
+      tunnel run
+    env_file:
+      - .env.staging
+    networks:
+      - tradeplay-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+networks:
+  tradeplay-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.25.0.0/16
+          gateway: 172.25.0.1

@@ -453,7 +453,7 @@ export default function AccountDetailPage() {
 											variant="destructive"
 											className="text-xs"
 										>
-											Giảm{" "}
+											{t("accountDetailsPage.discount")}{" "}
 											{Math.round(
 												((account.original_price -
 													account.price) /

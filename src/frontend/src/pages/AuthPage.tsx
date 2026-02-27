@@ -130,7 +130,7 @@ export default function AuthPage() {
 				} else {
 					toast({
 						title: t("authPage.registerFailed"),
-						description: t("authPage.emailUsed"),
+						// description: t("authPage.emailUsed"),
 						variant: "destructive",
 					});
 					setCaptchaToken("");

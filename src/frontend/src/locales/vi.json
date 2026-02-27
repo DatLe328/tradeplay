@@ -40,11 +40,11 @@
 	},
 	"account": {
 		"status": {
-			"statusAvailable": "Còn hàng",
-			"statusReserved": "Đã đặt cọc",
-			"statusSold": "Đã bán",
-			"statusDraft": "Bản nháp",
-			"statusDeleted": "Đã xóa"
+			"available": "Còn hàng",
+			"reserved": "Đã đặt cọc",
+			"sold": "Đã bán",
+			"draft": "Bản nháp",
+			"deleted": "Đã xóa"
 		},
 		"details": "Xem chi tiết"
 	},
@@ -329,7 +329,7 @@
 		"selectPaymentMethod": "Chọn phương thức thanh toán",
 		"depositBankTransferDesc": "Thanh toán qua QR code ngân hàng",
 		"depositMomoDesc": "Thanh toán qua ví MoMo",
-    "depositPhoneScratchCardDesc": "Thanh toán bằng thẻ cào điện thoại (Viettel, Mobifone, Vinaphone)",
+		"depositPhoneScratchCardDesc": "Thanh toán bằng thẻ cào điện thoại (Viettel, Mobifone, Vinaphone)",
 		"phoneScratchCard": "Thẻ cào điện thoại (Viettel, Mobifone, Vinaphone)",
 		"phoneScratchCardDesc": "Thanh toán bằng thẻ cào điện thoại",
 		"comingSoon": "Sắp có",
@@ -364,10 +364,11 @@
 		"tryChangeFilter": "Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm"
 	},
 	"accountDetailsPage": {
+		"discount": "Giảm",
 		"accountNotFound": "Không tìm thấy acc game",
 		"accountInformation": "Thông số tài khoản",
 		"backToList": "Quay lại danh sách",
-    "backToListShort": "Quay lại",
+		"backToListShort": "Quay lại",
 		"back": "Quay lại",
 		"inStock": "Còn hàng",
 		"sold": "Đã bán",
@@ -379,23 +380,24 @@
 		"loginToBuy": "Vui lòng đăng nhập để mua acc game",
 		"orderCreated": "Tạo đơn hàng thành công",
 		"orderFailed": "Tạo đơn hàng thất bại, vui lòng thử lại sau",
-    "orderFailedTitle": "Lỗi",
-    "orderFailedDescription": "Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại sau.",
-    "processing": "Đang xử lý...",
-    "trustBadge1": "Giao dịch tự động 24/7",
-    "trustBadge2": "Bảo hành uy tín - Hỗ trợ tận tâm",
-    "trustBadge3": "Muốn đặt cọc? Liên hệ Zalo/Instagram",
-    "confirmPurchase": "Xác nhận mua tài khoản",
-    "confirmPurchaseDescription": "Vui lòng kiểm tra kỹ thông tin trước khi thanh toán.",
-    "yourBalance": "Số dư hiện tại:",
-    "priceToPay": "Giá tài khoản:",
-    "balanceAfterPurchase": "Số dư sau khi mua:",
-    "notEnoughBalance": "Không đủ tiền",
-    "insufficientBalance": "Số dư của bạn không đủ để mua tài khoản này. Bạn còn thiếu ",
-    "pleaseDeposit": "Vui lòng nạp thêm tiền để tiếp tục.",
-    "depositNow": "Nạp tiền ngay",
-    "cancel": "Hủy bỏ",
-    "price": "Giá bán"
+		"orderFailedTitle": "Lỗi",
+		"orderFailedDescription": "Có lỗi xảy ra khi tạo đơn hàng. Vui lòng thử lại sau.",
+		"processing": "Đang xử lý...",
+		"trustBadge1": "Giao dịch tự động 24/7",
+		"trustBadge2": "Bảo hành uy tín - Hỗ trợ tận tâm",
+		"trustBadge3": "Muốn đặt cọc? Liên hệ Zalo/Instagram",
+		"confirmPurchase": "Xác nhận mua tài khoản",
+		"confirmPurchaseDescription": "Vui lòng kiểm tra kỹ thông tin trước khi thanh toán.",
+		"yourBalance": "Số dư hiện tại:",
+		"priceToPay": "Giá tài khoản:",
+		"balanceAfterPurchase": "Số dư sau khi mua:",
+		"notEnoughBalance": "Không đủ tiền",
+		"insufficientBalance": "Số dư của bạn không đủ để mua tài khoản này. Bạn còn thiếu ",
+		"information": "Thông số tài khoản",
+		"pleaseDeposit": "Vui lòng nạp thêm tiền để tiếp tục.",
+		"depositNow": "Nạp tiền ngay",
+		"cancel": "Hủy bỏ",
+		"price": "Giá bán"
 	},
 	"ordersPage": {
 		"myOrders": "Đơn Hàng",
@@ -423,6 +425,7 @@
 		"noOrders": "Chưa có đơn hàng nào",
 		"noOrdersDesc": "Bạn chưa mua tài khoản nào. Hãy khám phá kho game ngay!",
 		"noDepositsDesc": "Bạn chưa thực hiện giao dịch nạp tiền nào vào hệ thống.",
-		"depositHistory": "Lịch sử nạp tiền"
+		"depositHistory": "Lịch sử nạp tiền",
+		"allStatus": "Tất cả trạng thái"
 	}
 }

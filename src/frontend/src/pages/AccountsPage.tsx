@@ -108,7 +108,7 @@ export default function AccountsPage() {
 
 				const res = await accountService.getAll(params);
 
-				setAccounts(res.data);
+				setAccounts(res.data ?? []);
 
 				if (res.paging) {
 					setTotalItems(Number(res.paging.total));

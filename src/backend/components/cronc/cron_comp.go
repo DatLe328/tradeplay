@@ -80,7 +80,7 @@ func (c *cronComponent) registerJobs() error {
 func (c *cronComponent) cancelExpiredOrdersJob() {
 	c.logger.Info("Starting job: Clean expired pending orders...")
 
-	threshold := time.Now().Add(-30 * time.Minute)
+	threshold := time.Now().Add(-5 * time.Minute)
 
 	result := c.db.Model(&orderEntity.Order{}).
 		Where("status = ? AND type = ? AND created_at < ?",

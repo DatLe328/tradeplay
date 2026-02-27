@@ -68,7 +68,12 @@
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
-    gtag('config', 'G-RLYV5CWYRZ');
+    
+    // Prevent duplicate GA initialization from React.StrictMode
+    if (!window.__ga_initialized) {
+      window.__ga_initialized = true;
+      gtag('config', 'G-RLYV5CWYRZ');
+    }
   </script>
 </head>
 
