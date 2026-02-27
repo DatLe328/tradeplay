@@ -74,11 +74,13 @@ jobs:
             echo "VITE_APP_VERSION=${{ secrets.VITE_APP_VERSION_PRD }}" >> $GITHUB_OUTPUT
             echo "VITE_TURNSTILE_SITE_KEY=${{ secrets.VITE_TURNSTILE_SITE_KEY_PRD }}" >> $GITHUB_OUTPUT
             echo "VITE_UNDER_MAINTENANCE=${{ secrets.VITE_UNDER_MAINTENANCE_PRD }}" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG=prd" >> $GITHUB_OUTPUT
           else
             echo "VITE_API_URL=${{ secrets.VITE_API_URL_STG }}" >> $GITHUB_OUTPUT
             echo "VITE_APP_VERSION=${{ secrets.VITE_APP_VERSION_STG }}" >> $GITHUB_OUTPUT
             echo "VITE_TURNSTILE_SITE_KEY=${{ secrets.VITE_TURNSTILE_SITE_KEY_STG }}" >> $GITHUB_OUTPUT
             echo "VITE_UNDER_MAINTENANCE=${{ secrets.VITE_UNDER_MAINTENANCE_STG }}" >> $GITHUB_OUTPUT
+            echo "IMAGE_TAG=stg" >> $GITHUB_OUTPUT
           fi
 
       - name: Build and Push Backend
@@ -88,9 +90,9 @@ jobs:
           file: ./src/backend/Dockerfile
           push: true
           tags: |
-            ${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.BACKEND_IMAGE }}:${{ steps.frontend-args.outputs.IMAGE_TAG }}
             ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
-          cache-from: type=registry,ref=${{ env.BACKEND_IMAGE }}:buildcache
+          cache-from: type=registry,ref=${{ env.BACKEND_IMAGE }}:${{ steps.frontend-args.outputs.IMAGE_TAG }}
           cache-to: type=inline
 
       - name: Build and Push Frontend
@@ -105,26 +107,18 @@ jobs:
             VITE_TURNSTILE_SITE_KEY=${{ steps.frontend-args.outputs.VITE_TURNSTILE_SITE_KEY }}
             VITE_UNDER_MAINTENANCE=${{ steps.frontend-args.outputs.VITE_UNDER_MAINTENANCE }}
           tags: |
-            ${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.FRONTEND_IMAGE }}:${{ steps.frontend-args.outputs.IMAGE_TAG }}
             ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
-          cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE }}:buildcache
+          cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE }}:${{ steps.frontend-args.outputs.IMAGE_TAG }}
           cache-to: type=inline
 
-  deploy:
+  deploy-production:
     runs-on: ubuntu-latest
     needs: build-and-push
+    if: github.ref_name == 'main'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Set compose file name
-        id: set-env
-        run: |
-          if [ "${{ github.ref_name }}" == "main" ]; then
-            echo "COMPOSE_FILE=docker-compose.prd.yml" >> $GITHUB_OUTPUT
-          else
-            echo "COMPOSE_FILE=docker-compose.stg.yml" >> $GITHUB_OUTPUT
-          fi
 
       - name: Copy docker folder and compose files to VPS
         uses: appleboy/scp-action@v0.1.7
@@ -132,7 +126,7 @@ jobs:
           host: ${{ secrets.DO_HOST }}
           username: ${{ secrets.DO_USER }}
           key: ${{ secrets.DO_SSH_KEY }}
-          source: "docker/**,docker-compose.yml,${{ steps.set-env.outputs.COMPOSE_FILE }}"
+          source: "docker/**,docker-compose.yml,docker-compose.prd.yml"
           target: "~/tradeplay"
 
       - name: Deploy to DigitalOcean
@@ -143,12 +137,50 @@ jobs:
           key: ${{ secrets.DO_SSH_KEY }}
           script: |
             cd ~/tradeplay
-            
+
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
-            
-            COMPOSE_FILES="-f docker-compose.yml -f ${{ steps.set-env.outputs.COMPOSE_FILE }}"
-            
-            docker compose $COMPOSE_FILES pull
-            docker compose $COMPOSE_FILES up -d --remove-orphans
-            
+
+            docker compose -f docker-compose.yml -f docker-compose.prd.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.prd.yml up -d --remove-orphans
+
+            docker image prune -af
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref_name == 'staging'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v2
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Copy docker folder and compose files to dev machine
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          source: "docker/**,docker-compose.yml,docker-compose.stg.yml"
+          target: "~/tradeplay-staging"
+
+      - name: Deploy to dev machine via Tailscale
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEV_HOST }}
+          username: ${{ secrets.DEV_USER }}
+          key: ${{ secrets.DEV_SSH_KEY }}
+          script: |
+            cd ~/tradeplay-staging
+
+            echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+            docker compose -f docker-compose.yml -f docker-compose.stg.yml pull
+            docker compose -f docker-compose.yml -f docker-compose.stg.yml up -d --remove-orphans
+
             docker image prune -af

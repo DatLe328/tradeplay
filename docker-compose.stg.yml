@@ -32,7 +32,8 @@ services:
         max-file: "2"
 
   backend:
-    image: tadel/tradeplay-backend:latest
+    container_name: tradeplay-staging-backend
+    image: tadel/tradeplay-backend:stg
     ports:
       - "8080:8080"
     env_file:
@@ -49,9 +50,10 @@ services:
         max-file: "2"
 
   frontend:
-    image: tadel/tradeplay-frontend:latest
+    container_name: tradeplay-staging-frontend
+    image: tadel/tradeplay-frontend:stg
     ports:
-      - "5173:5173"
+      - "5174:5173"
 
   tunnel:
     image: cloudflare/cloudflared:latest
