@@ -44,8 +44,6 @@ services:
 
   frontend:
     image: tadel/tradeplay-frontend:latest
-    ports:
-      - "80:8080"
 
   tunnel:
     image: cloudflare/cloudflared:latest
