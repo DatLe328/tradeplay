@@ -28,7 +28,7 @@ services:
         max-file: "2"
 
   backend:
-    image: tadel/tradeplay-backend:latest
+    image: tadel/tradeplay-backend:prd
     env_file:
       - .env.production
     deploy:
@@ -43,7 +43,7 @@ services:
         max-file: "2"
 
   frontend:
-    image: tadel/tradeplay-frontend:latest
+    image: tadel/tradeplay-frontend:prd
 
   tunnel:
     image: cloudflare/cloudflared:latest
