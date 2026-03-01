@@ -160,22 +160,26 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
 
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEV_SSH_KEY }}" > ~/.ssh/dev_key
+          chmod 600 ~/.ssh/dev_key
+          ssh-keyscan -H ${{ secrets.DEV_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
       - name: Copy docker folder and compose files to dev machine
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.DEV_HOST }}
-          username: ${{ secrets.DEV_USER }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          source: "docker/**,docker-compose.yml,docker-compose.stg.yml"
-          target: "~/tradeplay-staging"
+        run: |
+          ssh -i ~/.ssh/dev_key -o StrictHostKeyChecking=no \
+            ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} "mkdir -p ~/tradeplay-staging"
+          rsync -avz \
+            -e "ssh -i ~/.ssh/dev_key -o StrictHostKeyChecking=no" \
+            docker docker-compose.yml docker-compose.stg.yml \
+            ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }}:~/tradeplay-staging/
 
       - name: Deploy to dev machine via Tailscale
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.DEV_HOST }}
-          username: ${{ secrets.DEV_USER }}
-          key: ${{ secrets.DEV_SSH_KEY }}
-          script: |
+        run: |
+          ssh -i ~/.ssh/dev_key -o StrictHostKeyChecking=no \
+            ${{ secrets.DEV_USER }}@${{ secrets.DEV_HOST }} << 'EOF'
             cd ~/tradeplay-staging
 
             echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
@@ -184,3 +188,4 @@ jobs:
             docker compose -f docker-compose.yml -f docker-compose.stg.yml up -d --remove-orphans
 
             docker image prune -af
+          EOF
