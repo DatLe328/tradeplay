@@ -50,9 +50,11 @@ jobs:
         working-directory: ./src/frontend
         run: npm run test -- --run --reporter=verbose
 
-  build-and-push:
+  build-and-push-production:
     runs-on: ubuntu-latest
     needs: [test-backend, test-frontend]
+    if: github.ref_name == 'main'
+    environment: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -66,23 +68,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Set frontend build args
-        id: frontend-args
-        run: |
-          if [ "${{ github.ref_name }}" == "main" ]; then
-            echo "VITE_API_URL=${{ secrets.VITE_API_URL_PRD }}" >> $GITHUB_OUTPUT
-            echo "VITE_APP_VERSION=${{ secrets.VITE_APP_VERSION_PRD }}" >> $GITHUB_OUTPUT
-            echo "VITE_TURNSTILE_SITE_KEY=${{ secrets.VITE_TURNSTILE_SITE_KEY_PRD }}" >> $GITHUB_OUTPUT
-            echo "VITE_UNDER_MAINTENANCE=${{ secrets.VITE_UNDER_MAINTENANCE_PRD }}" >> $GITHUB_OUTPUT
-            echo "IMAGE_TAG=prd" >> $GITHUB_OUTPUT
-          else
-            echo "VITE_API_URL=${{ secrets.VITE_API_URL_STG }}" >> $GITHUB_OUTPUT
-            echo "VITE_APP_VERSION=${{ secrets.VITE_APP_VERSION_STG }}" >> $GITHUB_OUTPUT
-            echo "VITE_TURNSTILE_SITE_KEY=${{ secrets.VITE_TURNSTILE_SITE_KEY_STG }}" >> $GITHUB_OUTPUT
-            echo "VITE_UNDER_MAINTENANCE=${{ secrets.VITE_UNDER_MAINTENANCE_STG }}" >> $GITHUB_OUTPUT
-            echo "IMAGE_TAG=stg" >> $GITHUB_OUTPUT
-          fi
-
       - name: Build and Push Backend
         uses: docker/build-push-action@v5
         with:
@@ -90,9 +75,9 @@ jobs:
           file: ./src/backend/Dockerfile
           push: true
           tags: |
-            ${{ env.BACKEND_IMAGE }}:${{ steps.frontend-args.outputs.IMAGE_TAG }}
+            ${{ env.BACKEND_IMAGE }}:prd
             ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
-          cache-from: type=registry,ref=${{ env.BACKEND_IMAGE }}:${{ steps.frontend-args.outputs.IMAGE_TAG }}
+          cache-from: type=registry,ref=${{ env.BACKEND_IMAGE }}:prd
           cache-to: type=inline
 
       - name: Build and Push Frontend
@@ -102,19 +87,66 @@ jobs:
           file: ./docker/nginx/Dockerfile
           push: true
           build-args: |
-            VITE_API_URL=${{ steps.frontend-args.outputs.VITE_API_URL }}
-            VITE_APP_VERSION=${{ steps.frontend-args.outputs.VITE_APP_VERSION }}
-            VITE_TURNSTILE_SITE_KEY=${{ steps.frontend-args.outputs.VITE_TURNSTILE_SITE_KEY }}
-            VITE_UNDER_MAINTENANCE=${{ steps.frontend-args.outputs.VITE_UNDER_MAINTENANCE }}
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_APP_VERSION=${{ secrets.VITE_APP_VERSION }}
+            VITE_TURNSTILE_SITE_KEY=${{ secrets.VITE_TURNSTILE_SITE_KEY }}
+            VITE_UNDER_MAINTENANCE=${{ secrets.VITE_UNDER_MAINTENANCE }}
           tags: |
-            ${{ env.FRONTEND_IMAGE }}:${{ steps.frontend-args.outputs.IMAGE_TAG }}
+            ${{ env.FRONTEND_IMAGE }}:prd
             ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
-          cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE }}:${{ steps.frontend-args.outputs.IMAGE_TAG }}
+          cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE }}:prd
+          cache-to: type=inline
+
+  build-and-push-staging:
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    if: github.ref_name == 'staging'
+    environment: staging
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./src/backend
+          file: ./src/backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:stg
+            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.BACKEND_IMAGE }}:stg
+          cache-to: type=inline
+
+      - name: Build and Push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./docker/nginx/Dockerfile
+          push: true
+          build-args: |
+            VITE_API_URL=${{ secrets.VITE_API_URL }}
+            VITE_APP_VERSION=${{ secrets.VITE_APP_VERSION }}
+            VITE_TURNSTILE_SITE_KEY=${{ secrets.VITE_TURNSTILE_SITE_KEY }}
+            VITE_UNDER_MAINTENANCE=${{ secrets.VITE_UNDER_MAINTENANCE }}
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:stg
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ env.FRONTEND_IMAGE }}:stg
           cache-to: type=inline
 
   deploy-production:
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: build-and-push-production
     if: github.ref_name == 'main'
     steps:
       - name: Checkout code
@@ -147,7 +179,7 @@ jobs:
 
   deploy-staging:
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: build-and-push-staging
     if: github.ref_name == 'staging'
     steps:
       - name: Checkout code
