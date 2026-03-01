@@ -50,14 +50,12 @@ services:
         max-file: "2"
 
   frontend:
-    container_name: tradeplay-frontend
     image: tadel/tradeplay-frontend:stg
     ports:
       - "5174:5173"
 
   tunnel:
     image: cloudflare/cloudflared:latest
-    container_name: tradeplay-tunnel
     restart: unless-stopped
     command: >
       tunnel run
