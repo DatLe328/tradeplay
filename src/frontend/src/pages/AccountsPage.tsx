@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout/Layout";
 import { AccountCard } from "@/components/accounts/AccountCard";
 import { AccountFilter } from "@/components/accounts/AccountFilter";
-import { PaginationWrapper } from "@/components/ui/pagination-wrapper";
+import { CursorPaginationWrapper } from "@/components/ui/cursor-pagination-wrapper";
 import {
 	accountService,
 	type GetAccountsParams,
@@ -44,15 +44,24 @@ export default function AccountsPage() {
 	const [accounts, setAccounts] = useState<GameAccount[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
-	const [currentPage, setCurrentPage] = useState(1);
+	const [currentCursor, setCurrentCursor] = useState("");
+	const [allCursors, setAllCursors] = useState<string[]>([""]);
+	const [pageNum, setPageNum] = useState(1);
+	const pageNumRef = useRef(1);
+	const [hasMoreBeyondKnown, setHasMoreBeyondKnown] = useState(false);
 	const [pageSize, setPageSize] = useState(12);
-	const [totalPages, setTotalPages] = useState(1);
-	const [totalItems, setTotalItems] = useState(0);
 	const [debouncedSearch, setDebouncedSearch] = useState(filters.search);
+
+	const navigateTo = (page: number) => {
+		const c = allCursors[page - 1] ?? "";
+		pageNumRef.current = page;
+		setPageNum(page);
+		setCurrentCursor(c);
+	};
 
 	useEffect(() => {
 		window.scrollTo({ top: 0, behavior: "smooth" });
-	}, [currentPage]);
+	}, [currentCursor]);
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -63,58 +72,84 @@ export default function AccountsPage() {
 	}, [filters.search]);
 
 	useEffect(() => {
-		setCurrentPage(1);
+		pageNumRef.current = 1;
+		setPageNum(1);
+		setCurrentCursor("");
+		setAllCursors([""]);
+		setHasMoreBeyondKnown(false);
 	}, [filters]);
 
 	useEffect(() => {
+		const buildParams = (c: string): GetAccountsParams => {
+			let minPrice: number | undefined;
+			let maxPrice: number | undefined;
+
+			if (filters.priceRange && filters.priceRange !== "all") {
+				const [minStr, maxStr] = filters.priceRange.split("-");
+				minPrice = Number(minStr);
+				maxPrice = Number(maxStr);
+			}
+
+			let statusParam: AccountStatus | AccountStatus[] | undefined;
+
+			if (filters.status && filters.status !== "all") {
+				statusParam = Number(filters.status) as AccountStatus;
+			} else {
+				statusParam = [
+					AccountStatus.Available,
+					AccountStatus.Reserved,
+					AccountStatus.Sold,
+				];
+			}
+
+			return {
+				cursor: c,
+				limit: pageSize,
+				category_id:
+					filters.categoryId === "all"
+						? undefined
+						: Number(filters.categoryId),
+				min_price: minPrice,
+				max_price: maxPrice,
+				search: debouncedSearch,
+				status: statusParam,
+				sort: filters.sort,
+			};
+		};
+
 		const fetchAccounts = async () => {
 			try {
 				setIsLoading(true);
+				const pn = pageNumRef.current;
 
-				let minPrice: number | undefined;
-				let maxPrice: number | undefined;
-
-				if (filters.priceRange && filters.priceRange !== "all") {
-					const [minStr, maxStr] = filters.priceRange.split("-");
-					minPrice = Number(minStr);
-					maxPrice = Number(maxStr);
-				}
-
-				let statusParam: AccountStatus | AccountStatus[] | undefined;
-
-				if (filters.status && filters.status !== "all") {
-					statusParam = Number(filters.status) as AccountStatus;
-				} else {
-					statusParam = [
-						AccountStatus.Available,
-						AccountStatus.Reserved,
-						AccountStatus.Sold,
-					];
-				}
-
-				const params: GetAccountsParams = {
-					page: currentPage,
-					limit: pageSize,
-					category_id:
-						filters.categoryId === "all"
-							? undefined
-							: Number(filters.categoryId),
-					min_price: minPrice,
-					max_price: maxPrice,
-					search: debouncedSearch,
-					status: statusParam,
-					sort: filters.sort,
-				};
-
-				const res = await accountService.getAll(params);
-
+				const res = await accountService.getAll(buildParams(currentCursor));
 				setAccounts(res.data ?? []);
 
-				if (res.paging) {
-					setTotalItems(Number(res.paging.total));
-					setTotalPages(
-						Math.ceil(Number(res.paging.total) / pageSize),
-					);
+				const nc = res.paging?.next_cursor ?? "";
+				const hm = res.paging?.has_more ?? false;
+
+				if (hm && nc) {
+					setAllCursors((prev) => {
+						if (prev.length > pn) return prev;
+						return [...prev, nc];
+					});
+					// Prefetch next page silently to discover cursor for pn+2
+					accountService.getAll(buildParams(nc)).then((pr) => {
+						const pnc = pr.paging?.next_cursor ?? "";
+						const phm = pr.paging?.has_more ?? false;
+						if (phm && pnc) {
+							setAllCursors((prev) => {
+								if (prev.length > pn + 1) return prev;
+								return [...prev.slice(0, pn + 1), pnc];
+							});
+							setHasMoreBeyondKnown(true);
+						} else {
+							setHasMoreBeyondKnown(false);
+						}
+					}).catch(() => {});
+				} else {
+					setAllCursors((prev) => prev.slice(0, pn));
+					setHasMoreBeyondKnown(false);
 				}
 			} catch (error) {
 				// console.error("Failed to fetch accounts", error);
@@ -125,7 +160,7 @@ export default function AccountsPage() {
 
 		fetchAccounts();
 	}, [
-		currentPage,
+		currentCursor,
 		pageSize,
 		filters.categoryId,
 		filters.priceRange,
@@ -134,19 +169,18 @@ export default function AccountsPage() {
 		debouncedSearch,
 	]);
 	const getPageTitle = () => {
-		const pageSuffix = currentPage > 1 ? ` - Trang ${currentPage}` : "";
 		if (filters.categoryId !== "all") {
 			const gameName = getGameName(Number(filters.categoryId));
-			return `Danh sách acc ${gameName} Giá Rẻ${pageSuffix} | Tiến Cơ Trưởng`;
+			return `Danh sách acc ${gameName} Giá Rẻ | Tiến Cơ Trưởng`;
 		}
-		return `Danh sách acc game${pageSuffix} | Tiến Cơ Trưởng`;
+		return `Danh sách acc game | Tiến Cơ Trưởng`;
 	};
 
 	return (
 		<Layout>
 			<SeoMetadata
 				title={getPageTitle()}
-				description={`Danh sách ${totalItems} tài khoản Play Together đang bán. Giá từ rẻ đến VIP, bảo hành uy tín. Cập nhật mới nhất.`}
+				description="Danh sách tài khoản Play Together đang bán. Giá từ rẻ đến VIP, bảo hành uy tín. Cập nhật mới nhất."
 			/>
 			<div className="container mx-auto px-4 py-8">
 				{/* Header */}
@@ -174,15 +208,6 @@ export default function AccountsPage() {
 						initialFilters={filters}
 					/>
 				</motion.div>
-
-				{/* Results count */}
-				<div className="mb-6 text-muted-foreground">
-					{t("accountPage.found")}{" "}
-					<span className="text-primary font-semibold">
-						{isLoading ? "..." : totalItems}
-					</span>{" "}
-					{t("accountPage.accGameCount")}
-				</div>
 
 				{/* Content */}
 				{isLoading ? (
@@ -237,13 +262,25 @@ export default function AccountsPage() {
 						</div>
 
 						{/* Pagination Wrapper */}
-						<PaginationWrapper
-							currentPage={currentPage}
-							totalPages={totalPages}
-							totalItems={totalItems}
-							onPageChange={setCurrentPage}
-							pageSize={pageSize}
-							onPageSizeChange={setPageSize}
+							<CursorPaginationWrapper
+								hasMore={allCursors.length > pageNum}
+								hasPrev={pageNum > 1}
+								onNext={() => navigateTo(pageNum + 1)}
+								onPrev={() => navigateTo(pageNum - 1)}
+								currentPage={pageNum}
+								onGoToPage={navigateTo}
+								maxKnownPage={allCursors.length}
+								hasMoreBeyondKnown={hasMoreBeyondKnown}
+								itemCount={accounts.length}
+								pageSize={pageSize}
+								onPageSizeChange={(size) => {
+									setPageSize(size);
+									pageNumRef.current = 1;
+									setPageNum(1);
+									setCurrentCursor("");
+									setAllCursors([""]);
+									setHasMoreBeyondKnown(false);
+								}}
 							pageSizeOptions={[8, 12, 24, 48]}
 						/>
 					</>

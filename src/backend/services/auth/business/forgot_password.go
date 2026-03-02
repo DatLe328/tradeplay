@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 	"tradeplay/common"
+	crypto "tradeplay/pkg/crypto"
 	authEntity "tradeplay/services/auth/entity"
 )
 
@@ -18,7 +19,7 @@ func (biz *business) ForgotPassword(ctx context.Context, email string) error {
 		return common.ErrInvalidRequest(authEntity.ErrAuthSuspended)
 	}
 
-	otp, err := common.GenOTP(6)
+	otp, err := crypto.GenOTP(6)
 	if err != nil {
 		return common.ErrInternal(err)
 	}

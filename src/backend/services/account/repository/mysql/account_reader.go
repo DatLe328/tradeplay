@@ -2,6 +2,9 @@ package mysql
 
 import (
 	"context"
+	"fmt"
+	"strconv"
+	"strings"
 	"tradeplay/common"
 	"tradeplay/services/account/entity"
 
@@ -31,14 +34,10 @@ func (repo *mysqlRepo) GetAccountByID(
 	return &data, nil
 }
 
-func (repo *mysqlRepo) GetAccountByIDForUpdate(ctx context.Context, tx *gorm.DB, id int32) (*entity.Account, error) {
+func (repo *mysqlRepo) GetAccountByIDForUpdate(ctx context.Context, id int32) (*entity.Account, error) {
 	var data entity.Account
-	db := repo.db
-	if tx != nil {
-		db = tx
-	}
 
-	if err := db.WithContext(ctx).
+	if err := repo.getDB(ctx).WithContext(ctx).
 		Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("id = ?", id).
 		First(&data).Error; err != nil {
@@ -56,6 +55,8 @@ func (repo *mysqlRepo) FindAccounts(
 	var result []entity.Account
 	db := repo.db.Table(entity.Account{}.TableName())
 
+	sort := "id desc"
+	sortKey := ""
 	if filter != nil {
 		if filter.OwnerId > 0 {
 			db = db.Where("owner_id = ?", filter.OwnerId)
@@ -82,25 +83,59 @@ func (repo *mysqlRepo) FindAccounts(
 				"%"+filter.Search+"%", "%"+filter.Search+"%", "%"+filter.Search+"%")
 		}
 
+		sortKey = filter.Sort
 		switch filter.Sort {
 		case "price_asc":
-			db = db.Order("price asc")
+			sort = "price asc, id asc"
 		case "price_desc":
-			db = db.Order("price desc")
+			sort = "price desc, id desc"
 		default:
-			db = db.Order("id desc")
+			sort = "id desc"
 		}
 	}
 
-	if err := db.Count(&paging.Total).Error; err != nil {
-		return nil, common.ErrDB(err)
+	// Apply cursor
+	if paging.Cursor != "" {
+		parts := strings.SplitN(paging.Cursor, ":", 2)
+		switch sortKey {
+		case "price_asc":
+			if len(parts) == 2 {
+				cp, _ := strconv.ParseInt(parts[0], 10, 64)
+				ci, _ := strconv.ParseInt(parts[1], 10, 32)
+				db = db.Where("price > ? OR (price = ? AND id > ?)", cp, cp, int32(ci))
+			}
+		case "price_desc":
+			if len(parts) == 2 {
+				cp, _ := strconv.ParseInt(parts[0], 10, 64)
+				ci, _ := strconv.ParseInt(parts[1], 10, 32)
+				db = db.Where("price < ? OR (price = ? AND id < ?)", cp, cp, int32(ci))
+			}
+		default:
+			if len(parts) == 1 {
+				ci, _ := strconv.ParseInt(parts[0], 10, 32)
+				db = db.Where("id < ?", int32(ci))
+			}
+		}
 	}
 
 	if err := db.Preload("Category").
-		Offset((paging.Page - 1) * paging.Limit).
-		Limit(paging.Limit).
+		Order(sort).
+		Limit(paging.Limit + 1).
 		Find(&result).Error; err != nil {
 		return nil, common.ErrDB(err)
+	}
+
+	// Compute next cursor from the (limit+1)-th item if it exists
+	if len(result) > paging.Limit {
+		paging.HasMore = true
+		last := result[paging.Limit-1]
+		switch sortKey {
+		case "price_asc", "price_desc":
+			paging.NextCursor = fmt.Sprintf("%d:%d", last.Price, last.ID)
+		default:
+			paging.NextCursor = fmt.Sprintf("%d", last.ID)
+		}
+		result = result[:paging.Limit]
 	}
 
 	return result, nil

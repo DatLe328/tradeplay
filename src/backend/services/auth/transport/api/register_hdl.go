@@ -2,7 +2,7 @@ package api
 
 import (
 	"net/http"
-	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 	"tradeplay/middleware"
 	"tradeplay/services/auth/entity"
 
@@ -14,14 +14,14 @@ func (api *api) RegisterHdl() gin.HandlerFunc {
 		var data entity.AuthRegisterDTO
 
 		if err := c.ShouldBind(&data); err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 
 		err := api.business.Register(c.Request.Context(), &data)
 
 		if err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 		c.SetSameSite(http.SameSiteNoneMode)

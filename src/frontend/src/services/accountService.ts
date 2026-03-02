@@ -5,7 +5,7 @@ import { uploadService } from "./uploadService";
 import type { AccountStatus } from "@/constants/enums";
 
 export interface GetAccountsParams {
-	page?: number;
+	cursor?: string;
 	limit?: number;
 	category_id?: number;
 	min_price?: number;
@@ -18,7 +18,7 @@ export const accountService = {
 	getAll: async (params: GetAccountsParams) => {
 		const query = new URLSearchParams();
 
-		if (params.page) query.append("page", params.page.toString());
+		if (params.cursor) query.append("cursor", params.cursor);
 		if (params.limit) query.append("limit", params.limit.toString());
 
 		if (params.category_id)

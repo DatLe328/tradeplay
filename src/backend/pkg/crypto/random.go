@@ -1,16 +1,17 @@
-package common
+package crypto
 
 import (
-	"crypto/rand"
-	"math/big"
+"crypto/rand"
+"math/big"
 )
 
 const (
-	Letters          = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	LettersAndDigits = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	Digits           = "0123456789"
-	Alphanumeric     = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	HexCharacters    = "0123456789abcdef"
+Letters           = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+LettersAndDigits  = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+Digits            = "0123456789"
+Alphanumeric      = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+HexCharacters     = "0123456789abcdef"
+DefaultSaltLength = 16
 )
 
 func GenOTP(length int) (string, error) {

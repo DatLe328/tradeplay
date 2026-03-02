@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 	"tradeplay/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -12,7 +13,7 @@ func (api *api) RefreshTokenHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		refreshToken, err := c.Cookie("refreshToken")
 		if err != nil || refreshToken == "" {
-			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
+			ginc.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
@@ -21,12 +22,12 @@ func (api *api) RefreshTokenHandler() gin.HandlerFunc {
 
 		resp, err := api.business.RefreshToken(c.Request.Context(), refreshToken, userAgent, clientIP)
 		if err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 
 		origin := c.GetHeader("Origin")
-		cookieDomain := common.GetCookieDomainForOrigin(origin)
+		cookieDomain := ginc.GetCookieDomainForOrigin(origin)
 
 		c.SetSameSite(http.SameSiteNoneMode)
 

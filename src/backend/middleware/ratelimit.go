@@ -10,22 +10,13 @@ import (
 	"time"
 	"tradeplay/common"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 	"golang.org/x/time/rate"
 )
 
 // TODO: Sharding for better performance under high load
-
-var rateLimitScript = redis.NewScript(`
-	local current = redis.call("INCR", KEYS[1])
-	if tonumber(current) == 1 or redis.call("TTL", KEYS[1]) == -1 then
-		redis.call("EXPIRE", KEYS[1], ARGV[1])
-	end
-	return current
-`)
 
 type ipEntry struct {
 	limiter  *rate.Limiter
@@ -164,8 +155,7 @@ func getUserID(c *gin.Context) string {
 }
 
 func RateLimitMiddleware(serviceCtx sctx.ServiceContext, limitPerWindow int, windowSec int) gin.HandlerFunc {
-	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
-	rdb := redisComp.GetClient()
+	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.KeyValueStore)
 
 	return func(c *gin.Context) {
 		userID := getUserID(c)
@@ -180,14 +170,11 @@ func RateLimitMiddleware(serviceCtx sctx.ServiceContext, limitPerWindow int, win
 		}
 		ctx := c.Request.Context()
 
-		res, err := rateLimitScript.Run(ctx, rdb, []string{key}, windowSec).Result()
-
+		count, err := redisComp.IncrWithExpire(ctx, key, time.Duration(windowSec)*time.Second)
 		if err != nil {
 			c.Next()
 			return
 		}
-
-		count := res.(int64)
 
 		if count > int64(limitPerWindow) {
 			c.Header("Retry-After", fmt.Sprintf("%d", windowSec))

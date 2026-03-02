@@ -9,7 +9,10 @@
 	},
 	"pagination": {
 		"showingResults": "Showing {start}-{end} of {totalItems} results",
-		"perPage": "Per page:"
+		"showingCount": "Showing {count} results",
+		"perPage": "Per page:",
+		"previous": "Previous",
+		"next": "Next"
 	},
 	"header": {
 		"home": "Home",
@@ -356,8 +359,6 @@
 		"accountsList": "List",
 		"accGame": "Game Accounts",
 		"accountsDesc": "Search and buy high-quality game accounts at the best prices",
-		"found": "Found",
-		"accGameCount": "game accounts",
 		"noAccountsFound": "No game accounts found",
 		"tryChangeFilter": "Try changing the filters or search keywords"
 	},

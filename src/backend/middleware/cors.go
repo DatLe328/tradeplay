@@ -1,9 +1,10 @@
 package middleware
 
 import (
+	"log"
 	"os"
 	"strings"
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,6 +15,7 @@ func Cors(serviceCtx sctx.ServiceContext) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.GetHeader("Origin")
 
+		log.Println(serviceCtx.EnvName())
 		if serviceCtx.EnvName() == sctx.DevEnv {
 			// In dev mode, allow the requesting origin (not wildcard for credentials)
 			if origin != "" {

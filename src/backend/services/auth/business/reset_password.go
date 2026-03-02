@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 	"tradeplay/common"
+	crypto "tradeplay/pkg/crypto"
 	auditEntity "tradeplay/services/audit/entity"
 	"tradeplay/services/auth/entity"
 )
@@ -43,7 +44,7 @@ func (biz *business) ResetPassword(ctx context.Context, data *entity.ResetPasswo
 		return common.ErrEntityNotFound(auth.TableName(), entity.ErrEmailIsNotValid)
 	}
 
-	salt, err := common.GenSalt(common.DefaultSaltLength)
+	salt, err := crypto.GenSalt(crypto.DefaultSaltLength)
 	if err != nil {
 		return common.ErrInternal(err)
 	}

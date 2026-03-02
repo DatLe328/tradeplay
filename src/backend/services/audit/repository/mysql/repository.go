@@ -8,10 +8,10 @@ import (
 
 type mysqlRepo struct {
 	db    *gorm.DB
-	redis common.RedisComponent
+	redis common.StreamBroker
 }
 
-func NewMySQLRepository(db *gorm.DB, redis common.RedisComponent) *mysqlRepo {
+func NewMySQLRepository(db *gorm.DB, redis common.StreamBroker) *mysqlRepo {
 	repo := &mysqlRepo{
 		db:    db,
 		redis: redis,

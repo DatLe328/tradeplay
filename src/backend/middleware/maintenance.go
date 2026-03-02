@@ -5,13 +5,13 @@ import (
 	"slices"
 	"tradeplay/common"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/gin-gonic/gin"
 )
 
 func MaintenanceSensitiveOnly(serviceCtx sctx.ServiceContext) gin.HandlerFunc {
-	conf := serviceCtx.MustGet(common.KeyCompConf).(common.ConfigComponent)
+	conf := serviceCtx.MustGet(common.KeyCompConf).(common.AppConfig)
 
 	return func(c *gin.Context) {
 		if !conf.UnderMaintenance() {

@@ -2,6 +2,8 @@ package composer
 
 import (
 	"tradeplay/common"
+	"tradeplay/components/gormc"
+	crypto "tradeplay/pkg/crypto"
 	auditRepository "tradeplay/services/audit/repository/mysql"
 	authBusiness "tradeplay/services/auth/business"
 	authRepository "tradeplay/services/auth/repository/mysql"
@@ -11,7 +13,7 @@ import (
 	walletBusiness "tradeplay/services/wallet/business"
 	walletRepository "tradeplay/services/wallet/repository/mysql"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/gin-gonic/gin"
 )
@@ -30,16 +32,17 @@ type AuthService interface {
 }
 
 func ComposeAuthAPIService(serviceCtx sctx.ServiceContext) AuthService {
-	db := serviceCtx.MustGet(common.KeyCompMySQL).(common.GormComponent)
-	jwtComp := serviceCtx.MustGet(common.KeyCompJWT).(common.JWTProvider)
-	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
-	emailComp := serviceCtx.MustGet(common.KeyCompEmail).(common.EmailComponent)
-	hasher := new(common.Hasher)
+	db := serviceCtx.MustGet(common.KeyCompMySQL).(gormc.DBComponent)
+	jwtComp := serviceCtx.MustGet(common.KeyCompJWT).(common.TokenProvider)
+	redisKV := serviceCtx.MustGet(common.KeyCompRedis).(common.KeyValueStore)
+	redisStream := serviceCtx.MustGet(common.KeyCompRedis).(common.StreamBroker)
+	emailComp := serviceCtx.MustGet(common.KeyCompEmail).(common.Mailer)
+	hasher := new(crypto.Hasher)
 
 	authRepository := authRepository.NewMySQLRepository(db.GetDB())
 	userRepository := userRepository.NewMySQLRepository(db.GetDB())
 	walletRepository := walletRepository.NewMySQLRepository(db.GetDB())
-	auditRepository := auditRepository.NewMySQLRepository(db.GetDB(), redisComp)
+	auditRepository := auditRepository.NewMySQLRepository(db.GetDB(), redisStream)
 
 	walletBusiness := walletBusiness.NewWalletBusiness(walletRepository, auditRepository)
 	userBusiness := userBusiness.NewUserBusiness(userRepository)
@@ -52,7 +55,8 @@ func ComposeAuthAPIService(serviceCtx sctx.ServiceContext) AuthService {
 		jwtComp,
 		hasher,
 		emailComp,
-		redisComp,
+		redisKV,
+		redisStream,
 	)
 
 	serviceAPI := authAPI.NewAuthAPI(serviceCtx, authBusiness)

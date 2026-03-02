@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 	"tradeplay/services/audit/entity"
 
 	"github.com/gin-gonic/gin"
@@ -14,18 +15,18 @@ func (h *api) ListAuditLogsHandler() gin.HandlerFunc {
 		var paging entity.Paging
 
 		if err := c.ShouldBindQuery(&filter); err != nil {
-			common.WriteErrorResponse(c, common.ErrBadRequest(err, "Invalid filter param"))
+			ginc.WriteErrorResponse(c, common.ErrBadRequest(err, "Invalid filter param"))
 			return
 		}
 
 		if err := c.ShouldBindQuery(&paging); err != nil {
-			common.WriteErrorResponse(c, common.ErrBadRequest(err, "Invalid paging param"))
+			ginc.WriteErrorResponse(c, common.ErrBadRequest(err, "Invalid paging param"))
 			return
 		}
 
 		logs, err := h.business.GetAuditLogs(c.Request.Context(), &filter, &paging)
 		if err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 

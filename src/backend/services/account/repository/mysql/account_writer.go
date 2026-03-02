@@ -8,22 +8,15 @@ import (
 	"tradeplay/services/account/entity"
 
 	"gorm.io/datatypes"
-	"gorm.io/gorm"
 )
 
 func (repo *mysqlRepo) CreateAccount(
 	ctx context.Context,
-	tx *gorm.DB,
 	data *entity.Account,
 ) error {
-	db := repo.db
-	if tx != nil {
-		db = tx
-	}
-
 	data.Version = 0
 
-	if err := db.Table(data.TableName()).Create(&data).Error; err != nil {
+	if err := repo.getDB(ctx).Table(data.TableName()).Create(&data).Error; err != nil {
 		return common.ErrDB(err)
 	}
 
@@ -32,16 +25,10 @@ func (repo *mysqlRepo) CreateAccount(
 
 func (repo *mysqlRepo) UpdateAccount(
 	ctx context.Context,
-	tx *gorm.DB,
 	id int32,
 	data *entity.AccountDataUpdate,
 	currentVersion int,
 ) error {
-	db := repo.db
-	if tx != nil {
-		db = tx
-	}
-
 	updates := map[string]interface{}{
 		"version": currentVersion + 1,
 	}
@@ -94,7 +81,7 @@ func (repo *mysqlRepo) UpdateAccount(
 		updates["features"] = datatypes.JSON(featuresJSON)
 	}
 
-	result := db.Model(&entity.Account{}).
+	result := repo.getDB(ctx).Model(&entity.Account{}).
 		Where("id = ? AND version = ?", id, currentVersion).
 		Updates(updates)
 

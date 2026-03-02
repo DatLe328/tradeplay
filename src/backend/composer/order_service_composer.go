@@ -2,6 +2,7 @@ package composer
 
 import (
 	"tradeplay/common"
+	"tradeplay/components/gormc"
 	accountBusiness "tradeplay/services/account/business"
 	accountRepo "tradeplay/services/account/repository/mysql"
 	auditRepo "tradeplay/services/audit/repository/mysql"
@@ -11,7 +12,7 @@ import (
 	walletBusiness "tradeplay/services/wallet/business"
 	walletRepo "tradeplay/services/wallet/repository/mysql"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,8 +26,8 @@ type OrderService interface {
 }
 
 func ComposeOrderAPIService(serviceCtx sctx.ServiceContext) OrderService {
-	db := serviceCtx.MustGet(common.KeyCompMySQL).(common.GormComponent).GetDB()
-	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
+	db := serviceCtx.MustGet(common.KeyCompMySQL).(gormc.DBComponent).GetDB()
+	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.StreamBroker)
 
 	accRepository := accountRepo.NewMySQLRepository(db)
 	orderRepository := orderRepo.NewMySQLRepository(db)

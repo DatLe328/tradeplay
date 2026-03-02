@@ -17,11 +17,11 @@ func (biz *business) LoginWithGoogle(
 	code string,
 	userAgent, ipAddress string,
 ) (*authEntity.TokenResponse, error) {
-	googleToken, err := common.ExchangeGoogleToken(code)
+	googleToken, err := authEntity.ExchangeGoogleToken(code)
 	if err != nil {
 		return nil, common.ErrInvalidRequest(err)
 	}
-	googleUser, err := common.GetGoogleUserInfo(googleToken)
+	googleUser, err := authEntity.GetGoogleUserInfo(googleToken)
 	if err != nil {
 		return nil, common.ErrInvalidRequest(err)
 	}

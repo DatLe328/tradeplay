@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"tradeplay/common"
-	sctx "tradeplay/components/service-context"
+	ginc "tradeplay/components/ginc"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/gin-gonic/gin"
 )
@@ -37,7 +37,7 @@ func SetCSRFToken(c *gin.Context) (string, error) {
 		return "", err
 	}
 
-	cookieDomain := common.GetCookieDomainForOrigin(c.GetHeader("Origin"))
+	cookieDomain := ginc.GetCookieDomainForOrigin(c.GetHeader("Origin"))
 
 	c.SetSameSite(http.SameSiteNoneMode)
 

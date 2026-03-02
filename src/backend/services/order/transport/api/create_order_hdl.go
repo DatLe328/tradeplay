@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 	"tradeplay/services/order/entity"
 
 	"github.com/gin-gonic/gin"
@@ -12,7 +13,7 @@ func (api *api) CreateOrderHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var data entity.OrderCreate
 		if err := c.ShouldBindJSON(&data); err != nil {
-			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
+			ginc.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
@@ -25,7 +26,7 @@ func (api *api) CreateOrderHandler() gin.HandlerFunc {
 		newOrder, err := api.business.CreateOrder(c.Request.Context(), int32(userId), &data, ipAddress)
 
 		if err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 

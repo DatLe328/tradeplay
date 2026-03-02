@@ -30,14 +30,13 @@ func (biz *business) CreateOrder(ctx context.Context, userID int32, data *orderE
 	}
 
 	var newOrder *orderEntity.Order
-	db := biz.orderRepository.GetDB()
 
 	// Set transaction timeout to 30 seconds for order creation
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	err = db.WithContext(ctxWithTimeout).Transaction(func(tx *gorm.DB) error {
-		account, err := biz.accountBusiness.GetAndLockAccount(ctxWithTimeout, tx, accID)
+	err = biz.orderRepository.RunInTransaction(ctxWithTimeout, func(ctx context.Context) error {
+		account, err := biz.accountBusiness.GetAndLockAccount(ctx, accID)
 		if err != nil {
 			return err
 		}
@@ -47,8 +46,7 @@ func (biz *business) CreateOrder(ctx context.Context, userID int32, data *orderE
 		}
 
 		desc := fmt.Sprintf("Thanh toán mua acc: %s", account.Title)
-		err = biz.walletBusiness.Debit(ctxWithTimeout, tx, userID, account.Price, "PENDING_ORDER", desc)
-		if err != nil {
+		if err = biz.walletBusiness.Debit(ctx, userID, account.Price, "PENDING_ORDER", desc); err != nil {
 			return err
 		}
 
@@ -64,22 +62,21 @@ func (biz *business) CreateOrder(ctx context.Context, userID int32, data *orderE
 			Notes:         "Mua bằng số dư ví",
 		}
 
-		if err := tx.Create(newOrder).Error; err != nil {
-			return common.ErrDB(err)
-		}
-
-		if err := biz.accountBusiness.MarkAsSold(ctxWithTimeout, tx, accID, userID); err != nil {
+		if err := biz.orderRepository.CreateOrder(ctx, newOrder); err != nil {
 			return err
 		}
 
-		history := &orderEntity.OrderHistory{
+		if err := biz.accountBusiness.MarkAsSold(ctx, accID, userID); err != nil {
+			return err
+		}
+
+		return biz.orderRepository.CreateOrderHistory(ctx, &orderEntity.OrderHistory{
 			OrderId:   newOrder.ID,
 			NewStatus: orderEntity.OrderStatusCompleted,
 			Note:      "Mua thành công qua Ví",
 			ChangedBy: userID,
 			IpAddress: ipAddress,
-		}
-		return tx.Create(history).Error
+		})
 	})
 
 	if err != nil {
@@ -104,16 +101,18 @@ func (biz *business) handleDepositOrder(
 		return nil, common.ErrInvalidRequest(errors.New("số tiền nạp tối thiểu là 10,000 VND"))
 	}
 
-	var existingOrder orderEntity.Order
-	err := biz.orderRepository.GetDB().Where("user_id = ? AND status = ? AND type = ?",
-		userID, orderEntity.OrderStatusPending, orderEntity.OrderTypeDeposit).First(&existingOrder).Error
+	existingOrder, err := biz.orderRepository.FindPendingDepositOrder(ctx, userID)
+	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, common.ErrDB(err)
+	}
 
-	if err == nil {
+	if existingOrder != nil {
 		if existingOrder.TotalPrice == data.TotalPrice {
 			existingOrder.Mask()
-			return &existingOrder, nil
+			return existingOrder, nil
 		}
-		biz.orderRepository.GetDB().Model(&existingOrder).Update("status", orderEntity.OrderStatusCancelled)
+		// Cancel stale pending deposit order; ignore error — not critical
+		_ = biz.orderRepository.UpdateOrderStatus(ctx, existingOrder.ID, orderEntity.OrderStatusCancelled)
 	}
 
 	newOrder := &orderEntity.Order{
@@ -129,7 +128,7 @@ func (biz *business) handleDepositOrder(
 		return nil, common.ErrInternal(err)
 	}
 
-	_ = biz.orderRepository.CreateOrderHistory(ctx, nil, &orderEntity.OrderHistory{
+	_ = biz.orderRepository.CreateOrderHistory(ctx, &orderEntity.OrderHistory{
 		OrderId: newOrder.ID, NewStatus: orderEntity.OrderStatusPending, Note: "Khởi tạo đơn nạp", ChangedBy: userID, IpAddress: ipAddress,
 	})
 

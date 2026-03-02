@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 )
 
 type EmailProvider interface {

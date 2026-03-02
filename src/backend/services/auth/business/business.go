@@ -63,10 +63,11 @@ type business struct {
 	userBusiness    userBusiness
 	walletBusiness  walletBusiness
 	auditRepository auditRepository
-	jwtProvider     common.JWTProvider
+	jwtProvider     common.TokenProvider
 	hasher          hasher
 	emailProvider   emailc.EmailProvider
-	redis           common.RedisComponent
+	redis           common.KeyValueStore
+	notifier        common.StreamBroker
 }
 
 func NewAuthBusiness(
@@ -74,10 +75,11 @@ func NewAuthBusiness(
 	userBusiness userBusiness,
 	walletBusiness walletBusiness,
 	auditRepository auditRepository,
-	jwtProvider common.JWTProvider,
+	jwtProvider common.TokenProvider,
 	hasher hasher,
 	emailProvider emailc.EmailProvider,
-	redis common.RedisComponent,
+	redis common.KeyValueStore,
+	notifier common.StreamBroker,
 ) *business {
 	return &business{
 		authRepository:  authRepository,
@@ -88,5 +90,6 @@ func NewAuthBusiness(
 		hasher:          hasher,
 		emailProvider:   emailProvider,
 		redis:           redis,
+		notifier:        notifier,
 	}
 }

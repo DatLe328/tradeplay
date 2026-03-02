@@ -3,7 +3,7 @@ package composer
 import (
 	"tradeplay/services/upload/transport/api"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/gin-gonic/gin"
 )

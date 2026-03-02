@@ -69,13 +69,13 @@ func (biz *business) ProcessSepayWebhook(
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	return biz.db.WithContext(ctxWithTimeout).Transaction(func(tx *gorm.DB) error {
+	return biz.repo.RunInTransaction(ctxWithTimeout, func(ctx context.Context) error {
 		// Idempotency check: Check if webhook already processed
-		existingWebhook, err := biz.repo.GetPaymentWebhookBySepayID(ctxWithTimeout, tx, sepayIDStr)
+		existingWebhook, err := biz.repo.GetPaymentWebhookBySepayID(ctx, sepayIDStr)
 		if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 			return err
 		}
-		
+
 		// If webhook already processed, return success to prevent duplicate processing
 		if err == nil && existingWebhook != nil {
 			if existingWebhook.Status == "processed" {
@@ -101,9 +101,8 @@ func (biz *business) ProcessSepayWebhook(
 			Status:        "processing",
 		}
 
-		if err := biz.repo.CreatePaymentWebhook(ctxWithTimeout, tx, webhookRecord); err != nil {
+		if err := biz.repo.CreatePaymentWebhook(ctx, webhookRecord); err != nil {
 			if errors.Is(err, gorm.ErrDuplicatedKey) {
-				// Another request is processing this webhook, return success for idempotency
 				biz.auditRepo.PushAuditLog(context.Background(), &auditEntity.AuditLog{
 					UserId:   0,
 					Action:   "WEBHOOK_RACE_CONDITION",
@@ -114,26 +113,26 @@ func (biz *business) ProcessSepayWebhook(
 			return err
 		}
 
-		order, err := biz.orderBusiness.GetOrderInternal(ctxWithTimeout, orderID)
+		order, err := biz.orderBusiness.GetOrderInternal(ctx, orderID)
 		if err != nil {
-			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
+			_ = biz.repo.UpdatePaymentWebhookStatus(ctx, payload.ReferenceCode, "failed")
 			return err
 		}
 		if order == nil {
-			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
+			_ = biz.repo.UpdatePaymentWebhookStatus(ctx, payload.ReferenceCode, "failed")
 			return errors.New("order not found in system")
 		}
 		if order.Type != orderEntity.OrderTypeDeposit {
-			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
+			_ = biz.repo.UpdatePaymentWebhookStatus(ctx, payload.ReferenceCode, "failed")
 			return errors.New("order is not a deposit order")
 		}
 		if order.Status != orderEntity.OrderStatusPending {
-			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
+			_ = biz.repo.UpdatePaymentWebhookStatus(ctx, payload.ReferenceCode, "failed")
 			return errors.New("order is not in pending status")
 		}
 
 		if order.TotalPrice != payload.TransferAmount {
-			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
+			_ = biz.repo.UpdatePaymentWebhookStatus(ctx, payload.ReferenceCode, "failed")
 			biz.auditRepo.PushAuditLog(context.Background(), &auditEntity.AuditLog{
 				UserId:   order.UserID,
 				Action:   "WEBHOOK_AMOUNT_MISMATCH",
@@ -142,13 +141,12 @@ func (biz *business) ProcessSepayWebhook(
 			return fmt.Errorf("amount mismatch: expected %d but got %d", order.TotalPrice, payload.TransferAmount)
 		}
 
-		order, err = biz.orderBusiness.MarkOrderAsPaid(ctxWithTimeout, tx, orderID, payload.TransferAmount, payload.Gateway, payload.ReferenceCode)
+		order, err = biz.orderBusiness.MarkOrderAsPaid(ctx, orderID, payload.TransferAmount, payload.Gateway, payload.ReferenceCode)
 		if err != nil {
-			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
-			
-			// Create failure notification
+			_ = biz.repo.UpdatePaymentWebhookStatus(ctx, payload.ReferenceCode, "failed")
+
 			_, _ = notificationHelper.CreateNotification(
-				ctxWithTimeout,
+				ctx,
 				biz.notificationRepository,
 				order.UserID,
 				notificationEntity.NotificationTypeOrderStatus,
@@ -157,7 +155,7 @@ func (biz *business) ProcessSepayWebhook(
 				nil,
 				nil,
 			)
-			
+
 			biz.auditRepo.PushAuditLog(context.Background(), &auditEntity.AuditLog{
 				UserId:   0,
 				Action:   "PAYMENT_FAILED",
@@ -167,7 +165,7 @@ func (biz *business) ProcessSepayWebhook(
 		}
 
 		if order == nil {
-			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
+			_ = biz.repo.UpdatePaymentWebhookStatus(ctx, payload.ReferenceCode, "failed")
 			return nil
 		}
 
@@ -178,33 +176,27 @@ func (biz *business) ProcessSepayWebhook(
 		metadata := common.JSON(txBytes)
 
 		description := fmt.Sprintf("Nạp tiền tự động SePay: %s", payload.ReferenceCode)
-
-		orderID := strconv.Itoa(int(order.ID))
-		if err := biz.walletBusiness.Deposit(
-			ctxWithTimeout, tx, order.UserID, payload.TransferAmount, orderID, description, &metadata); err != nil {
-			biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "failed")
+		orderIDStr := strconv.Itoa(int(order.ID))
+		if err := biz.walletBusiness.Deposit(ctx, order.UserID, payload.TransferAmount, orderIDStr, description, &metadata); err != nil {
+			_ = biz.repo.UpdatePaymentWebhookStatus(ctx, payload.ReferenceCode, "failed")
 			return err
 		}
 
-		if err := biz.repo.UpdatePaymentWebhookStatus(ctxWithTimeout, tx, payload.ReferenceCode, "processed"); err != nil {
+		if err := biz.repo.UpdatePaymentWebhookStatus(ctx, payload.ReferenceCode, "processed"); err != nil {
 			return err
 		}
 
-		now := time.Now()
-		if err := tx.WithContext(ctxWithTimeout).Model(&paymentEntity.PaymentWebhook{}).
-			Where("reference_code = ?", payload.ReferenceCode).
-			Update("processed_at", now).Error; err != nil {
+		if err := biz.repo.UpdatePaymentWebhookProcessedAt(ctx, payload.ReferenceCode, time.Now()); err != nil {
 			return err
 		}
 
-		if err := biz.orderBusiness.MarkOrderAsCompleted(ctxWithTimeout, tx, order.ID, "SePay payment processed"); err != nil {
+		if err := biz.orderBusiness.MarkOrderAsCompleted(ctx, order.ID, "SePay payment processed"); err != nil {
 			return err
 		}
 
-		// Create notification for successful payment
 		notificationMsg := fmt.Sprintf("Nạp tiền thành công: +%d đ từ SePay", payload.TransferAmount)
 		_, _ = notificationHelper.CreateNotification(
-			ctxWithTimeout,
+			ctx,
 			biz.notificationRepository,
 			order.UserID,
 			notificationEntity.NotificationTypeOrderStatus,

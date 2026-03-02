@@ -3,7 +3,7 @@ package api
 import (
 	"log"
 	"net/http"
-	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 	"tradeplay/middleware"
 	"tradeplay/services/auth/entity"
 
@@ -15,7 +15,7 @@ func (api *api) LoginHdl() gin.HandlerFunc {
 		var data entity.AuthEmailPasswordDTO
 
 		if err := c.ShouldBind(&data); err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 
@@ -24,12 +24,12 @@ func (api *api) LoginHdl() gin.HandlerFunc {
 
 		response, err := api.business.Authenticate(c.Request.Context(), &data, userAgent, clientIP)
 		if err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 
 		origin := c.GetHeader("Origin")
-		cookieDomain := common.GetCookieDomainForOrigin(origin)
+		cookieDomain := ginc.GetCookieDomainForOrigin(origin)
 		log.Println("Cookie domain for login", cookieDomain)
 
 		c.SetSameSite(http.SameSiteNoneMode)

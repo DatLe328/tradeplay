@@ -19,12 +19,12 @@ import {
 import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PaginationWrapper } from "@/components/ui/pagination-wrapper";
+import { CursorPaginationWrapper } from "@/components/ui/cursor-pagination-wrapper";
 import { useAuthStore } from "@/stores/authStore";
 import { orderService } from "@/services/orderService";
 import { accountService } from "@/services/accountService";
 import { formatCurrency, formatDateTime } from "@/utils/format";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { Order, AccountCredentials } from "@/types";
 import { useTranslation } from "@/stores/languageStore";
 import {
@@ -87,13 +87,22 @@ export default function OrdersPage() {
 	const { t } = useTranslation();
 	const { toast } = useToast();
 
-	const [currentPage, setCurrentPage] = useState(1);
+	const [currentCursor, setCurrentCursor] = useState("");
+	const [allCursors, setAllCursors] = useState<string[]>([""]);
+	const [pageNum, setPageNum] = useState(1);
+	const pageNumRef = useRef(1);
+	const [hasMoreBeyondKnown, setHasMoreBeyondKnown] = useState(false);
 	useEffect(() => {
 		window.scrollTo({ top: 0, behavior: "smooth" });
-	}, [currentPage]);
+	}, [currentCursor]);
 
-	const [totalPages, setTotalPages] = useState(1);
-	const [totalItems, setTotalItems] = useState(0);
+	const navigateTo = (page: number) => {
+		const c = allCursors[page - 1] ?? "";
+		pageNumRef.current = page;
+		setPageNum(page);
+		setCurrentCursor(c);
+	};
+
 	const [activeTab, setActiveTab] = useState<"accounts" | "deposits">(
 		"accounts",
 	);
@@ -109,13 +118,14 @@ export default function OrdersPage() {
 
 	useEffect(() => {
 		if (isAuthenticated) {
-			loadOrders(currentPage);
+			loadOrders(currentCursor);
 		}
-	}, [isAuthenticated, currentPage, activeTab, filterStatus]);
+	}, [isAuthenticated, currentCursor, activeTab, filterStatus]);
 
-	const loadOrders = async (page: number) => {
+	const loadOrders = async (cursor: string) => {
 		setIsLoading(true);
 		try {
+			const pn = pageNumRef.current;
 			const typeParam =
 				activeTab === "accounts" ? OrderType.BuyAcc : OrderType.Deposit;
 			const statusParam =
@@ -124,15 +134,37 @@ export default function OrdersPage() {
 					: (Number(filterStatus) as OrderStatus);
 
 			const res = await orderService.getMyOrders(
-				page,
+				cursor,
 				pageSize,
 				typeParam,
 				statusParam,
 			);
 			setOrders(res.data);
-			if (res.paging) {
-				setTotalItems(Number(res.paging.total));
-				setTotalPages(Math.ceil(Number(res.paging.total) / pageSize));
+
+			const nc = res.paging?.next_cursor ?? "";
+			const hm = res.paging?.has_more ?? false;
+
+			if (hm && nc) {
+				setAllCursors((prev) => {
+					if (prev.length > pn) return prev;
+					return [...prev, nc];
+				});
+				orderService.getMyOrders(nc, pageSize, typeParam, statusParam).then((pr) => {
+					const pnc = pr.paging?.next_cursor ?? "";
+					const phm = pr.paging?.has_more ?? false;
+					if (phm && pnc) {
+						setAllCursors((prev) => {
+							if (prev.length > pn + 1) return prev;
+							return [...prev.slice(0, pn + 1), pnc];
+						});
+						setHasMoreBeyondKnown(true);
+					} else {
+						setHasMoreBeyondKnown(false);
+					}
+				}).catch(() => {});
+			} else {
+				setAllCursors((prev) => prev.slice(0, pn));
+				setHasMoreBeyondKnown(false);
 			}
 		} catch (error) {
 			// console.error(error);
@@ -149,14 +181,22 @@ export default function OrdersPage() {
 	const handleTabChange = (tab: "accounts" | "deposits") => {
 		if (activeTab !== tab) {
 			setActiveTab(tab);
-			setCurrentPage(1);
+			pageNumRef.current = 1;
+			setPageNum(1);
+			setCurrentCursor("");
+			setAllCursors([""]);
+			setHasMoreBeyondKnown(false);
 			setFilterStatus("all");
 		}
 	};
 
 	const handleStatusChange = (value: string) => {
 		setFilterStatus(value);
-		setCurrentPage(1);
+		pageNumRef.current = 1;
+		setPageNum(1);
+		setCurrentCursor("");
+		setAllCursors([""]);
+		setHasMoreBeyondKnown(false);
 	};
 
 	const handleViewCredentials = async (accountId: string | number) => {
@@ -473,13 +513,18 @@ export default function OrdersPage() {
 							})}
 						</div>
 
-						<PaginationWrapper
-							currentPage={currentPage}
-							totalPages={totalPages}
-							totalItems={totalItems}
-							onPageChange={setCurrentPage}
-							pageSize={pageSize}
-						/>
+					<CursorPaginationWrapper
+					hasMore={allCursors.length > pageNum}
+					hasPrev={pageNum > 1}
+					onNext={() => navigateTo(pageNum + 1)}
+					onPrev={() => navigateTo(pageNum - 1)}
+					currentPage={pageNum}
+					onGoToPage={navigateTo}
+					maxKnownPage={allCursors.length}
+					hasMoreBeyondKnown={hasMoreBeyondKnown}
+						itemCount={orders.length}
+						pageSize={pageSize}
+					/>
 					</>
 				) : (
 					<motion.div

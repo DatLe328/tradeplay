@@ -23,8 +23,8 @@ func (biz *business) GetAccount(ctx context.Context, id int32) (*entity.Account,
 	return data, nil
 }
 
-func (biz *business) GetAndLockAccount(ctx context.Context, tx *gorm.DB, id int32) (*entity.Account, error) {
-	account, err := biz.accountRepo.GetAccountByIDForUpdate(ctx, tx, id)
+func (biz *business) GetAndLockAccount(ctx context.Context, id int32) (*entity.Account, error) {
+	account, err := biz.accountRepo.GetAccountByIDForUpdate(ctx, id)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, common.ErrNotFound(entity.Account{}.TableName())

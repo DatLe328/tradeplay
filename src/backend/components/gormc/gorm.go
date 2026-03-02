@@ -8,7 +8,7 @@ import (
 
 	"tradeplay/components/gormc/dialets"
 	"tradeplay/components/logger"
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"gorm.io/gorm"
 	gormLogger "gorm.io/gorm/logger"

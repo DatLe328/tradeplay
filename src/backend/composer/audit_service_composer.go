@@ -2,11 +2,12 @@ package composer
 
 import (
 	"tradeplay/common"
+	"tradeplay/components/gormc"
 	"tradeplay/services/audit/business"
 	auditRepo "tradeplay/services/audit/repository/mysql"
 	"tradeplay/services/audit/transport/api"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,9 +17,9 @@ type AuditService interface {
 }
 
 func ComposeAuditAPIService(serviceCtx sctx.ServiceContext) AuditService {
-	db := serviceCtx.MustGet("mysql").(common.GormComponent)
+	db := serviceCtx.MustGet("mysql").(gormc.DBComponent)
 
-	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
+	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.StreamBroker)
 	auditRepository := auditRepo.NewMySQLRepository(db.GetDB(), redisComp)
 	biz := business.NewBusiness(auditRepository)
 

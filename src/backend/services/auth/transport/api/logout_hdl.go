@@ -2,7 +2,7 @@ package api
 
 import (
 	"net/http"
-	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,7 +16,7 @@ func (api *api) LogoutHdl() gin.HandlerFunc {
 		}
 
 		origin := c.GetHeader("Origin")
-		cookieDomain := common.GetCookieDomainForOrigin(origin)
+		cookieDomain := ginc.GetCookieDomainForOrigin(origin)
 
 		var sameSite http.SameSite
 		var secure bool

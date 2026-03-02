@@ -9,7 +9,7 @@ interface OrderStore {
   error: string | null;
 
   createOrder: (accountId: number) => Promise<Order | null>;
-  fetchMyOrders: (page?: number) => Promise<void>;
+  fetchMyOrders: (cursor?: string) => Promise<void>;
   fetchOrderDetail: (id: string) => Promise<void>;
 }
 
@@ -40,10 +40,10 @@ export const useOrderStore = create<OrderStore>((set) => ({
     }
   },
 
-  fetchMyOrders: async (page = 1) => {
+  fetchMyOrders: async (cursor = "") => {
     set({ isLoading: true, error: null });
     try {
-      const res = await orderService.getMyOrders(page);
+      const res = await orderService.getMyOrders(cursor);
       set({ orders: res.data });
     } catch (err: any) {
       set({ error: err.message });

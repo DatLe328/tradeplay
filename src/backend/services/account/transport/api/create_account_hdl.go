@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 	"tradeplay/services/account/entity"
 
 	"github.com/gin-gonic/gin"
@@ -13,7 +14,7 @@ func (api *api) CreateAccountHandler() gin.HandlerFunc {
 		var data entity.AccountDataCreation
 
 		if err := c.ShouldBindJSON(&data); err != nil {
-			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
+			ginc.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
@@ -24,7 +25,7 @@ func (api *api) CreateAccountHandler() gin.HandlerFunc {
 
 		newId, err := api.business.CreateAccount(c.Request.Context(), userId, &data)
 		if err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 

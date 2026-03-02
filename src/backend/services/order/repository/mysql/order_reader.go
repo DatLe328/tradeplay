@@ -2,10 +2,10 @@ package mysql
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"tradeplay/common"
 	orderEntity "tradeplay/services/order/entity"
-
-	"gorm.io/gorm"
 )
 
 func (repo *mysqlRepo) GetOrder(ctx context.Context, id int32) (*orderEntity.Order, error) {
@@ -21,15 +21,10 @@ func (repo *mysqlRepo) GetOrder(ctx context.Context, id int32) (*orderEntity.Ord
 	return &data, nil
 }
 
-func (repo *mysqlRepo) GetOrderForUpdate(ctx context.Context, tx *gorm.DB, id int32) (*orderEntity.Order, error) {
+func (repo *mysqlRepo) GetOrderForUpdate(ctx context.Context, id int32) (*orderEntity.Order, error) {
 	var order orderEntity.Order
 
-	db := repo.db
-	if tx != nil {
-		db = tx
-	}
-
-	if err := db.Set("gorm:query_option", "FOR UPDATE").
+	if err := repo.getDB(ctx).Set("gorm:query_option", "FOR UPDATE").
 		First(&order, id).Error; err != nil {
 		return nil, err
 	}
@@ -79,19 +74,39 @@ func (repo *mysqlRepo) FindOrders(
 		}
 	}
 
-	if err := db.Count(&paging.Total).Error; err != nil {
-		return nil, common.ErrDB(err)
+	if paging.Cursor != "" {
+		if ci, err := strconv.ParseInt(paging.Cursor, 10, 32); err == nil {
+			db = db.Where("id < ?", int32(ci))
+		}
 	}
 
 	if err := db.Preload("Account").
-		Offset((paging.Page - 1) * paging.Limit).
-		Limit(paging.Limit).
 		Order("id desc").
+		Limit(paging.Limit + 1).
 		Find(&result).Error; err != nil {
 		return nil, common.ErrDB(err)
 	}
 
+	if len(result) > paging.Limit {
+		paging.HasMore = true
+		paging.NextCursor = fmt.Sprintf("%d", result[paging.Limit-1].ID)
+		result = result[:paging.Limit]
+	}
+
 	return result, nil
+}
+
+// FindPendingDepositOrder returns the first pending deposit order for the given user, if any.
+func (repo *mysqlRepo) FindPendingDepositOrder(ctx context.Context, userID int32) (*orderEntity.Order, error) {
+	var order orderEntity.Order
+	err := repo.db.WithContext(ctx).Where(
+		"user_id = ? AND status = ? AND type = ?",
+		userID, orderEntity.OrderStatusPending, orderEntity.OrderTypeDeposit,
+	).First(&order).Error
+	if err != nil {
+		return nil, err
+	}
+	return &order, nil
 }
 
 func (repo *mysqlRepo) GetAllOrders(ctx context.Context, filter *orderEntity.OrderFilter, paging *common.Paging) ([]orderEntity.Order, error) {
@@ -104,16 +119,23 @@ func (repo *mysqlRepo) GetAllOrders(ctx context.Context, filter *orderEntity.Ord
 		}
 	}
 
-	if err := db.Count(&paging.Total).Error; err != nil {
-		return nil, common.ErrDB(err)
+	if paging.Cursor != "" {
+		if ci, err := strconv.ParseInt(paging.Cursor, 10, 32); err == nil {
+			db = db.Where("id < ?", int32(ci))
+		}
 	}
 
 	if err := db.Preload("Account").
-		Offset((paging.Page - 1) * paging.Limit).
-		Limit(paging.Limit).
 		Order("id desc").
+		Limit(paging.Limit + 1).
 		Find(&result).Error; err != nil {
 		return nil, common.ErrDB(err)
+	}
+
+	if len(result) > paging.Limit {
+		paging.HasMore = true
+		paging.NextCursor = fmt.Sprintf("%d", result[paging.Limit-1].ID)
+		result = result[:paging.Limit]
 	}
 
 	return result, nil

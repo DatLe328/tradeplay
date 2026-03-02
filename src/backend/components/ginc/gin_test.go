@@ -3,7 +3,7 @@ package ginc
 import (
 	"os"
 	"testing"
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 )
 
 var testServiceCtx sctx.ServiceContext

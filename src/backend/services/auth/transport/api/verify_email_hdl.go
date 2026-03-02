@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 	"tradeplay/services/auth/entity"
 
 	"github.com/gin-gonic/gin"
@@ -13,12 +14,12 @@ func (api *api) VerifyEmailHandler() gin.HandlerFunc {
 		var data entity.VerifyEmailData
 
 		if err := c.ShouldBindJSON(&data); err != nil {
-			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
+			ginc.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
 		if err := api.business.VerifyEmail(c.Request.Context(), &data); err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 

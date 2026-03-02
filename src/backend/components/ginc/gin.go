@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 	"tradeplay/components/logger"
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/gin-gonic/gin"
 )

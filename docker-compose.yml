@@ -51,7 +51,11 @@ services:
 
 volumes:
   mysql_data:
+    external: true
+    name: tradeplay-mysql-data
   redis_data:
+    external: true
+    name: tradeplay-redis-data
 
 networks:
   tradeplay-network:

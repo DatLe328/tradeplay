@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,7 +15,7 @@ func (api *api) GetMeHandler() gin.HandlerFunc {
 		uid, err := common.FromBase58(requester.GetSubject())
 
 		if err != nil {
-			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
+			ginc.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
@@ -22,7 +23,7 @@ func (api *api) GetMeHandler() gin.HandlerFunc {
 
 		wallet, err := api.business.GetUserWallet(c.Request.Context(), userId)
 		if err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 

@@ -2,11 +2,12 @@ package composer
 
 import (
 	"tradeplay/common"
+	"tradeplay/components/gormc"
 	"tradeplay/services/user/business"
 	"tradeplay/services/user/repository/mysql"
 	"tradeplay/services/user/transport/api"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +18,7 @@ type UserService interface {
 }
 
 func ComposeUserAPIService(serviceCtx sctx.ServiceContext) UserService {
-	db := serviceCtx.MustGet(common.KeyCompMySQL).(common.GormComponent)
+	db := serviceCtx.MustGet(common.KeyCompMySQL).(gormc.DBComponent)
 
 	userRepository := mysql.NewMySQLRepository(db.GetDB())
 

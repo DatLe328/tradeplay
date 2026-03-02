@@ -6,7 +6,9 @@ import (
 	"flag"
 	"fmt"
 	"time"
-	sctx "tradeplay/components/service-context"
+
+	"tradeplay/common"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -54,9 +56,9 @@ func (j *jwtx) Activate(_ sctx.ServiceContext) error {
 	if len(j.secret) < 32 {
 		return ErrSecretKeyNotValid
 	}
-	// if j.expireTokenInSeconds < 60 {
-	// 	return ErrTokenLifeTimeTooShort
-	// }
+	if j.expireTokenInSeconds < 60 {
+		return ErrTokenLifeTimeTooShort
+	}
 	return nil
 }
 
@@ -91,7 +93,7 @@ func (j *jwtx) IssueToken(ctx context.Context, id, sub string, seconds int) (tok
 	return tokenSignedStr, exp, nil
 }
 
-func (j *jwtx) ParseToken(ctx context.Context, tokenString string) (*jwt.RegisteredClaims, error) {
+func (j *jwtx) ParseToken(ctx context.Context, tokenString string) (*common.TokenClaims, error) {
 	if j == nil {
 		return nil, errors.New("jwt component is nil")
 	}
@@ -113,5 +115,18 @@ func (j *jwtx) ParseToken(ctx context.Context, tokenString string) (*jwt.Registe
 		return nil, errors.New("invalid token")
 	}
 
-	return &rc, nil
+	var expiresAt, issuedAt time.Time
+	if rc.ExpiresAt != nil {
+		expiresAt = rc.ExpiresAt.Time
+	}
+	if rc.IssuedAt != nil {
+		issuedAt = rc.IssuedAt.Time
+	}
+
+	return &common.TokenClaims{
+		ID:        rc.ID,
+		Subject:   rc.Subject,
+		ExpiresAt: expiresAt,
+		IssuedAt:  issuedAt,
+	}, nil
 }

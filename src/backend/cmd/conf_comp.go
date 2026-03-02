@@ -4,7 +4,7 @@ import (
 	"flag"
 	"tradeplay/common"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 )
 
 type config struct {

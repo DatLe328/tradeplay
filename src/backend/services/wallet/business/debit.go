@@ -6,19 +6,16 @@ import (
 	"fmt"
 	"tradeplay/common"
 	"tradeplay/services/wallet/entity"
-
-	"gorm.io/gorm"
 )
 
 func (biz *business) Debit(
 	ctx context.Context,
-	tx *gorm.DB,
 	userID int32,
 	amount int64,
 	refId string,
 	description string,
 ) error {
-	wallet, err := biz.walletRepository.GetWalletForUpdate(ctx, tx, userID)
+	wallet, err := biz.walletRepository.GetWalletForUpdate(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("không tìm thấy ví người dùng: %w", err)
 	}
@@ -31,7 +28,7 @@ func (biz *business) Debit(
 	newBalance := oldBalance - amount
 
 	wallet.Balance = newBalance
-	if err := tx.Save(wallet).Error; err != nil {
+	if err := biz.walletRepository.UpdateWalletBalance(ctx, wallet); err != nil {
 		return common.ErrDB(err)
 	}
 
@@ -47,7 +44,7 @@ func (biz *business) Debit(
 		nil,
 	)
 
-	if err := biz.walletRepository.CreateWalletTransaction(ctx, tx, walletTx); err != nil {
+	if err := biz.walletRepository.CreateWalletTransaction(ctx, walletTx); err != nil {
 		return common.ErrDB(err)
 	}
 
