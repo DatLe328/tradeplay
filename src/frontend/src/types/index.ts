@@ -69,9 +69,14 @@ export interface AuditLogFilter {
 export interface ApiResponse<T> {
   data: T;
   paging?: {
-    page: number;
-    limit: number;
-    total: number;
+    limit?: number;
+    // cursor-based
+    cursor?: string;
+    next_cursor?: string;
+    has_more?: boolean;
+    // page-based (AuditLogs)
+    total?: number;
+    page?: number;
   };
   filter?: any;
 }

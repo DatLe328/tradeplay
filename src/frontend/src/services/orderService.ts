@@ -22,13 +22,13 @@ export const orderService = {
     },
 
 	getMyOrders: async (
-		page = 1,
+		cursor = "",
 		limit = 10,
 		type?: OrderType,
 		status?: OrderStatus
 	) => {
 		const query = new URLSearchParams();
-		query.append("page", page.toString());
+		if (cursor) query.append("cursor", cursor);
 		query.append("limit", limit.toString());
 
 		if (type !== undefined) {
@@ -47,8 +47,9 @@ export const orderService = {
 		return apiRequest<ApiResponse<Order>>(`/orders/${id}`);
 	},
 
-	getAdminOrders: async (page = 1, limit = 10, type?: OrderType) => {
-	let url = `/admin/orders?page=${page}&limit=${limit}`;
+	getAdminOrders: async (cursor = "", limit = 10, type?: OrderType) => {
+	let url = `/admin/orders?limit=${limit}`;
+		if (cursor) url += `&cursor=${cursor}`;
         if (type !== undefined) {
             url += `&type=${type}`;
         }

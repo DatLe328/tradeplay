@@ -2,6 +2,8 @@ package mysql
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"tradeplay/common"
 	orderEntity "tradeplay/services/order/entity"
 )
@@ -72,16 +74,23 @@ func (repo *mysqlRepo) FindOrders(
 		}
 	}
 
-	if err := db.Count(&paging.Total).Error; err != nil {
-		return nil, common.ErrDB(err)
+	if paging.Cursor != "" {
+		if ci, err := strconv.ParseInt(paging.Cursor, 10, 32); err == nil {
+			db = db.Where("id < ?", int32(ci))
+		}
 	}
 
 	if err := db.Preload("Account").
-		Offset((paging.Page - 1) * paging.Limit).
-		Limit(paging.Limit).
 		Order("id desc").
+		Limit(paging.Limit + 1).
 		Find(&result).Error; err != nil {
 		return nil, common.ErrDB(err)
+	}
+
+	if len(result) > paging.Limit {
+		paging.HasMore = true
+		paging.NextCursor = fmt.Sprintf("%d", result[paging.Limit-1].ID)
+		result = result[:paging.Limit]
 	}
 
 	return result, nil
@@ -110,16 +119,23 @@ func (repo *mysqlRepo) GetAllOrders(ctx context.Context, filter *orderEntity.Ord
 		}
 	}
 
-	if err := db.Count(&paging.Total).Error; err != nil {
-		return nil, common.ErrDB(err)
+	if paging.Cursor != "" {
+		if ci, err := strconv.ParseInt(paging.Cursor, 10, 32); err == nil {
+			db = db.Where("id < ?", int32(ci))
+		}
 	}
 
 	if err := db.Preload("Account").
-		Offset((paging.Page - 1) * paging.Limit).
-		Limit(paging.Limit).
 		Order("id desc").
+		Limit(paging.Limit + 1).
 		Find(&result).Error; err != nil {
 		return nil, common.ErrDB(err)
+	}
+
+	if len(result) > paging.Limit {
+		paging.HasMore = true
+		paging.NextCursor = fmt.Sprintf("%d", result[paging.Limit-1].ID)
+		result = result[:paging.Limit]
 	}
 
 	return result, nil

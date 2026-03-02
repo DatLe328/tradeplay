@@ -219,8 +219,8 @@ export default function AuditLogs() {
 				const res = await auditService.getLogs(params);
 				setLogs(res.data);
 				if (res.paging) {
-					setTotalItems(res.paging.total);
-					setTotalPages(Math.ceil(res.paging.total / pageSize));
+					setTotalItems(res.paging.total ?? 0);
+					setTotalPages(Math.ceil((res.paging.total ?? 0) / pageSize));
 				}
 			} catch (error) {
 				console.error("Audit fetch error:", error);

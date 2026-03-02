@@ -9,7 +9,10 @@
 	},
 	"pagination": {
 		"showingResults": "Hiển thị {start}-{end} / {totalItems} kết quả",
-		"perPage": "Mỗi trang:"
+		"showingCount": "Hiển thị {count} kết quả",
+		"perPage": "Mỗi trang:",
+		"previous": "Trước",
+		"next": "Sau"
 	},
 	"header": {
 		"home": "Trang Chủ",
@@ -358,8 +361,6 @@
 		"accountsList": "Danh Sách",
 		"accGame": "Acc Game",
 		"accountsDesc": "Tìm kiếm và mua acc game chất lượng với giá tốt nhất",
-		"found": "Tìm thấy",
-		"accGameCount": "acc game",
 		"noAccountsFound": "Không tìm thấy acc game",
 		"tryChangeFilter": "Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm"
 	},

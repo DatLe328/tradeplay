@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import {
 	Plus,
@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { PaginationWrapper } from "@/components/ui/pagination-wrapper";
+import { CursorPaginationWrapper } from "@/components/ui/cursor-pagination-wrapper";
 import {
 	Select,
 	SelectContent,
@@ -379,13 +379,22 @@ const AccountsSkeleton = () => {
 
 export default function AdminAccounts() {
 	const [accounts, setAccounts] = useState<GameAccount[]>([]);
-	const [currentPage, setCurrentPage] = useState(1);
+	const [currentCursor, setCurrentCursor] = useState("");
+	const [allCursors, setAllCursors] = useState<string[]>([""]);
+	const [pageNum, setPageNum] = useState(1);
+	const pageNumRef = useRef(1);
+	const [hasMoreBeyondKnown, setHasMoreBeyondKnown] = useState(false);
 	useEffect(() => {
 		window.scrollTo({ top: 0, behavior: "smooth" });
-	}, [currentPage]);
+	}, [currentCursor]);
 
-	const [totalPages, setTotalPages] = useState(1);
-	const [totalItems, setTotalItems] = useState(0);
+	const navigateTo = (page: number) => {
+		const c = allCursors[page - 1] ?? "";
+		pageNumRef.current = page;
+		setPageNum(page);
+		setCurrentCursor(c);
+	};
+
 	const [searchTerm, setSearchTerm] = useState("");
 	const [debouncedSearch, setDebouncedSearch] = useState("");
 	const pageSize = 10;
@@ -448,7 +457,7 @@ export default function AdminAccounts() {
 				description: `Đã xóa tài khoản #${accountToDelete.id}`,
 				className: "bg-green-600 text-white border-none",
 			});
-			loadAccounts(currentPage);
+			loadAccounts(currentCursor);
 		} catch (error) {
 			toast({
 				title: "Xóa thất bại",
@@ -492,19 +501,42 @@ export default function AdminAccounts() {
 		}
 	};
 
-	const loadAccounts = async (page: number) => {
+	const loadAccounts = async (cursor: string) => {
 		try {
 			setIsLoading(true);
+			const pn = pageNumRef.current;
 			const res = await accountService.getAll({
-				page: page,
+				cursor: cursor,
 				limit: pageSize,
 				search: debouncedSearch,
 			});
 
 			setAccounts(res.data);
-			if (res.paging) {
-				setTotalItems(Number(res.paging.total));
-				setTotalPages(Math.ceil(Number(res.paging.total) / pageSize));
+
+			const nc = res.paging?.next_cursor ?? "";
+			const hm = res.paging?.has_more ?? false;
+
+			if (hm && nc) {
+				setAllCursors((prev) => {
+					if (prev.length > pn) return prev;
+					return [...prev, nc];
+				});
+				accountService.getAll({ cursor: nc, limit: pageSize, search: debouncedSearch }).then((pr) => {
+					const pnc = pr.paging?.next_cursor ?? "";
+					const phm = pr.paging?.has_more ?? false;
+					if (phm && pnc) {
+						setAllCursors((prev) => {
+							if (prev.length > pn + 1) return prev;
+							return [...prev.slice(0, pn + 1), pnc];
+						});
+						setHasMoreBeyondKnown(true);
+					} else {
+						setHasMoreBeyondKnown(false);
+					}
+				}).catch(() => {});
+			} else {
+				setAllCursors((prev) => prev.slice(0, pn));
+				setHasMoreBeyondKnown(false);
 			}
 		} catch (error) {
 			toast({ title: "Lỗi tải danh sách", variant: "destructive" });
@@ -521,14 +553,17 @@ export default function AdminAccounts() {
 	}, [searchTerm]);
 
 	useEffect(() => {
-		setCurrentPage(1);
+		pageNumRef.current = 1;
+		setPageNum(1);
+		setCurrentCursor("");
+		setAllCursors([""]);
+		setHasMoreBeyondKnown(false);
 	}, [debouncedSearch]);
 
 	useEffect(() => {
-		loadAccounts(currentPage);
-	}, [currentPage, debouncedSearch]);
+		loadAccounts(currentCursor);
+	}, [currentCursor, debouncedSearch]);
 
-	const handlePageChange = (page: number) => setCurrentPage(page);
 
 	const handleAttributesChange = (attributes: GameAttributes) => {
 		setFormData({ ...formData, attributes });
@@ -850,7 +885,7 @@ export default function AdminAccounts() {
 				toast({ title: "Cập nhật thành công" });
 			}
 
-			loadAccounts(currentPage);
+			loadAccounts(currentCursor);
 			setIsDialogOpen(false);
 		} catch (error: any) {
 			console.error(error);
@@ -1181,14 +1216,18 @@ export default function AdminAccounts() {
 			)}
 
 			{/* Pagination */}
-			{!isLoading && totalItems > 0 && (
-				<div className="mt-4">
-					<PaginationWrapper
-						currentPage={currentPage}
-						totalPages={totalPages}
-						totalItems={totalItems}
-						onPageChange={handlePageChange}
-						pageSize={pageSize}
+		{!isLoading && accounts.length > 0 && (
+			<div className="mt-4">
+				<CursorPaginationWrapper
+					hasMore={allCursors.length > pageNum}
+					hasPrev={pageNum > 1}
+					onNext={() => navigateTo(pageNum + 1)}
+					onPrev={() => navigateTo(pageNum - 1)}
+					currentPage={pageNum}
+					onGoToPage={navigateTo}
+					maxKnownPage={allCursors.length}
+					hasMoreBeyondKnown={hasMoreBeyondKnown}
+					itemCount={accounts.length}
 					/>
 				</div>
 			)}

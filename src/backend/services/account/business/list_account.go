@@ -2,7 +2,6 @@ package business
 
 import (
 	"context"
-	"fmt"
 	"html"
 	"strings"
 	"tradeplay/common"
@@ -33,16 +32,6 @@ func (biz *business) FindAccounts(
 
 	for i := range result {
 		result[i].Mask()
-	}
-
-	if len(result) > 0 {
-		lastItem := result[len(result)-1]
-
-		paging.NextCursor = fmt.Sprintf("%d", lastItem.FakeId)
-	}
-
-	if len(result) < paging.Limit {
-		paging.NextCursor = ""
 	}
 
 	return result, nil

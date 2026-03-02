@@ -12,11 +12,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { PaginationWrapper } from "@/components/ui/pagination-wrapper";
+import { CursorPaginationWrapper } from "@/components/ui/cursor-pagination-wrapper";
 import { formatCurrency, formatDateTime } from "@/utils/format";
 import { useToast } from "@/hooks/use-toast";
 import { orderService } from "@/services/orderService";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import type { Order } from "@/types";
 import { OrderStatus, OrderType } from "@/constants/enums";
 
@@ -51,32 +51,63 @@ const statusConfig: Record<number, any> = {
 export default function AdminOrders() {
 	const [orders, setOrders] = useState<Order[]>([]);
 
-	const [currentPage, setCurrentPage] = useState(1);
+	const [currentCursor, setCurrentCursor] = useState("");
+	const [allCursors, setAllCursors] = useState<string[]>([""]);
+	const [pageNum, setPageNum] = useState(1);
+	const pageNumRef = useRef(1);
+	const [hasMoreBeyondKnown, setHasMoreBeyondKnown] = useState(false);
 	useEffect(() => {
 		window.scrollTo({ top: 0, behavior: "smooth" });
-	}, [currentPage]);
+	}, [currentCursor]);
 
-	const [totalPages, setTotalPages] = useState(1);
-	const [totalItems, setTotalItems] = useState(0);
+	const navigateTo = (page: number) => {
+		const c = allCursors[page - 1] ?? "";
+		pageNumRef.current = page;
+		setPageNum(page);
+		setCurrentCursor(c);
+	};
+
 	const [filterType, setFilterType] = useState<OrderType | "all">("all");
 	const pageSize = 10;
 
 	const { toast } = useToast();
 
-	const loadOrders = async (page: number) => {
+	const loadOrders = async (cursor: string) => {
 		try {
+			const pn = pageNumRef.current;
 			const typeParam = filterType === "all" ? undefined : filterType;
 
 			const res = await orderService.getAdminOrders(
-				page,
+				cursor,
 				pageSize,
 				typeParam,
 			);
 			setOrders(res.data);
 
-			if (res.paging) {
-				setTotalItems(Number(res.paging.total));
-				setTotalPages(Math.ceil(Number(res.paging.total) / pageSize));
+			const nc = res.paging?.next_cursor ?? "";
+			const hm = res.paging?.has_more ?? false;
+
+			if (hm && nc) {
+				setAllCursors((prev) => {
+					if (prev.length > pn) return prev;
+					return [...prev, nc];
+				});
+				orderService.getAdminOrders(nc, pageSize, typeParam).then((pr) => {
+					const pnc = pr.paging?.next_cursor ?? "";
+					const phm = pr.paging?.has_more ?? false;
+					if (phm && pnc) {
+						setAllCursors((prev) => {
+							if (prev.length > pn + 1) return prev;
+							return [...prev.slice(0, pn + 1), pnc];
+						});
+						setHasMoreBeyondKnown(true);
+					} else {
+						setHasMoreBeyondKnown(false);
+					}
+				}).catch(() => {});
+			} else {
+				setAllCursors((prev) => prev.slice(0, pn));
+				setHasMoreBeyondKnown(false);
 			}
 		} catch (error) {
 			toast({ title: "Lỗi tải đơn hàng", variant: "destructive" });
@@ -84,12 +115,16 @@ export default function AdminOrders() {
 	};
 
 	useEffect(() => {
-		loadOrders(currentPage);
-	}, [currentPage, filterType]);
+		loadOrders(currentCursor);
+	}, [currentCursor, filterType]);
 
 	const handleFilterChange = (type: OrderType | "all") => {
 		setFilterType(type);
-		setCurrentPage(1);
+		pageNumRef.current = 1;
+		setPageNum(1);
+		setCurrentCursor("");
+		setAllCursors([""]);
+		setHasMoreBeyondKnown(false);
 	};
 
 	const handleUpdateStatus = async (orderId: string, status: OrderStatus) => {
@@ -97,7 +132,7 @@ export default function AdminOrders() {
 			await orderService.updateStatus(orderId, status);
 			const statusLabel = statusConfig[status]?.label || "Trạng thái mới";
 			toast({ title: `Đã cập nhật: ${statusLabel}` });
-			loadOrders(currentPage);
+			loadOrders(currentCursor);
 		} catch (error) {
 			toast({ title: "Cập nhật thất bại", variant: "destructive" });
 		}
@@ -316,11 +351,16 @@ export default function AdminOrders() {
 						})}
 					</div>
 
-					<PaginationWrapper
-						currentPage={currentPage}
-						totalPages={totalPages}
-						totalItems={totalItems}
-						onPageChange={setCurrentPage}
+					<CursorPaginationWrapper
+						hasMore={allCursors.length > pageNum}
+						hasPrev={pageNum > 1}
+						onNext={() => navigateTo(pageNum + 1)}
+						onPrev={() => navigateTo(pageNum - 1)}
+						currentPage={pageNum}
+						onGoToPage={navigateTo}
+						maxKnownPage={allCursors.length}
+						hasMoreBeyondKnown={hasMoreBeyondKnown}
+						itemCount={orders.length}
 						pageSize={pageSize}
 					/>
 				</>
