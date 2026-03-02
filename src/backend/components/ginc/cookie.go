@@ -1,10 +1,12 @@
-package common
+package ginc
 
 import (
 	"os"
 	"strings"
 )
 
+// GetCookieDomainForOrigin resolves the cookie domain from the request Origin header.
+// Returns an empty string for localhost or unrecognised origins.
 func GetCookieDomainForOrigin(originURL string) string {
 	var originDomain string
 	if strings.Contains(originURL, "://") {

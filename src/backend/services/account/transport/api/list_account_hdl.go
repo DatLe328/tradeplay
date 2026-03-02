@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 	"tradeplay/services/account/entity"
 
 	"github.com/gin-gonic/gin"
@@ -14,12 +15,12 @@ func (api *api) FindAccountsHandler() gin.HandlerFunc {
 		var filter entity.Filter
 
 		if err := c.ShouldBindQuery(&paging); err != nil {
-			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
+			ginc.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
 		if err := c.ShouldBindQuery(&filter); err != nil {
-			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
+			ginc.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
@@ -27,7 +28,7 @@ func (api *api) FindAccountsHandler() gin.HandlerFunc {
 
 		result, err := api.business.FindAccounts(c.Request.Context(), &filter, &paging)
 		if err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 

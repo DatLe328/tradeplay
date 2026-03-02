@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 	"tradeplay/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -48,7 +48,7 @@ func (api *api) GoogleCallbackHdl() gin.HandlerFunc {
 			return
 		}
 
-		cookieDomain := common.GetCookieDomainForOrigin(frontendURL)
+		cookieDomain := ginc.GetCookieDomainForOrigin(frontendURL)
 
 		c.SetSameSite(http.SameSiteNoneMode)
 

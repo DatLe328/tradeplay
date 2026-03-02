@@ -10,14 +10,13 @@ import (
 	"tradeplay/common"
 	userEntity "tradeplay/services/user/entity"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/gin-gonic/gin"
 )
 
 func RequireAdmin(serviceCtx sctx.ServiceContext, userStore UserStore) gin.HandlerFunc {
-	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
-	rdb := redisComp.GetClient()
+	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.KeyValueStore)
 
 	return func(c *gin.Context) {
 		requester, ok := c.MustGet(common.KeyRequester).(common.Requester)
@@ -30,7 +29,7 @@ func RequireAdmin(serviceCtx sctx.ServiceContext, userStore UserStore) gin.Handl
 		userID := int32(uid.GetLocalID())
 
 		cacheKey := fmt.Sprintf("user:role:%d", userID)
-		roleStr, err := rdb.Get(c.Request.Context(), cacheKey).Result()
+		roleStr, err := redisComp.Get(c.Request.Context(), cacheKey)
 
 		if err == nil {
 			roleInt, _ := strconv.Atoi(roleStr)
@@ -48,7 +47,7 @@ func RequireAdmin(serviceCtx sctx.ServiceContext, userStore UserStore) gin.Handl
 			return
 		}
 
-		go rdb.Set(context.Background(), cacheKey, strconv.Itoa(int(user.SystemRole)), 30*time.Minute)
+		go redisComp.Set(context.Background(), cacheKey, strconv.Itoa(int(user.SystemRole)), 30*time.Minute)
 
 		if user.SystemRole != userEntity.RoleAdmin {
 			c.AbortWithStatusJSON(http.StatusForbidden, common.ErrForbidden(errors.New("admin access required"), "Bạn không có quyền truy cập trang này"))

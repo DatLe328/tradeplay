@@ -2,6 +2,7 @@ package composer
 
 import (
 	"tradeplay/common"
+	"tradeplay/components/gormc"
 	accountRepo "tradeplay/services/account/repository/mysql"
 	auditRepo "tradeplay/services/audit/repository/mysql"
 	notificationMysql "tradeplay/services/notification/repository/mysql"
@@ -15,7 +16,7 @@ import (
 	orderBusiness "tradeplay/services/order/business"
 	walletBusiness "tradeplay/services/wallet/business"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,9 +26,9 @@ type PaymentService interface {
 }
 
 func ComposePaymentAPIService(serviceCtx sctx.ServiceContext) PaymentService {
-	db := serviceCtx.MustGet(common.KeyCompMySQL).(common.GormComponent)
-	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
-	configComp := serviceCtx.MustGet(common.KeyCompConf).(common.ConfigComponent)
+	db := serviceCtx.MustGet(common.KeyCompMySQL).(gormc.DBComponent)
+	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.StreamBroker)
+	configComp := serviceCtx.MustGet(common.KeyCompConf).(common.AppConfig)
 
 	orderRepository := orderRepo.NewMySQLRepository(db.GetDB())
 	walletRepository := walletRepo.NewMySQLRepository(db.GetDB())
@@ -61,7 +62,6 @@ func ComposePaymentAPIService(serviceCtx sctx.ServiceContext) PaymentService {
 	}
 
 	biz := business.NewBusiness(
-		db.GetDB(),
 		paymentRepository,
 		orderBiz,
 		walletBusiness,

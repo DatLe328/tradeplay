@@ -2,18 +2,18 @@ package business
 
 import (
 	"context"
+	"tradeplay/common"
 	auditEntity "tradeplay/services/audit/entity"
 	walletEntity "tradeplay/services/wallet/entity"
-
-	"gorm.io/gorm"
 )
 
 type walletRepository interface {
-	GetDB() *gorm.DB
+	common.TxManager
 	GetWalletByUserID(ctx context.Context, userID int32) (*walletEntity.Wallet, error)
-	GetWalletForUpdate(ctx context.Context, tx *gorm.DB, userID int32) (*walletEntity.Wallet, error)
+	GetWalletForUpdate(ctx context.Context, userID int32) (*walletEntity.Wallet, error)
 	CreateWallet(ctx context.Context, userID int32) error
-	CreateWalletTransaction(ctx context.Context, tx *gorm.DB, data *walletEntity.WalletTransaction) error
+	UpdateWalletBalance(ctx context.Context, wallet *walletEntity.Wallet) error
+	CreateWalletTransaction(ctx context.Context, data *walletEntity.WalletTransaction) error
 }
 
 type auditRepository interface {

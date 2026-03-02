@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 	"tradeplay/common"
+	crypto "tradeplay/pkg/crypto"
 	auditEntity "tradeplay/services/audit/entity"
 	"tradeplay/services/auth/entity"
 	authEntity "tradeplay/services/auth/entity"
@@ -16,7 +17,7 @@ func (biz *business) Register(ctx context.Context, data *authEntity.AuthRegister
 		return common.ErrInvalidRequest(err)
 	}
 
-	salt, err := common.GenSalt(common.DefaultSaltLength)
+	salt, err := crypto.GenSalt(crypto.DefaultSaltLength)
 	if err != nil {
 		return common.ErrInternal(err)
 	}
@@ -80,7 +81,7 @@ func (biz *business) Register(ctx context.Context, data *authEntity.AuthRegister
 		}
 	}
 
-	otp, err := common.GenOTP(6)
+	otp, err := crypto.GenOTP(6)
 	if err != nil {
 		return common.ErrInternal(err)
 	}
@@ -112,7 +113,7 @@ func (biz *business) Register(ctx context.Context, data *authEntity.AuthRegister
 		"timestamp": time.Now().Unix(),
 	}
 
-	if err := biz.redis.Produce(ctx, "notification_stream", notificationPayload); err != nil {
+	if err := biz.notifier.Produce(ctx, "notification_stream", notificationPayload); err != nil {
 		biz.auditRepository.PushAuditLog(context.Background(), &auditEntity.AuditLog{
 			UserId:     userID,
 			Action:     common.ActionPushNotificationFailed,

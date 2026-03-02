@@ -4,7 +4,6 @@ import (
 	"context"
 	"tradeplay/services/wallet/entity"
 
-	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
@@ -31,17 +30,11 @@ func (repo *mysqlRepo) CreateWallet(
 
 func (repo *mysqlRepo) GetWalletForUpdate(
 	ctx context.Context,
-	tx *gorm.DB,
 	userID int32,
 ) (*entity.Wallet, error) {
 	var wallet entity.Wallet
 
-	db := repo.db
-	if tx != nil {
-		db = tx
-	}
-
-	if err := db.WithContext(ctx).
+	if err := repo.getDB(ctx).WithContext(ctx).
 		Table(wallet.TableName()).
 		Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("user_id = ?", userID).

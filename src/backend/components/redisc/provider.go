@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"github.com/redis/go-redis/v9"
 )
@@ -58,4 +58,27 @@ func (r *redisOpt) Stop() error {
 
 func (r *redisOpt) GetClient() *redis.Client {
 	return r.client
+}
+
+func (r *redisOpt) Get(ctx context.Context, key string) (string, error) {
+	return r.client.Get(ctx, key).Result()
+}
+
+func (r *redisOpt) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) error {
+	return r.client.Set(ctx, key, value, expiration).Err()
+}
+
+func (r *redisOpt) Del(ctx context.Context, key string) error {
+	return r.client.Del(ctx, key).Err()
+}
+
+func (r *redisOpt) IncrWithExpire(ctx context.Context, key string, expiration time.Duration) (int64, error) {
+	pipe := r.client.Pipeline()
+	incr := pipe.Incr(ctx, key)
+	pipe.Expire(ctx, key, expiration)
+	_, err := pipe.Exec(ctx)
+	if err != nil {
+		return 0, err
+	}
+	return incr.Val(), nil
 }

@@ -13,11 +13,11 @@ import (
 	"tradeplay/components/gormc"
 	"tradeplay/components/jwtc"
 	"tradeplay/components/redisc"
-	sctx "tradeplay/components/service-context"
 	upload "tradeplay/components/uploadc"
 	"tradeplay/composer"
 	_ "tradeplay/docs"
 	"tradeplay/middleware"
+	sctx "tradeplay/pkg/service-context"
 	authBusiness "tradeplay/services/auth/business"
 	userRepository "tradeplay/services/user/repository/mysql"
 
@@ -42,9 +42,12 @@ func newServiceCtx() sctx.ServiceContext {
 }
 
 func setupRoute(serviceCtx sctx.ServiceContext, router *gin.RouterGroup) {
-	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
 	authBusiness := authBusiness.NewAuthBusiness(
-		nil, nil, nil, nil, serviceCtx.MustGet(common.KeyCompJWT).(common.JWTProvider), nil, nil, redisComp)
+		nil, nil, nil, nil,
+		serviceCtx.MustGet(common.KeyCompJWT).(common.TokenProvider),
+		nil, nil,
+		serviceCtx.MustGet(common.KeyCompRedis).(common.KeyValueStore),
+		nil)
 	requireAuthMdw := middleware.RequireAuth(authBusiness)
 	captchaMdw := middleware.VerifyTurnstile(serviceCtx)
 
@@ -126,10 +129,13 @@ func setupWebhook(serviceCtx sctx.ServiceContext, router *gin.RouterGroup) {
 }
 
 func setupAdminRoute(serviceCtx sctx.ServiceContext, router *gin.RouterGroup) {
-	db := serviceCtx.MustGet(common.KeyCompMySQL).(common.GormComponent)
-	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
+	db := serviceCtx.MustGet(common.KeyCompMySQL).(gormc.DBComponent)
 	authBusiness := authBusiness.NewAuthBusiness(
-		nil, nil, nil, nil, serviceCtx.MustGet(common.KeyCompJWT).(common.JWTProvider), nil, nil, redisComp)
+		nil, nil, nil, nil,
+		serviceCtx.MustGet(common.KeyCompJWT).(common.TokenProvider),
+		nil, nil,
+		serviceCtx.MustGet(common.KeyCompRedis).(common.KeyValueStore),
+		nil)
 	userRepo := userRepository.NewMySQLRepository(db.GetDB())
 	requireAuthMdw := middleware.RequireAuth(authBusiness)
 	requireAdminMdw := middleware.RequireAdmin(serviceCtx, userRepo)
@@ -186,7 +192,7 @@ func Execute() {
 	composer.RunNotificationWorker(serviceCtx)
 	composer.RunAuditWorker(serviceCtx)
 
-	ginComp := serviceCtx.MustGet(common.KeyCompGIN).(common.GinEngine)
+	ginComp := serviceCtx.MustGet(common.KeyCompGIN).(ginc.HTTPServer)
 	router := ginComp.GetRouter()
 
 	router.Use(gin.Recovery(), gin.Logger(), sctxMdw.Recovery(serviceCtx))

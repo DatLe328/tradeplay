@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 
 	"github.com/gin-gonic/gin"
 )
@@ -14,18 +15,18 @@ func (api *api) AdminGetAccountCredentialsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id, err := strconv.Atoi(c.Param("id"))
 		if err != nil {
-			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
+			ginc.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
 		if id < 0 {
-			common.WriteErrorResponse(c, common.ErrInvalidRequest(nil))
+			ginc.WriteErrorResponse(c, common.ErrInvalidRequest(nil))
 			return
 		}
 
 		requester, exists := c.Get(common.KeyRequester)
 		if !exists {
-			common.WriteErrorResponse(c, common.ErrUnauthorized(errors.New("unauthorized"), "unauthorized"))
+			ginc.WriteErrorResponse(c, common.ErrUnauthorized(errors.New("unauthorized"), "unauthorized"))
 			return
 		}
 
@@ -35,7 +36,7 @@ func (api *api) AdminGetAccountCredentialsHandler() gin.HandlerFunc {
 
 		data, err := api.business.AdminGetAccountCredentials(ctx, int32(id))
 		if err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 

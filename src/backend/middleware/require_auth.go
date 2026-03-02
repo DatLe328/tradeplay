@@ -8,11 +8,10 @@ import (
 	"tradeplay/common"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 type AuthClient interface {
-	IntrospectToken(ctx context.Context, accessToken string) (*jwt.RegisteredClaims, error)
+	IntrospectToken(ctx context.Context, accessToken string) (*common.TokenClaims, error)
 	IsTokenRevoked(ctx context.Context, tokenID string) bool
 }
 

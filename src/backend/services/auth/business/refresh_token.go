@@ -16,7 +16,7 @@ func (biz *business) RefreshToken(ctx context.Context, refreshToken, userAgent, 
 		return nil, common.ErrUnauthorized(errors.New("invalid refresh token"), "invalid refresh token")
 	}
 
-	res, _ := biz.redis.GetClient().Get(ctx, "revoked:"+claims.ID).Result()
+	res, _ := biz.redis.Get(ctx, "revoked:"+claims.ID)
 	if res == "1" {
 		uid, _ := common.FromBase58(claims.Subject)
 		_ = biz.authRepository.RevokeAllUserTokens(ctx, int32(uid.GetLocalID()))
@@ -33,7 +33,7 @@ func (biz *business) RefreshToken(ctx context.Context, refreshToken, userAgent, 
 
 	if storedToken.IsRevoked {
 		_ = biz.authRepository.RevokeAllUserTokens(ctx, userId)
-		biz.redis.GetClient().Set(ctx, "revoked:"+claims.ID, "1", time.Hour*24)
+		biz.redis.Set(ctx, "revoked:"+claims.ID, "1", time.Hour*24)
 		return nil, common.ErrUnauthorized(errors.New("security alert"), "suspicious activity detected, please login again")
 	}
 
@@ -41,9 +41,9 @@ func (biz *business) RefreshToken(ctx context.Context, refreshToken, userAgent, 
 		return nil, common.ErrInternal(err)
 	}
 
-	ttl := time.Until(claims.ExpiresAt.Time)
+	ttl := time.Until(claims.ExpiresAt)
 	if ttl > 0 {
-		biz.redis.GetClient().Set(ctx, "revoked:"+claims.ID, "1", ttl)
+		biz.redis.Set(ctx, "revoked:"+claims.ID, "1", ttl)
 	}
 
 	newAccessTid := uuid.New().String()
@@ -73,10 +73,9 @@ func (biz *business) RefreshToken(ctx context.Context, refreshToken, userAgent, 
 }
 
 func (biz *business) IsTokenRevoked(ctx context.Context, tokenID string) bool {
-	res, err := biz.redis.GetClient().Get(ctx, "revoked:"+tokenID).Result()
+	res, err := biz.redis.Get(ctx, "revoked:"+tokenID)
 	if err == nil && res == "1" {
 		return true
 	}
-
 	return false
 }

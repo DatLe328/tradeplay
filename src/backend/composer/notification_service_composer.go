@@ -12,7 +12,8 @@ import (
 	notificationMysql "tradeplay/services/notification/repository/mysql"
 	notificationApi "tradeplay/services/notification/transport/api"
 
-	sctx "tradeplay/components/service-context"
+	"tradeplay/components/gormc"
+	sctx "tradeplay/pkg/service-context"
 )
 
 type NotificationService interface {
@@ -25,7 +26,7 @@ type NotificationService interface {
 }
 
 func ComposeNotificationService(serviceCtx sctx.ServiceContext) NotificationService {
-	db := serviceCtx.MustGet(common.KeyCompMySQL).(common.GormComponent).GetDB()
+db := serviceCtx.MustGet(common.KeyCompMySQL).(gormc.DBComponent).GetDB()
 
 	reader := notificationMysql.NewNotificationReader(db)
 	writer := notificationMysql.NewNotificationWriter(db)

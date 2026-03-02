@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,7 +13,7 @@ func (api *api) GetUserProfileHandler() gin.HandlerFunc {
 		requester := c.MustGet(common.KeyRequester).(common.Requester)
 		uid, err := common.FromBase58(requester.GetSubject())
 		if err != nil {
-			common.WriteErrorResponse(c, common.ErrUnauthorized(err, "invalid requester"))
+			ginc.WriteErrorResponse(c, common.ErrUnauthorized(err, "invalid requester"))
 			return
 		}
 		requesterID := int32(uid.GetLocalID())
@@ -20,7 +21,7 @@ func (api *api) GetUserProfileHandler() gin.HandlerFunc {
 		user, err := api.business.GetUserByID(c.Request.Context(), requesterID)
 
 		if err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 

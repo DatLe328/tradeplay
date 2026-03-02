@@ -1,4 +1,4 @@
-package common
+package crypto
 
 import (
 	"crypto/rand"
@@ -8,15 +8,14 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type Hasher struct{}
-
 const PasswordCost = 12
+
+type Hasher struct{}
 
 func (r *Hasher) RandomStr(length int) (string, error) {
 	var b = make([]byte, length)
 
 	_, err := rand.Read(b)
-
 	if err != nil {
 		return "", err
 	}
@@ -28,7 +27,6 @@ func (r *Hasher) HashPassword(salt, password string) (string, error) {
 	spStr := fmt.Sprintf("%s.%s", salt, password)
 
 	h, err := bcrypt.GenerateFromPassword([]byte(spStr), PasswordCost)
-
 	if err != nil {
 		return "", err
 	}

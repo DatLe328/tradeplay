@@ -6,12 +6,12 @@ import (
 	"log"
 	"tradeplay/common"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 )
 
 func RunNotificationWorker(serviceCtx sctx.ServiceContext) {
-	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.RedisComponent)
-	emailProv := serviceCtx.MustGet(common.KeyCompEmail).(common.EmailComponent)
+	redisComp := serviceCtx.MustGet(common.KeyCompRedis).(common.StreamBroker)
+	emailProv := serviceCtx.MustGet(common.KeyCompEmail).(common.Mailer)
 
 	ctx := context.Background()
 

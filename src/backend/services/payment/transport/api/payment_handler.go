@@ -19,7 +19,7 @@ type SepayResponse struct {
 }
 
 func (h *api) HandleSepayWebhook(c *gin.Context) {
-	configComp := h.serviceCtx.MustGet(common.KeyCompConf).(common.ConfigComponent)
+	configComp := h.serviceCtx.MustGet(common.KeyCompConf).(common.AppConfig)
 	myApiKey := configComp.SepayAPIKey()
 
 	if myApiKey == "" {

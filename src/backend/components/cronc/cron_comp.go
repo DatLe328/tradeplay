@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"time"
 	"tradeplay/common"
+	"tradeplay/components/gormc"
 	auditEntity "tradeplay/services/audit/entity"
 	orderEntity "tradeplay/services/order/entity"
 
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 
 	"tradeplay/components/logger"
 
@@ -35,7 +36,7 @@ func (c *cronComponent) InitFlags() {
 func (c *cronComponent) Activate(sc sctx.ServiceContext) error {
 	c.logger = sc.Logger("cron-component")
 
-	dbComp := sc.MustGet(common.KeyCompMySQL).(common.GormComponent)
+	dbComp := sc.MustGet(common.KeyCompMySQL).(gormc.DBComponent)
 	c.db = dbComp.GetDB()
 
 	c.scheduler = cron.New(cron.WithSeconds())

@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	sctx "tradeplay/components/service-context"
+	sctx "tradeplay/pkg/service-context"
 	"tradeplay/services/auth/entity"
 )
 

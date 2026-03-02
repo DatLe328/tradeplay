@@ -31,14 +31,10 @@ func (repo *mysqlRepo) GetAccountByID(
 	return &data, nil
 }
 
-func (repo *mysqlRepo) GetAccountByIDForUpdate(ctx context.Context, tx *gorm.DB, id int32) (*entity.Account, error) {
+func (repo *mysqlRepo) GetAccountByIDForUpdate(ctx context.Context, id int32) (*entity.Account, error) {
 	var data entity.Account
-	db := repo.db
-	if tx != nil {
-		db = tx
-	}
 
-	if err := db.WithContext(ctx).
+	if err := repo.getDB(ctx).WithContext(ctx).
 		Clauses(clause.Locking{Strength: "UPDATE"}).
 		Where("id = ?", id).
 		First(&data).Error; err != nil {

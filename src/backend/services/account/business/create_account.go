@@ -4,9 +4,8 @@ import (
 	"context"
 	"time"
 	"tradeplay/common"
+	"tradeplay/pkg/crypto"
 	"tradeplay/services/account/entity"
-
-	"gorm.io/gorm"
 )
 
 func (biz *business) CreateAccount(ctx context.Context, userID int32, data *entity.AccountDataCreation) (*int32, error) {
@@ -31,19 +30,17 @@ func (biz *business) CreateAccount(ctx context.Context, userID int32, data *enti
 		Version:   0,
 	}
 
-	db := biz.accountRepo.GetDB()
-
 	ctxWithTimeout, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	err := db.WithContext(ctxWithTimeout).Transaction(func(tx *gorm.DB) error {
-		if err := biz.accountRepo.CreateAccount(ctxWithTimeout, tx, account); err != nil {
+	err := biz.accountRepo.RunInTransaction(ctxWithTimeout, func(ctx context.Context) error {
+		if err := biz.accountRepo.CreateAccount(ctx, account); err != nil {
 			return err
 		}
 
-		encUser, _ := common.Encrypt(data.Username, biz.appSecretKey)
-		encPass, _ := common.Encrypt(data.Password, biz.appSecretKey)
-		encExtra, _ := common.Encrypt(data.ExtraData, biz.appSecretKey)
+		encUser, _ := crypto.Encrypt(data.Username, biz.appSecretKey)
+		encPass, _ := crypto.Encrypt(data.Password, biz.appSecretKey)
+		encExtra, _ := crypto.Encrypt(data.ExtraData, biz.appSecretKey)
 
 		accountInfo := &entity.AccountInfo{
 			AccountId: account.ID,
@@ -52,11 +49,7 @@ func (biz *business) CreateAccount(ctx context.Context, userID int32, data *enti
 			ExtraData: encExtra,
 		}
 
-		if err := biz.accountRepo.CreateAccountInfo(ctxWithTimeout, tx, accountInfo); err != nil {
-			return err
-		}
-
-		return nil
+		return biz.accountRepo.CreateAccountInfo(ctx, accountInfo)
 	})
 
 	if err != nil {

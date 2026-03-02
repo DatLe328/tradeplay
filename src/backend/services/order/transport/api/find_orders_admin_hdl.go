@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 	"tradeplay/services/order/entity"
 
 	"github.com/gin-gonic/gin"
@@ -12,14 +13,14 @@ func (api *api) FindOrdersAdminHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var paging common.Paging
 		if err := c.ShouldBindQuery(&paging); err != nil {
-			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
+			ginc.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 		paging.Process()
 
 		var filter entity.OrderFilter
 		if err := c.ShouldBindQuery(&filter); err != nil {
-			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
+			ginc.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
@@ -29,7 +30,7 @@ func (api *api) FindOrdersAdminHandler() gin.HandlerFunc {
 
 		result, err := api.business.FindOrdersAdmin(c.Request.Context(), int32(userId), &filter, &paging)
 		if err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 

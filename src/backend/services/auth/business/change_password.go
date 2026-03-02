@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"tradeplay/common"
+	crypto "tradeplay/pkg/crypto"
 	auditEntity "tradeplay/services/audit/entity"
 	authEntity "tradeplay/services/auth/entity"
 )
@@ -32,7 +33,7 @@ func (biz *business) ChangePassword(ctx context.Context, userID int32, data *aut
 		return common.ErrInvalidRequest(authEntity.ErrPasswordsNotMatch)
 	}
 
-	newSalt, err := common.GenSalt(common.DefaultSaltLength)
+	newSalt, err := crypto.GenSalt(crypto.DefaultSaltLength)
 	if err != nil {
 		return common.ErrInternal(err)
 	}

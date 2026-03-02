@@ -3,6 +3,7 @@ package api
 import (
 	"net/http"
 	"tradeplay/common"
+	ginc "tradeplay/components/ginc"
 	"tradeplay/services/order/entity"
 
 	"github.com/gin-gonic/gin"
@@ -13,14 +14,14 @@ func (api *api) UpdateOrderStatusHandler() gin.HandlerFunc {
 		uidStr := c.Param("id")
 		uid, err := common.FromBase58(uidStr)
 		if err != nil {
-			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
+			ginc.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 		id := int(uid.GetLocalID())
 
 		var data entity.OrderUpdate
 		if err := c.ShouldBindJSON(&data); err != nil {
-			common.WriteErrorResponse(c, common.ErrInvalidRequest(err))
+			ginc.WriteErrorResponse(c, common.ErrInvalidRequest(err))
 			return
 		}
 
@@ -31,7 +32,7 @@ func (api *api) UpdateOrderStatusHandler() gin.HandlerFunc {
 		ipAddress := c.ClientIP()
 
 		if err := api.business.UpdateOrderStatus(c.Request.Context(), int32(id), data.Status, int32(requesterId), ipAddress); err != nil {
-			common.WriteErrorResponse(c, err)
+			ginc.WriteErrorResponse(c, err)
 			return
 		}
 

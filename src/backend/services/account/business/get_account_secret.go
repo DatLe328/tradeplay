@@ -3,6 +3,7 @@ package business
 import (
 	"context"
 	"tradeplay/common"
+	"tradeplay/pkg/crypto"
 	"tradeplay/services/account/entity"
 	auditEntity "tradeplay/services/audit/entity"
 )
@@ -44,7 +45,7 @@ func (biz *business) GetAccountCredentials(ctx context.Context, requesterID int3
 	}
 
 	decryptField := func(cipherText string) string {
-		plain, err := common.Decrypt(cipherText, biz.appSecretKey)
+		plain, err := crypto.Decrypt(cipherText, biz.appSecretKey)
 		if err != nil {
 			return "[Error Decrypting]"
 		}
