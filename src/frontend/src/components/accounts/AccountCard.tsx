@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { motion } from "framer-motion";
 import { type GameAccount } from "@/types";
 import { formatCurrency } from "@/utils/format";

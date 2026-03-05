@@ -1,4 +1,4 @@
-import { Link, useLocation, Outlet, Navigate } from "react-router-dom";
+import { Link, useLocation, Outlet, Navigate } from "react-router";
 import {
 	LayoutDashboard,
 	Gamepad2,

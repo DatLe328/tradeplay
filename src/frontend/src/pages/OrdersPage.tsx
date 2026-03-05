@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { motion } from "framer-motion";
 import {
 	Package,
@@ -16,7 +16,6 @@ import {
 	History,
 	CreditCard,
 } from "lucide-react";
-import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CursorPaginationWrapper } from "@/components/ui/cursor-pagination-wrapper";
@@ -149,19 +148,22 @@ export default function OrdersPage() {
 					if (prev.length > pn) return prev;
 					return [...prev, nc];
 				});
-				orderService.getMyOrders(nc, pageSize, typeParam, statusParam).then((pr) => {
-					const pnc = pr.paging?.next_cursor ?? "";
-					const phm = pr.paging?.has_more ?? false;
-					if (phm && pnc) {
-						setAllCursors((prev) => {
-							if (prev.length > pn + 1) return prev;
-							return [...prev.slice(0, pn + 1), pnc];
-						});
-						setHasMoreBeyondKnown(true);
-					} else {
-						setHasMoreBeyondKnown(false);
-					}
-				}).catch(() => {});
+				orderService
+					.getMyOrders(nc, pageSize, typeParam, statusParam)
+					.then((pr) => {
+						const pnc = pr.paging?.next_cursor ?? "";
+						const phm = pr.paging?.has_more ?? false;
+						if (phm && pnc) {
+							setAllCursors((prev) => {
+								if (prev.length > pn + 1) return prev;
+								return [...prev.slice(0, pn + 1), pnc];
+							});
+							setHasMoreBeyondKnown(true);
+						} else {
+							setHasMoreBeyondKnown(false);
+						}
+					})
+					.catch(() => {});
 			} else {
 				setAllCursors((prev) => prev.slice(0, pn));
 				setHasMoreBeyondKnown(false);
@@ -229,29 +231,27 @@ export default function OrdersPage() {
 
 	if (!isAuthenticated) {
 		return (
-			<Layout>
-				<div className="container mx-auto px-4 py-20 text-center">
-					<div className="p-4 rounded-full bg-secondary w-fit mx-auto mb-4">
-						<Package className="h-12 w-12 text-muted-foreground" />
-					</div>
-					<h1 className="font-gaming text-2xl font-bold mb-4">
-						{t("ordersPage.loginToViewOrders")}
-					</h1>
-					<p className="text-muted-foreground mb-6">
-						{t("ordersPage.loginToViewOrdersDesc")}
-					</p>
-					<Link to="/auth">
-						<Button className="btn-gaming">
-							{t("ordersPage.loginNow")}
-						</Button>
-					</Link>
+			<div className="container mx-auto px-4 py-20 text-center">
+				<div className="p-4 rounded-full bg-secondary w-fit mx-auto mb-4">
+					<Package className="h-12 w-12 text-muted-foreground" />
 				</div>
-			</Layout>
+				<h1 className="font-gaming text-2xl font-bold mb-4">
+					{t("ordersPage.loginToViewOrders")}
+				</h1>
+				<p className="text-muted-foreground mb-6">
+					{t("ordersPage.loginToViewOrdersDesc")}
+				</p>
+				<Link to="/auth">
+					<Button className="btn-gaming">
+						{t("ordersPage.loginNow")}
+					</Button>
+				</Link>
+			</div>
 		);
 	}
 
 	return (
-		<Layout>
+		<>
 			<div className="container mx-auto px-4 py-8">
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
@@ -513,18 +513,18 @@ export default function OrdersPage() {
 							})}
 						</div>
 
-					<CursorPaginationWrapper
-					hasMore={allCursors.length > pageNum}
-					hasPrev={pageNum > 1}
-					onNext={() => navigateTo(pageNum + 1)}
-					onPrev={() => navigateTo(pageNum - 1)}
-					currentPage={pageNum}
-					onGoToPage={navigateTo}
-					maxKnownPage={allCursors.length}
-					hasMoreBeyondKnown={hasMoreBeyondKnown}
-						itemCount={orders.length}
-						pageSize={pageSize}
-					/>
+						<CursorPaginationWrapper
+							hasMore={allCursors.length > pageNum}
+							hasPrev={pageNum > 1}
+							onNext={() => navigateTo(pageNum + 1)}
+							onPrev={() => navigateTo(pageNum - 1)}
+							currentPage={pageNum}
+							onGoToPage={navigateTo}
+							maxKnownPage={allCursors.length}
+							hasMoreBeyondKnown={hasMoreBeyondKnown}
+							itemCount={orders.length}
+							pageSize={pageSize}
+						/>
 					</>
 				) : (
 					<motion.div
@@ -656,6 +656,6 @@ export default function OrdersPage() {
 					)}
 				</DialogContent>
 			</Dialog>
-		</Layout>
+		</>
 	);
 }

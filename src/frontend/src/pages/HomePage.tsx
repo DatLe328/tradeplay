@@ -1,7 +1,6 @@
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { ArrowRight, Sparkles } from "lucide-react";
-import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 
 import priceFilter1 from "@/assets/price-filter-1.jpg";
@@ -11,7 +10,6 @@ import priceFilter4 from "@/assets/price-filter-4.jpg";
 import priceFilter5 from "@/assets/price-filter-5.jpg";
 import { WelcomePopup } from "@/components/layout/WelcomePopup";
 import { useTranslation } from "@/stores/languageStore";
-import { SeoMetadata } from "@/components/seo/SeoMetadata";
 
 export default function HomePage() {
 	const { t } = useTranslation();
@@ -55,11 +53,7 @@ export default function HomePage() {
 	];
 
 	return (
-		<Layout>
-			<SeoMetadata
-				title="Tiến Cơ Trưởng - Shop Acc Play Together Uy Tín"
-				description="Shop Tiến Cơ Trưởng chuyên mua bán nick Play Together giá rẻ, uy tín. Giao dịch tự động, bảo hành, hỗ trợ 24/7."
-			/>
+		<>
 			<WelcomePopup />
 			{/* Hero Section */}
 			<section className="relative overflow-hidden">
@@ -129,7 +123,9 @@ export default function HomePage() {
 					<div className="text-center mb-12">
 						<h2 className="font-gaming text-3xl md:text-4xl font-bold mb-2">
 							{t("homePage.findByPrice")}{" "}
-							<span className="text-gradient">{t("homePage.price")}</span>{" "}
+							<span className="text-gradient">
+								{t("homePage.price")}
+							</span>{" "}
 							💰
 						</h2>
 						<p className="text-muted-foreground">
@@ -195,6 +191,6 @@ export default function HomePage() {
 					</div>
 				</div>
 			</section>
-		</Layout>
+		</>
 	);
 }

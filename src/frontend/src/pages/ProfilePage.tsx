@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import {
 	User,
 	Mail,
@@ -13,7 +13,6 @@ import {
 	EyeOff,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -168,7 +167,7 @@ export default function ProfilePage() {
 	if (!user) return null;
 
 	return (
-		<Layout>
+		<>
 			<div className="container mx-auto px-4 py-8">
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
@@ -180,7 +179,8 @@ export default function ProfilePage() {
 						onClick={() => navigate(-1)}
 						className="mb-6 gap-2"
 					>
-						<ArrowLeft className="h-4 w-4" /> {t("profilePage.back")}
+						<ArrowLeft className="h-4 w-4" />{" "}
+						{t("profilePage.back")}
 					</Button>
 
 					<Card className="border-2 border-primary/20 bg-card/50 backdrop-blur-sm shadow-xl">
@@ -301,16 +301,22 @@ export default function ProfilePage() {
 												className="flex-1 gap-2 border-primary/20 hover:bg-primary/5"
 											>
 												<KeyRound className="h-4 w-4" />
-												{t("profilePage.changePassword")}
+												{t(
+													"profilePage.changePassword",
+												)}
 											</Button>
 										</DialogTrigger>
 										<DialogContent className="sm:max-w-[425px]">
 											<DialogHeader>
 												<DialogTitle>
-													{t("profilePage.changePassword")}
+													{t(
+														"profilePage.changePassword",
+													)}
 												</DialogTitle>
 												<DialogDescription>
-													{t("profilePage.manageProfile")}
+													{t(
+														"profilePage.manageProfile",
+													)}
 												</DialogDescription>
 											</DialogHeader>
 											<form
@@ -320,7 +326,9 @@ export default function ProfilePage() {
 												{/* Old password */}
 												<div className="space-y-2">
 													<Label htmlFor="oldPass">
-														{t("profilePage.oldPassword")}
+														{t(
+															"profilePage.oldPassword",
+														)}
 													</Label>
 													<div className="relative">
 														<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -363,7 +371,9 @@ export default function ProfilePage() {
 												{/* New password */}
 												<div className="space-y-2">
 													<Label htmlFor="newPass">
-														{t("profilePage.newPassword")}
+														{t(
+															"profilePage.newPassword",
+														)}
 													</Label>
 													<div className="relative">
 														<Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -464,7 +474,9 @@ export default function ProfilePage() {
 															)
 														}
 													>
-														{t("profilePage.cancel")}
+														{t(
+															"profilePage.cancel",
+														)}
 													</Button>
 													<Button
 														type="submit"
@@ -473,8 +485,12 @@ export default function ProfilePage() {
 														}
 													>
 														{isPasswordLoading
-															? t("profilePage.processing")
-															: t("profilePage.confirm")}
+															? t(
+																	"profilePage.processing",
+																)
+															: t(
+																	"profilePage.confirm",
+																)}
 													</Button>
 												</div>
 											</form>
@@ -486,6 +502,6 @@ export default function ProfilePage() {
 					</Card>
 				</motion.div>
 			</div>
-		</Layout>
+		</>
 	);
 }

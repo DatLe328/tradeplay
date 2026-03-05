@@ -1,4 +1,4 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link } from "react-router";
 import { motion } from "framer-motion";
 import {
 	ArrowLeft,
@@ -11,7 +11,6 @@ import {
 	ShoppingBag,
 	AlertTriangle,
 } from "lucide-react";
-import { Layout } from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
 import { useOrderStore } from "@/stores/orderStore";
 import { formatCurrency, formatDateTime } from "@/utils/format";
@@ -44,20 +43,18 @@ export default function PaymentPage() {
 
 	if (isLoading) {
 		return (
-			<Layout>
-				<div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
-					<Loader2 className="h-10 w-10 animate-spin text-primary" />
-					<p className="text-muted-foreground animate-pulse">
-						{t("paymentPage.processing")}
-					</p>
-				</div>
-			</Layout>
+			<div className="min-h-[60vh] flex flex-col items-center justify-center gap-4">
+				<Loader2 className="h-10 w-10 animate-spin text-primary" />
+				<p className="text-muted-foreground animate-pulse">
+					{t("paymentPage.processing")}
+				</p>
+			</div>
 		);
 	}
 
 	if (!currentOrder) {
 		return (
-			<Layout>
+			<>
 				<div className="container mx-auto px-4 py-20 text-center">
 					<div className="p-4 rounded-full bg-secondary w-fit mx-auto mb-4">
 						<Package className="h-12 w-12 text-muted-foreground" />
@@ -66,10 +63,12 @@ export default function PaymentPage() {
 						{t("paymentPage.orderNotFound")}
 					</h1>
 					<Link to="/accounts">
-						<Button variant="outline">{t("paymentPage.backToList")}</Button>
+						<Button variant="outline">
+							{t("paymentPage.backToList")}
+						</Button>
 					</Link>
 				</div>
-			</Layout>
+			</>
 		);
 	}
 
@@ -82,7 +81,7 @@ export default function PaymentPage() {
 		currentOrder.status === OrderStatus.Refunded;
 
 	return (
-		<Layout>
+		<>
 			<div className="container mx-auto px-4 py-8 max-w-2xl">
 				{/* Back Button */}
 				<motion.div
@@ -280,6 +279,6 @@ export default function PaymentPage() {
 					</div>
 				</motion.div>
 			</div>
-		</Layout>
+		</>
 	);
 }

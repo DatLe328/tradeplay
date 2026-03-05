@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Layout } from "@/components/layout/Layout";
 import { AccountCard } from "@/components/accounts/AccountCard";
 import { AccountFilter } from "@/components/accounts/AccountFilter";
 import { CursorPaginationWrapper } from "@/components/ui/cursor-pagination-wrapper";
@@ -10,10 +9,9 @@ import {
 } from "@/services/accountService";
 import { Gamepad2 } from "lucide-react";
 import type { GameAccount } from "@/types";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router";
 import { useTranslation } from "@/stores/languageStore";
-import { AccountStatus, getGameName } from "@/constants/enums";
-import { SeoMetadata } from "@/components/seo/SeoMetadata";
+import { AccountStatus } from "@/constants/enums";
 
 interface FilterState {
 	search: string;
@@ -122,7 +120,9 @@ export default function AccountsPage() {
 				setIsLoading(true);
 				const pn = pageNumRef.current;
 
-				const res = await accountService.getAll(buildParams(currentCursor));
+				const res = await accountService.getAll(
+					buildParams(currentCursor),
+				);
 				setAccounts(res.data ?? []);
 
 				const nc = res.paging?.next_cursor ?? "";
@@ -134,19 +134,22 @@ export default function AccountsPage() {
 						return [...prev, nc];
 					});
 					// Prefetch next page silently to discover cursor for pn+2
-					accountService.getAll(buildParams(nc)).then((pr) => {
-						const pnc = pr.paging?.next_cursor ?? "";
-						const phm = pr.paging?.has_more ?? false;
-						if (phm && pnc) {
-							setAllCursors((prev) => {
-								if (prev.length > pn + 1) return prev;
-								return [...prev.slice(0, pn + 1), pnc];
-							});
-							setHasMoreBeyondKnown(true);
-						} else {
-							setHasMoreBeyondKnown(false);
-						}
-					}).catch(() => {});
+					accountService
+						.getAll(buildParams(nc))
+						.then((pr) => {
+							const pnc = pr.paging?.next_cursor ?? "";
+							const phm = pr.paging?.has_more ?? false;
+							if (phm && pnc) {
+								setAllCursors((prev) => {
+									if (prev.length > pn + 1) return prev;
+									return [...prev.slice(0, pn + 1), pnc];
+								});
+								setHasMoreBeyondKnown(true);
+							} else {
+								setHasMoreBeyondKnown(false);
+							}
+						})
+						.catch(() => {});
 				} else {
 					setAllCursors((prev) => prev.slice(0, pn));
 					setHasMoreBeyondKnown(false);
@@ -168,20 +171,9 @@ export default function AccountsPage() {
 		filters.sort,
 		debouncedSearch,
 	]);
-	const getPageTitle = () => {
-		if (filters.categoryId !== "all") {
-			const gameName = getGameName(Number(filters.categoryId));
-			return `Danh sách acc ${gameName} Giá Rẻ | Tiến Cơ Trưởng`;
-		}
-		return `Danh sách acc game | Tiến Cơ Trưởng`;
-	};
 
 	return (
-		<Layout>
-			<SeoMetadata
-				title={getPageTitle()}
-				description="Danh sách tài khoản Play Together đang bán. Giá từ rẻ đến VIP, bảo hành uy tín. Cập nhật mới nhất."
-			/>
+		<>
 			<div className="container mx-auto px-4 py-8">
 				{/* Header */}
 				<motion.div
@@ -191,9 +183,13 @@ export default function AccountsPage() {
 				>
 					<h1 className="font-gaming text-3xl md:text-4xl font-bold mb-2">
 						{t("accountPage.accountsList")}{" "}
-						<span className="text-gradient">{t("accountPage.accGame")}</span>
+						<span className="text-gradient">
+							{t("accountPage.accGame")}
+						</span>
 					</h1>
-					<p className="text-muted-foreground">{t("accountPage.accountsDesc")}</p>
+					<p className="text-muted-foreground">
+						{t("accountPage.accountsDesc")}
+					</p>
 				</motion.div>
 
 				{/* Filters */}
@@ -262,25 +258,25 @@ export default function AccountsPage() {
 						</div>
 
 						{/* Pagination Wrapper */}
-							<CursorPaginationWrapper
-								hasMore={allCursors.length > pageNum}
-								hasPrev={pageNum > 1}
-								onNext={() => navigateTo(pageNum + 1)}
-								onPrev={() => navigateTo(pageNum - 1)}
-								currentPage={pageNum}
-								onGoToPage={navigateTo}
-								maxKnownPage={allCursors.length}
-								hasMoreBeyondKnown={hasMoreBeyondKnown}
-								itemCount={accounts.length}
-								pageSize={pageSize}
-								onPageSizeChange={(size) => {
-									setPageSize(size);
-									pageNumRef.current = 1;
-									setPageNum(1);
-									setCurrentCursor("");
-									setAllCursors([""]);
-									setHasMoreBeyondKnown(false);
-								}}
+						<CursorPaginationWrapper
+							hasMore={allCursors.length > pageNum}
+							hasPrev={pageNum > 1}
+							onNext={() => navigateTo(pageNum + 1)}
+							onPrev={() => navigateTo(pageNum - 1)}
+							currentPage={pageNum}
+							onGoToPage={navigateTo}
+							maxKnownPage={allCursors.length}
+							hasMoreBeyondKnown={hasMoreBeyondKnown}
+							itemCount={accounts.length}
+							pageSize={pageSize}
+							onPageSizeChange={(size) => {
+								setPageSize(size);
+								pageNumRef.current = 1;
+								setPageNum(1);
+								setCurrentCursor("");
+								setAllCursors([""]);
+								setHasMoreBeyondKnown(false);
+							}}
 							pageSizeOptions={[8, 12, 24, 48]}
 						/>
 					</>
@@ -302,6 +298,6 @@ export default function AccountsPage() {
 					</motion.div>
 				)}
 			</div>
-		</Layout>
+		</>
 	);
 }

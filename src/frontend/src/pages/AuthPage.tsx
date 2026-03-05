@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router";
 import { motion } from "framer-motion";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import {
@@ -124,7 +124,7 @@ export default function AuthPage() {
 						title: t("authPage.registerSuccess"),
 						description: t("authPage.accountCreated"),
 					});
-					navigate("/verify-email", {
+					navigate("auth/verify-email", {
 						state: { email: formData.email },
 					});
 				} else {
@@ -370,7 +370,7 @@ export default function AuthPage() {
 					{isLogin && (
 						<div className="flex justify-end">
 							<Link
-								to="/forgot-password"
+								to="/auth/forgot-password"
 								className="text-sm text-primary hover:underline"
 							>
 								{t("authPage.forgotPassword")}

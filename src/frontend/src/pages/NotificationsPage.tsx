@@ -15,7 +15,7 @@ import { notificationService } from "@/services/notificationService";
 import { useTranslation } from "@/stores/languageStore";
 import { formatTimeAgo } from "@/utils/format";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { NotificationType } from "@/constants/enums";
 import {
 	DropdownMenu,
@@ -24,7 +24,6 @@ import {
 	DropdownMenuCheckboxItem,
 	DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import { Layout } from "@/components/layout/Layout";
 
 // Enhanced color mapping
 const notificationTypeColors: Record<number, string> = {
@@ -164,7 +163,7 @@ export function NotificationsPage() {
 		searchQuery || filterTypes.length > 0 || showUnreadOnly;
 
 	return (
-		<Layout>
+		<>
 			<div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
 				<div className="container mx-auto px-4 py-8 max-w-5xl">
 					{/* Enhanced Header */}
@@ -619,6 +618,6 @@ export function NotificationsPage() {
 					)}
 				</div>
 			</div>
-		</Layout>
+		</>
 	);
 }

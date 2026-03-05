@@ -1,18 +1,21 @@
-import { type ReactNode } from "react";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { FloatingContact } from "./FloatingContact";
+import { Outlet } from "react-router";
+import { ScrollToTop } from "./ScrollToTop";
 
 interface LayoutProps {
-	children: ReactNode;
 	showFooter?: boolean;
 }
 
-export function Layout({ children, showFooter = true }: LayoutProps) {
+export function Layout({ showFooter = true }: LayoutProps) {
 	return (
 		<div className="min-h-screen flex flex-col bg-background">
+			<ScrollToTop />
 			<Header />
-			<main className="flex-1">{children}</main>
+			<main className="flex-1">
+				<Outlet />
+			</main>
 			{showFooter && <Footer />}
 			<FloatingContact />
 		</div>

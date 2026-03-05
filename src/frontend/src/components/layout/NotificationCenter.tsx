@@ -11,7 +11,7 @@ import { notificationService } from "@/services/notificationService";
 import { useTranslation } from "@/stores/languageStore";
 import { formatTimeAgo } from "@/utils/format";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { NotificationType } from "@/constants/enums";
 
 // Enhanced color mapping với consistent design

@@ -1,4 +1,4 @@
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router";
 import { motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import {
@@ -18,7 +18,6 @@ import {
 	Shield,
 	Zap,
 } from "lucide-react";
-import { Layout } from "@/components/layout/Layout";
 import { AccountGallery } from "@/components/accounts/AccountGallery";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,7 +40,6 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { SeoMetadata } from "@/components/seo/SeoMetadata";
 
 const formatValue = (value: any) => {
 	if (value === true) return "Có";
@@ -145,36 +143,32 @@ export default function AccountDetailPage() {
 
 	if (isLoading) {
 		return (
-			<Layout>
-				<div className="flex flex-col justify-center items-center min-h-[60vh] gap-4">
-					<Loader2 className="h-10 w-10 animate-spin text-primary" />
-					<p className="text-sm text-muted-foreground">
-						Đang tải thông tin...
-					</p>
-				</div>
-			</Layout>
+			<div className="flex flex-col justify-center items-center min-h-[60vh] gap-4">
+				<Loader2 className="h-10 w-10 animate-spin text-primary" />
+				<p className="text-sm text-muted-foreground">
+					Đang tải thông tin...
+				</p>
+			</div>
 		);
 	}
 
 	if (!account) {
 		return (
-			<Layout>
-				<div className="container mx-auto px-4 py-20 text-center space-y-4">
-					<AlertCircle className="h-16 w-16 text-muted-foreground mx-auto" />
-					<h1 className="font-gaming text-2xl font-bold">
-						{t("accountDetailsPage.accountNotFound")}
-					</h1>
-					<p className="text-muted-foreground">
-						Tài khoản không tồn tại hoặc đã bị xóa
-					</p>
-					<Link to="/accounts">
-						<Button variant="outline" className="gap-2">
-							<ArrowLeft className="h-4 w-4" />
-							{t("accountDetailsPage.backToList")}
-						</Button>
-					</Link>
-				</div>
-			</Layout>
+			<div className="container mx-auto px-4 py-20 text-center space-y-4">
+				<AlertCircle className="h-16 w-16 text-muted-foreground mx-auto" />
+				<h1 className="font-gaming text-2xl font-bold">
+					{t("accountDetailsPage.accountNotFound")}
+				</h1>
+				<p className="text-muted-foreground">
+					Tài khoản không tồn tại hoặc đã bị xóa
+				</p>
+				<Link to="/accounts">
+					<Button variant="outline" className="gap-2">
+						<ArrowLeft className="h-4 w-4" />
+						{t("accountDetailsPage.backToList")}
+					</Button>
+				</Link>
+			</div>
 		);
 	}
 
@@ -288,14 +282,7 @@ export default function AccountDetailPage() {
 	const missingAmount = account.price - balance;
 
 	return (
-		<Layout>
-			<SeoMetadata
-				title={`${account.title} - Mã số #${account.id} | Tiến Cơ Trưởng Shop`}
-				description={
-					account.description ||
-					`Mua ngay tài khoản ${account.category?.name} giá rẻ, uy tín tại Tiến Cơ Trưởng Shop.`
-				}
-			/>
+		<>
 			<div className="container mx-auto px-4 py-6 md:py-8 max-w-7xl">
 				{/* Back Button */}
 				<motion.div
@@ -312,7 +299,9 @@ export default function AccountDetailPage() {
 							<span className="hidden sm:inline">
 								{t("accountDetailsPage.backToList")}
 							</span>
-							<span className="sm:hidden">{t("accountDetailsPage.backToListShort")}</span>
+							<span className="sm:hidden">
+								{t("accountDetailsPage.backToListShort")}
+							</span>
 						</Button>
 					</Link>
 				</motion.div>
@@ -334,7 +323,9 @@ export default function AccountDetailPage() {
 						<div className="space-y-4">
 							<h3 className="font-gaming font-semibold text-lg md:text-xl flex items-center gap-2">
 								<Info className="h-5 w-5 text-primary" />
-								<span>{t("accountDetailsPage.description")}</span>
+								<span>
+									{t("accountDetailsPage.description")}
+								</span>
 							</h3>
 							<div className="p-4 md:p-5 rounded-xl bg-secondary/20 border border-border/50 hover:border-border transition-colors">
 								<p className="text-muted-foreground leading-relaxed whitespace-pre-line text-sm md:text-base">
@@ -348,7 +339,9 @@ export default function AccountDetailPage() {
 							<div className="space-y-4">
 								<h3 className="font-gaming font-semibold text-lg md:text-xl flex items-center gap-2">
 									<Sparkles className="h-5 w-5 text-primary" />
-									<span>{t("accountDetailsPage.highlights")}</span>
+									<span>
+										{t("accountDetailsPage.highlights")}
+									</span>
 								</h3>
 								<ul className="grid sm:grid-cols-2 gap-3">
 									{account.features.map((feature, index) => (
@@ -412,7 +405,9 @@ export default function AccountDetailPage() {
 							<div className="space-y-4 pt-2">
 								<h3 className="font-gaming font-semibold text-lg md:text-xl flex items-center gap-2">
 									<Sparkles className="h-5 w-5 text-primary" />
-									<span>{t("accountDetailsPage.information")}</span>
+									<span>
+										{t("accountDetailsPage.information")}
+									</span>
 								</h3>
 
 								<div className="grid grid-cols-2 gap-3">
@@ -475,12 +470,18 @@ export default function AccountDetailPage() {
 									{isOrderLoading ? (
 										<>
 											<Loader2 className="h-5 w-5 animate-spin" />
-											<span>{t("accountDetailsPage.processing")}</span>
+											<span>
+												{t(
+													"accountDetailsPage.processing",
+												)}
+											</span>
 										</>
 									) : (
 										<>
 											<ShoppingCart className="h-5 w-5" />
-											<span>{t("accountDetailsPage.buyNow")}</span>
+											<span>
+												{t("accountDetailsPage.buyNow")}
+											</span>
 										</>
 									)}
 								</Button>
@@ -499,7 +500,9 @@ export default function AccountDetailPage() {
 							<div className="space-y-2 pt-2 border-t border-border/50">
 								<div className="flex items-center gap-2 text-xs text-muted-foreground">
 									<Zap className="h-4 w-4 text-green-500 shrink-0" />
-									<span>{t("accountDetailsPage.trustBadge1")}</span>
+									<span>
+										{t("accountDetailsPage.trustBadge1")}
+									</span>
 								</div>
 								<div className="flex items-center gap-2 text-xs text-muted-foreground">
 									<Shield className="h-4 w-4 text-blue-500 shrink-0" />
@@ -589,7 +592,9 @@ export default function AccountDetailPage() {
 							</div>
 							<div className="border-t border-border/50 pt-3 flex justify-between items-center">
 								<span className="font-medium text-sm md:text-base">
-									{t("accountDetailsPage.balanceAfterPurchase")}
+									{t(
+										"accountDetailsPage.balanceAfterPurchase",
+									)}
 								</span>
 								<span
 									className={cn(
@@ -603,7 +608,9 @@ export default function AccountDetailPage() {
 										? formatCurrency(
 												balance - account.price,
 											)
-										: t("accountDetailsPage.notEnoughBalance")}
+										: t(
+												"accountDetailsPage.notEnoughBalance",
+											)}
 								</span>
 							</div>
 						</div>
@@ -613,11 +620,13 @@ export default function AccountDetailPage() {
 							<div className="flex items-start gap-2 p-3 text-sm text-red-600 bg-red-50 dark:bg-red-900/10 rounded-lg border border-red-200 dark:border-red-900/20">
 								<AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
 								<span>
-									{t("accountDetailsPage.insufficientBalance")}{" "}
+									{t(
+										"accountDetailsPage.insufficientBalance",
+									)}{" "}
 									<b className="font-bold">
 										{formatCurrency(missingAmount)}
 									</b>
-										.{" "}
+									.{" "}
 									{t("accountDetailsPage.pleaseDeposit")}{" "}
 								</span>
 							</div>
@@ -668,6 +677,6 @@ export default function AccountDetailPage() {
 					</DialogFooter>
 				</DialogContent>
 			</Dialog>
-		</Layout>
+		</>
 	);
 }

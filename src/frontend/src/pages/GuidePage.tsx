@@ -1,4 +1,3 @@
-import { Layout } from "@/components/layout/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -13,7 +12,6 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useTranslation } from "@/stores/languageStore";
-import { SeoMetadata } from "@/components/seo/SeoMetadata";
 
 export default function GuidePage() {
 	const { t, tArray } = useTranslation();
@@ -58,11 +56,7 @@ export default function GuidePage() {
 	];
 
 	return (
-		<Layout>
-			<SeoMetadata
-				title="Hướng dẫn mua tài khoản - Tiến Cơ Trưởng"
-				description="Quy trình 4 bước mua nick Play Together an toàn, tự động 100%. Hỗ trợ thanh toán Momo, Ngân hàng."
-			/>
+		<>
 			<div className="container mx-auto px-4 py-8">
 				{/* Header */}
 				<motion.div
@@ -106,7 +100,8 @@ export default function GuidePage() {
 													variant="outline"
 													className="bg-primary/10 text-primary border-primary/30"
 												>
-													{t("guidePage.step")} {item.step}
+													{t("guidePage.step")}{" "}
+													{item.step}
 												</Badge>
 											</div>
 											<CardTitle className="text-xl font-gaming">
@@ -218,6 +213,6 @@ export default function GuidePage() {
 					</Card>
 				</motion.div>
 			</div>
-		</Layout>
+		</>
 	);
 }

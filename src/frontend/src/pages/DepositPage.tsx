@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Layout } from "@/components/layout/Layout";
 import { useTranslation } from "@/stores/languageStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useWalletStore } from "@/stores/walletStore";
@@ -25,7 +24,7 @@ import {
 	Loader2,
 } from "lucide-react";
 import { formatCurrency } from "@/utils/format";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { OrderStatus } from "@/constants/enums";
 import { useToast } from "@/hooks/use-toast";
 import { orderService } from "@/services/orderService";
@@ -230,7 +229,7 @@ export default function DepositPage() {
 	if (!isAuthenticated) return null;
 
 	return (
-		<Layout>
+		<>
 			<div className="container mx-auto px-4 py-8">
 				<motion.div
 					initial={{ opacity: 0, y: 20 }}
@@ -319,7 +318,9 @@ export default function DepositPage() {
 													)}
 													{method.disabled && (
 														<span className="text-xs text-orange-500 font-bold bg-orange-100 px-2 py-0.5 rounded-full mt-1 inline-block">
-															{t("depositPage.comingSoon")}
+															{t(
+																"depositPage.comingSoon",
+															)}
 														</span>
 													)}
 												</div>
@@ -550,6 +551,6 @@ export default function DepositPage() {
 					)}
 				</DialogContent>
 			</Dialog>
-		</Layout>
+		</>
 	);
 }

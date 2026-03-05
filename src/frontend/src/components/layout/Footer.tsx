@@ -1,5 +1,5 @@
 import { Sparkles, Instagram, Phone, MapPin, Heart } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useTranslation } from "@/stores/languageStore";
 
 export function Footer() {
